@@ -1,0 +1,57 @@
+# --- Python ---
+__pycache__/
+.venv/
+venv/
+*.pyc
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+
+# --- Build & Packaging (PyInstaller / UV) ---
+build/
+dist/
+localpycs/
+*.spec
+# If you want to keep your .spec file for the GitHub Action, 
+# remove the line above. Usually, keeping it is better.
+Analysis-00.toc
+EXE-00.toc
+PKG-00.toc
+PYZ-00.toc
+warn-FoundryL10n.txt
+
+# --- App Data (CRITICAL: Do not upload your memory!) ---
+*.db
+*.db-journal
+out/
+reports/
+
+# --- Project Resources (Local only) ---
+# If you have custom glossaries or styles you don't want to share:
+glossary.tsv
+style.md
+forbidden.txt
+profiles/*.md
+profiles/*.txt
+
+# --- Models (Never commit these!) ---
+models/
+*.gguf
+*.bin
+*.safetensors
+Modelfile
+
+# --- IDEs & OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Tests Data ---
+# We keep the test scripts, but ignore the big data files you use for testing
+tests/*.tsv
+tests/*.csv
+tests/*.txt
+!tests/__init__.py
+dialogue.tsv

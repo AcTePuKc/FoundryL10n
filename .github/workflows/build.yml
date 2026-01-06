@@ -1,0 +1,33 @@
+name: Build FoundryL10n
+
+on:
+  push:
+    tags: ['v*'] # Only build on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv and dependencies
+        run: |
+          pip install uv
+          uv sync --frozen
+
+      - name: Build Executable
+        run: |
+          # --noconsole hides the cmd window
+          # --onefile packs everything into one .exe
+          # --exclude-module omits things we don't need
+          uv run pyinstaller --noconsole --onefile --name "FoundryL10n" src/main.py
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/FoundryL10n.exe

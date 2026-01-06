@@ -1,0 +1,12 @@
+[project]
+name = "MyAwesomeGame"
+source_lang = "English"
+target_langs = ["Bulgarian"]
+
+[files]
+# Format: "source_file" = "profile"
+"dialogue.tsv" = "game_tsv"
+
+[paths]
+source_dir = "src_files"
+output_dir = "out"
