@@ -1,14 +1,21 @@
 import csv
-from typing import List, Dict, Optional, Sequence
+from typing import List, Dict, Optional
 from pathlib import Path
 
 class TranslationSegment:
-    def __init__(self, key: str, source_text: str, context: str = "", original_row: Optional[Dict] = None):
+    def __init__(
+        self,
+        key: str,
+        source_text: str,
+        context: str = "",
+        translation: str = "",
+        original_row: Optional[Dict] = None,
+    ):
         self.key = key
         self.source_text = source_text
         self.context = context
         self.original_row: Dict = original_row if original_row is not None else {}
-        self.translation = ""
+        self.translation = translation
         self.thought = ""
 
 class FoundryParser:
@@ -41,11 +48,13 @@ class FoundryParser:
                 self.headers.append('translation')
 
             for row in reader:
+                translation_value = row.get(self.target_col, "") if self.target_col else ""
                 segments.append(
                     TranslationSegment(
                         key=row.get('key', ''),
                         source_text=row.get(self.text_col, ""),
                         context=row.get('note', row.get('context', '')),
+                        translation=translation_value or "",
                         original_row=row
                     )
                 )

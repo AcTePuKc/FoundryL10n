@@ -1,15 +1,19 @@
 from PySide6.QtWidgets import (QWidget, QFormLayout, QComboBox, QDoubleSpinBox, 
                              QLineEdit, QPushButton, QHBoxLayout, QFileDialog, 
                              QMessageBox, QCheckBox, QTextEdit, QLabel, QVBoxLayout, QGroupBox)
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Signal 
 from services.llm_service import LLMService
 from core.database import TranslationRecord, Session, engine
 from sqlmodel import SQLModel, delete, col
 
 class SettingsTab(QWidget):
+    font_changed = Signal(float)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.llm_service = LLMService()
+
+        
         
         # Main Layout is Vertical
         self.main_layout = QVBoxLayout(self)
@@ -36,6 +40,12 @@ class SettingsTab(QWidget):
         self.strict_mode = QCheckBox("Strict Tag Validation (Retry on error)")
         self.strict_mode.setChecked(True)
         gen_form.addRow("Validation:", self.strict_mode)
+
+        self.font_size_spin = QDoubleSpinBox()
+        self.font_size_spin.setRange(8, 30)
+        self.font_size_spin.setValue(12)
+        self.font_size_spin.valueChanged.connect(self.font_changed.emit)
+        gen_form.addRow("UI Font Size:", self.font_size_spin)
         
         self.main_layout.addWidget(gen_group)
 
@@ -145,7 +155,7 @@ class SettingsTab(QWidget):
         self.model_dropdown.clear()
         if models:
             self.model_dropdown.addItems(models)
-
+    
     def save_settings(self):
         """Saves only the form-related settings."""
         s = QSettings("FoundryL10n", "TranslatorApp")
@@ -156,15 +166,16 @@ class SettingsTab(QWidget):
         s.setValue("forbidden_path", self.forbidden_path.text())
         s.setValue("temp", self.temp_spin.value())
         s.setValue("strict_mode", self.strict_mode.isChecked())
-        # If the prompt editor is inside this tab, save it here:
+        # Save the current text in the prompt editor
         s.setValue("custom_prompt", self.prompt_editor.toPlainText())
+        # Save the font size
+        s.setValue("ui_font_size", self.font_size_spin.value())
 
     def load_settings(self):
         """Loads only the form-related settings with string casting."""
         s = QSettings("FoundryL10n", "TranslatorApp")
         self.target_lang_input.setText(str(s.value("target_lang", "BG")))
         
-        # Cast to string for findText
         saved_model = str(s.value("model", ""))
         idx = self.model_dropdown.findText(saved_model)
         if idx >= 0: 
@@ -174,18 +185,21 @@ class SettingsTab(QWidget):
         self.style_path.setText(str(s.value("style_path", "style.md")))
         self.forbidden_path.setText(str(s.value("forbidden_path", "forbidden.txt")))
         
-        # Safe boolean check
         is_strict = str(s.value("strict_mode", "true")).lower() == "true"
         self.strict_mode.setChecked(is_strict)
 
-        # Safe prompt load
+        # Load the prompt
         default_p = self.get_default_prompt()
         self.prompt_editor.setPlainText(str(s.value("custom_prompt", default_p)))
 
+        # Load font size and trigger the update
         try:
-            self.temp_spin.setValue(float(str(s.value("temp", 0.1))))
-        except:
-            self.temp_spin.setValue(0.1)
+            f_size = float(str(s.value("ui_font_size", 12)))
+            self.font_size_spin.setValue(f_size)
+            # Manually emit once to apply font on startup
+            self.font_changed.emit(f_size)
+        except (ValueError, TypeError):
+            self.font_size_spin.setValue(12)
 
     def get_settings(self):
         return {

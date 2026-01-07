@@ -44,7 +44,7 @@ class TranslationWorker(QThread):
                     style=style_content, 
                     forbidden=forbidden_content,
                     temp=self.temp,
-                    prompt_template=self.prompt_template # Pass it here!
+                    prompt_template=self.prompt_template
                 )
             else:
                 # If it's empty, we just mark it as empty and move on

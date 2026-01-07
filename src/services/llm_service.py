@@ -22,12 +22,12 @@ class LLMService:
             return ["ollama-not-found"]
 
     def translate_segment(self, text, target_lang, glossary, style, forbidden, temp, prompt_template, current_translation=""):
-        """Uses a custom prompt template provided by the UI."""
-        
-        # 1. Prepare the Prompt
+        # 1. Fallback if template is empty
         if not prompt_template or "{source}" not in prompt_template:
-            prompt_template = "Translate to {target_lang}: {source}"
+            prompt_template = "### ROLE: Localizer\n### SOURCE: {source}\n### TARGET ({target_lang}):"
 
+        # 2. Injection logic
+        # We use .replace instead of .format to avoid errors with stray {} in AI text
         full_prompt = prompt_template.replace("{source}", text)\
                                      .replace("{target_lang}", target_lang)\
                                      .replace("{glossary}", glossary)\
@@ -35,13 +35,17 @@ class LLMService:
                                      .replace("{forbidden}", forbidden)\
                                      .replace("{translation}", current_translation)
 
+        # DEBUG: Let's see what the AI is actually reading
+        # print("-" * 30)
+        # print(f"SENDING PROMPT:\n{full_prompt}")
+        # print("-" * 30)
+
         try:
-            # 2. Call the AI
             response = ollama.generate(
                 model=self.model,
                 prompt=full_prompt,
                 options={
-                    "temperature": temp,
+                    "temperature": float(temp),
                     "stop": ["###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n"]
                 }
             )

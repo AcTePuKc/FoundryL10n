@@ -27,11 +27,15 @@ class Masker:
     def unmask(self, masked_text: str, tokens: list):
         unmasked_text = masked_text
         for i, token in enumerate(tokens):
-            # We look for the tag WITH a trailing space and replace it with just the tag
-            unmasked_text = unmasked_text.replace(f"[#_{i}_] ", token)
-            # Then replace any remaining ones without spaces
-            unmasked_text = unmasked_text.replace(f"[#_{i}_]", token)
-        
+            # NEW: Search for the tag PLUS an accidental space
+            tag_to_find = f"[#_{i}_]"
+            
+            # Case 1: Tag has a space after it -> "[#_0_] "
+            unmasked_text = unmasked_text.replace(f"{tag_to_find} ", token)
+            
+            # Case 2: Tag is right against the word -> "[#_0_]Word"
+            unmasked_text = unmasked_text.replace(tag_to_find, token)
+            
         return unmasked_text.strip()
 
 
