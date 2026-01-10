@@ -30,7 +30,7 @@ jobs:
           uv run pyinstaller --onefile --collect-all sqlmodel --collect-all pydantic --collect-all ollama --collect-all sqlalchemy --add-data "src;src" --add-data "profiles;profiles" --add-data "resources;resources" --paths "src" --hidden-import "pysqlite3" --icon "resources/app.ico" --name "FoundryL10n" src/main.py
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2 # Upgraded to v2
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/FoundryL10n.exe
         env:
