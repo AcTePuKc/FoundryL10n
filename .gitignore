@@ -3,57 +3,50 @@ __pycache__/
 .venv/
 venv/
 *.pyc
-*.pyo
-*.pyd
-.python-version
 .pytest_cache/
+# .python-version  <-- REMOVED FROM IGNORE (Commit this)
 
-# --- Build & Packaging (PyInstaller / UV) ---
+# --- Build & Packaging ---
 build/
 dist/
 localpycs/
-*.spec
-# If you want to keep your .spec file for the GitHub Action, 
-# remove the line above. Usually, keeping it is better.
+# FoundryL10n.spec <-- REMOVED FROM IGNORE (Commit this)
 Analysis-00.toc
 EXE-00.toc
 PKG-00.toc
 PYZ-00.toc
-warn-FoundryL10n.txt
 
-# --- App Data (CRITICAL: Do not upload your memory!) ---
+# --- App Data (NEVER COMMIT) ---
 *.db
 *.db-journal
 out/
 reports/
 
-# --- Project Resources (Local only) ---
-# If you have custom glossaries or styles you don't want to share:
+# --- Project Resources (Ignore personal work, but keep folder structure) ---
+# We ignore the actual files, but you should commit 'sample' versions
 glossary.tsv
 style.md
 forbidden.txt
-profiles/*.md
-profiles/*.txt
 
-# --- Models (Never commit these!) ---
+# --- Profiles ---
+# Ignore your personal profiles, but keep the directory
+profiles/*.json
+!profiles/sample_profile.json
+!profiles/.gitkeep
+
+# --- Models ---
 models/
 *.gguf
 *.bin
 *.safetensors
-Modelfile
+# Modelfile <-- REMOVED FROM IGNORE (Commit this)
 
-# --- IDEs & OS ---
+# --- IDEs ---
 .vscode/
 .idea/
-.DS_Store
-Thumbs.db
 
-# --- Tests Data ---
-# We keep the test scripts, but ignore the big data files you use for testing
+# --- Tests & Samples ---
 tests/*.tsv
 tests/*.csv
 tests/*.txt
 !tests/__init__.py
-dialogue.tsv
-auto_glossary.tsv
-Spiderman*

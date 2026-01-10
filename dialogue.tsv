@@ -1,0 +1,4 @@
+key	text	context
+MSG_01	Welcome to the {player_name}!	Intro message
+MSG_02	Enter the <color=red>Fire Dungeon</color>.	Quest start
+MSG_03	You found a Health Potion!	Item pickup
