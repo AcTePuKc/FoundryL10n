@@ -1,24 +1,35 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QComboBox, QTextEdit, QLabel
 
 PROMPTS = {
-    "Standard Translator": (
+    "Standard Localizer": (
+        "### STORY CONTEXT:\n{context}\n\n"
         "### ROLE: Expert {target_lang} Game Localizer\n"
-        "Translate the following string accurately.\n"
-        "Rules:\n- Glossary: {glossary}\n- Style: {style}\n"
-        "- Tags: Keep [#_0_], [#_1_] exactly where they are.\n\n"
-        "Source: {source}\nTarget:"
+        "### TASK: Translate the string accurately. Use natural dialogue.\n"
+        "### RULES:\n"
+        "- GLOSSARY: {glossary}\n"
+        "- STYLE: {style}\n"
+        "- TAGS: Keep all [#_x_] anchors in their relative positions.\n"
+        "- OUTPUT: ONLY the Bulgarian translation. NO chat. NO 'Разбира се'.\n\n"
+        "SOURCE: {source}\n"
+        "TARGET:"
     ),
-    "Technical Fixer (Strict)": (
-        "### ROLE: Technical Fixer\n"
-        "I have a translation that broke the tags. Fix the tags and the Bulgarian grammar.\n"
-        "Source: {source}\n"
-        "Rules: Preserve all [#_x_] anchors.\n"
-        "Target:"
+    "Tag Surgeon (Pass 2)": (
+        "### ROLE: Technical Editor\n"
+        "### TASK: Re-insert anchors into the DRAFT based on the SOURCE.\n"
+        "### RULES:\n"
+        "1. DO NOT change the words in the DRAFT.\n"
+        "2. Only place the anchors [#_0_], [#_1_], etc., where they belong.\n"
+        "3. NO chat. NO explanations.\n\n"
+        "SOURCE MAP: {source}\n"
+        "DRAFT TEXT: {translation}\n"
+        "FIXED RESULT:"
     ),
     "Narrative Polish": (
         "### ROLE: Creative Writer\n"
-        "Make this Bulgarian translation sound more heroic and high-fantasy.\n"
-        "Source: {source}\nTarget:"
+        "Re-write this {target_lang} translation to be more epic and high-fantasy.\n"
+        "Rules: {style}\n"
+        "Source: {source}\n"
+        "Target:"
     )
 }
 

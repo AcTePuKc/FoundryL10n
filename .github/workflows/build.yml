@@ -2,7 +2,7 @@ name: Build FoundryL10n
 
 on:
   push:
-    tags: ['v*'] # Only build on version tags like v1.0.0
+    tags: ['v*'] # Triggers when you push a tag like v1.0
 
 jobs:
   build:
@@ -15,19 +15,19 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install uv and dependencies
-        run: |
-          pip install uv
-          uv sync --frozen
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync
 
       - name: Build Executable
         run: |
-          # --noconsole hides the cmd window
-          # --onefile packs everything into one .exe
-          # --exclude-module omits things we don't need
-          uv run pyinstaller --noconsole --onefile --name "FoundryL10n" src/main.py
+          uv run pyinstaller --onefile --collect-all sqlmodel --collect-all pydantic --collect-all ollama --collect-all sqlalchemy --add-data "src;src" --add-data "profiles;profiles" --add-data "resources;resources" --paths "src" --hidden-import "pysqlite3" --icon "resources/app.ico" --name "FoundryL10n" src/main.py
 
-      - name: Upload Release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/FoundryL10n.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

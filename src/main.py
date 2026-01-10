@@ -1,8 +1,14 @@
 import sys
+import os
 from pathlib import Path
+import ctypes
+try:
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FoundryL10n.Workspace.V1")
+except Exception:
+    pass
+os.environ["QT_LOGGING_RULES"] = "qt.text.font.db.warning=false"
 
-# --- THE HERO EXE BOOTSTRAPPER ---
-# We use getattr to avoid Pylance/Linter errors regarding _MEIPASS
+# --- BOOTSTRAPPER ---
 if getattr(sys, 'frozen', False):
     # PyInstaller temporary folder
     base_path = Path(getattr(sys, '_MEIPASS'))
@@ -22,6 +28,12 @@ from core.engine import TranslationEngine
 from core.parser import FoundryParser, TranslationSegment
 from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
+
+QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
+    Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+)
 
 # Initialize Typer
 app = typer.Typer(help="FoundryL10n: Professional Local-First Game Translator")
@@ -57,7 +69,6 @@ def translate_file(
     llm_service = LLMService(model_name=model)
     engine = TranslationEngine(llm_service)
     
-    # FIXED: Now passing paths to the loader
     glossary_content = loader.load_glossary(glossary)
     style_content = loader.load_style_guide(style)
     
@@ -99,7 +110,6 @@ def translate_text(
     llm_service = LLMService(model_name=model)
     engine = TranslationEngine(llm_service)
     
-    # FIXED: Now passing paths to the loader
     glossary_content = loader.load_glossary(glossary)
     style_content = loader.load_style_guide(style)
     

@@ -10,6 +10,7 @@ class TranslationSegment:
         context: str = "",
         translation: str = "",
         original_row: Optional[Dict] = None,
+        ai_draft: str = "",
     ):
         self.key = key
         self.source_text = source_text
@@ -17,6 +18,10 @@ class TranslationSegment:
         self.original_row: Dict = original_row if original_row is not None else {}
         self.translation = translation
         self.thought = ""
+        self.ai_draft = ai_draft
+        self.has_conflict = False
+        self.is_verified = False
+        self.never_translate = False
 
 class FoundryParser:
     def __init__(self):
@@ -30,17 +35,14 @@ class FoundryParser:
         with open(file_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f, delimiter='\t')
             
-            # Fixed Pylance: Handle potential None for fieldnames
             raw_headers = reader.fieldnames
             if not raw_headers:
-                # Fallback if file is empty or malformed
                 self.headers = ["key", "source", "translation"]
             else:
-                # Fixed Pylance: Convert Sequence to a List so we can append
                 self.headers = list(raw_headers)
             
-            # Fixed Pylance: Safe detection of columns
-            self.text_col = next((h for h in self.headers if h.lower() in ['source', 'text', 'original']), self.headers[1] if len(self.headers) > 1 else "source")
+            self.text_col = next((h for h in self.headers if h.lower() in ['source', 'text', 'original']), 
+                                 self.headers[1] if len(self.headers) > 1 else "source")
             self.target_col = next((h for h in self.headers if h.lower() in ['translation', 'target', 'result']), "")
             
             if not self.target_col:
@@ -48,13 +50,16 @@ class FoundryParser:
                 self.headers.append('translation')
 
             for row in reader:
-                translation_value = row.get(self.target_col, "") if self.target_col else ""
+                existing_trans = row.get(self.target_col, "")
+                existing_draft = row.get('ai_draft', "")
+                
                 segments.append(
                     TranslationSegment(
-                        key=row.get('key', ''),
+                        key=row.get('key', 'no_key'),
                         source_text=row.get(self.text_col, ""),
                         context=row.get('note', row.get('context', '')),
-                        translation=translation_value or "",
+                        translation=existing_trans,
+                        ai_draft=existing_draft,
                         original_row=row
                     )
                 )

@@ -4,12 +4,14 @@ FoundryL10n is a local-first translation workstation for narrative-heavy games. 
 
 ## Key Features
 
-- **Two Workflows** – Launch an interactive desktop UI (`foundryl10n gui`) or drive bulk translation from the command line.
-- **Placeholder Safety** – Automatically masks XML tags, bracketed actions, Python-style `%s/%d` formatters, and other tokens so LLMs won’t break your scripts.
-- **Translation Memory** – Stores every suggestion in `foundry_memory.db`, including human approvals and “never translate” decisions.
-- **Glossary & Style Guidance** – Optional TSV/CSV glossary, Markdown style guides, and forbidden word lists are merged into each prompt.
-- **Progress Tracking** – Rich-powered CLI progress bars and GUI stats help you see what’s translated, pending, or needs review.
-- **Local-First** – All assets (translations, glossaries, memory) stay on disk; nothing is sent to remote services beyond your Ollama host.
+- **Dual Workflows** – Launch the PySide6 workstation (`python main.py gui`) or run fully headless TSV jobs from the Typer CLI.
+- **Translation Memory & Recovery** – Rehydrates the table with previous translations, verification flags, locks, and AI drafts stored in `foundry_memory.db`.
+- **Bulk Translation Pipeline** – Fire off long-running batches from the GUI or CLI, with live progress, pause/stop controls, and automatic draft restoration.
+- **Placeholder Safety** – Masks XML tags, bracketed actions, numeric tokens, and other fragile placeholders before the LLM sees them.
+- **Guided Prompts** – Blend glossary/style/forbidden lists with configurable prompt templates and temperature control per profile.
+- **Productivity Tooling** – Search & filter rows, bulk-verify, run find/replace, export verified lines to a glossary, and surface fuzzy matches plus history for each entry.
+- **Integrity & QA** – Dedicated audit tab to flag inconsistent translations across projects, with one-click normalization back into the database.
+- **Local-First** – Everything (translations, profiles, memory) remains on disk; the only model calls are to your local Ollama host.
 
 ## Requirements
 
@@ -71,14 +73,39 @@ python main.py file dialogue.tsv --lang "French" --glossary profiles/french_glos
 
 ### GUI
 
-`foundryl10n` ships with a workstation UI tailored for translators:
+The workstation UI is organized into three feature-rich tabs.
 
-- **Workstation Tab** – Load TSV files, view translation states, apply filters, and inspect AI “thoughts”.
-- **Editor Panel** – Apply manual edits, mark lines as verified, or flag entries as “never translate”.
-- **Bulk Translation** – Run the LLM against the current file, masking placeholders and honoring glossary/style guidance.
-- **Settings Tab** – Configure model name, temperature, target language, font sizes, and default resource paths.
+#### Workstation tab
 
-To launch:
+- Open TSV files, instantly restoring saved translations, verification states, locks, and AI drafts from the memory database.
+- Spreadsheet-like table with row filters (search text, “only errors”), bulk selection, and a right-click menu for quick verify/skip/clear actions.
+- Kick off or halt bulk translation runs that stream updates row-by-row, respecting glossary/style guidance and placeholder shielding.
+- “Follow” toggle keeps the view in sync with bulk translation progress, while **Zen mode** hides auxiliary widgets for a distraction-free layout.
+- Context menu shortcuts for find & replace across the file and exporting all verified rows to a glossary TSV.
+- Live counters and a progress bar showing verified, QA, risk, error, conflict, pending, and locked states.
+
+#### Editor panel
+
+- Side-by-side source, AI draft, and editable translation fields with configurable font size and keyboard shortcuts (Ctrl+Enter to save & advance).
+- Fuzzy match suggestions powered by the translation engine, with one-click insertion and a scrollable history of past revisions for each row.
+- Verification, skip, rollback, and navigation controls, plus the ability to toggle the entire panel or scroll it independently when the window is compact.
+
+#### Integrity report tab
+
+- Runs database-wide consistency checks to surface entries where a source string has multiple translations.
+- Presents conflicts in a table with per-row “Normalize” actions that let you pick the canonical translation and push it back to SQLite.
+- Integrates with the Workstation tab, re-highlighting rows with conflicts after each audit.
+
+#### Settings tab
+
+- Manage project profiles: set target language, project name, save/load presets, and refresh the list of Ollama models.
+- Adjust LLM parameters (model, temperature), font size, and strict-tag mode.
+- Configure resource paths (glossary, style guide, forbidden terms) via quick file pickers.
+- Edit prompt templates directly, or pick from curated presets tailored for localization, tag surgery, or creative polish.
+- Database utilities let you run global replace, purge unverified entries, clear tag mismatches, or wipe the entire memory for a project.
+
+Launch the GUI with:
+
 ```bash
 python main.py gui
 ```

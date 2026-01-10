@@ -55,3 +55,5 @@ tests/*.csv
 tests/*.txt
 !tests/__init__.py
 dialogue.tsv
+auto_glossary.tsv
+Spiderman*

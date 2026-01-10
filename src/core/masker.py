@@ -27,14 +27,8 @@ class Masker:
     def unmask(self, masked_text: str, tokens: list):
         unmasked_text = masked_text
         for i, token in enumerate(tokens):
-            # NEW: Search for the tag PLUS an accidental space
-            tag_to_find = f"[#_{i}_]"
-            
-            # Case 1: Tag has a space after it -> "[#_0_] "
-            unmasked_text = unmasked_text.replace(f"{tag_to_find} ", token)
-            
-            # Case 2: Tag is right against the word -> "[#_0_]Word"
-            unmasked_text = unmasked_text.replace(tag_to_find, token)
+            pattern = re.escape(f"[#_{i}_]") + r"\s?"
+            unmasked_text = re.sub(pattern, token, unmasked_text)
             
         return unmasked_text.strip()
 
