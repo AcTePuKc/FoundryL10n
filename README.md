@@ -15,7 +15,7 @@ FoundryL10n is a local-first translation workstation for narrative-heavy games. 
 
 ## Requirements
 
-- Python 3.13+
+- Python 3.11+
 - [Ollama](https://ollama.com/) running locally with at least one chat-capable model (default: `qwen2.5:7b`)
 - Windows, macOS, or Linux desktop environment
 
