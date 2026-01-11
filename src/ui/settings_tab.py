@@ -34,8 +34,16 @@ class SettingsTab(QWidget):
         QGroupBox {
             border: 1px solid #444444;
             border-radius: 6px;
-            margin-top: 12px;
+            margin-top: 10px;
+            padding-top: 2px;
             background-color: #323232;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 5px;
+            top: -1px; 
+        
         }
         QLineEdit, QTextEdit, QComboBox, QDoubleSpinBox {
             background-color: #1e1e1e;
