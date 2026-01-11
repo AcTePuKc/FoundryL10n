@@ -8,6 +8,7 @@ import json
 class TranslationRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     project_name: str = Field(default="default", index=True)
+    segment_key: str = Field(default="default", index=True)
     source_hash: str = Field(index=True)
     source_text: str
     target_lang: str
@@ -234,20 +235,29 @@ def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]
     return [src for src, trans_set in source_map.items() if len(trans_set) > 1]
 
 
-def save_translation(source_text: str, target_lang: str, translation: str, project_name="default",
-                     verified=False, skip=False, ai_draft=""):
+def save_translation(
+    source_text: str,
+    target_lang: str,
+    translation: str,
+    project_name: str = "default",
+    segment_key: str = "default",  
+    verified: bool = False,
+    skip: bool = False,
+    ai_draft: str = "",
+):
     source_hash = hashlib.md5(source_text.encode()).hexdigest()
 
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
-            TranslationRecord.source_text == source_text,
+            TranslationRecord.project_name == project_name,
             TranslationRecord.target_lang == target_lang,
-            TranslationRecord.project_name == project_name
+            TranslationRecord.segment_key == segment_key,
+            TranslationRecord.source_text == source_text,
         )
         existing = session.exec(statement).first()
 
         if existing:
-            # HISTORY: move previous non-empty translation if it changed
+            # HISTORY:
             if existing.translation and existing.translation != translation:
                 try:
                     history = json.loads(existing.history_json or "[]")
@@ -268,6 +278,8 @@ def save_translation(source_text: str, target_lang: str, translation: str, proje
             session.add(existing)
         else:
             record = TranslationRecord(
+                project_name=project_name,
+                segment_key=segment_key,
                 source_hash=source_hash,
                 source_text=source_text,
                 target_lang=target_lang,
@@ -275,7 +287,6 @@ def save_translation(source_text: str, target_lang: str, translation: str, proje
                 is_verified=verified,
                 never_translate=skip,
                 ai_draft=ai_draft,
-                project_name=project_name,
                 history_json="[]",
             )
             session.add(record)

@@ -85,6 +85,7 @@ class TranslationEngine:
                     target_lang,
                     seg.translation,
                     project_name=project_name,
+                    segment_key=seg.key,
                     verified=seg.is_verified,
                     skip=seg.never_translate,
                     ai_draft=seg.ai_draft,

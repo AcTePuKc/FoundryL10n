@@ -18,8 +18,8 @@ class Masker:
             token = match.group(0)
             idx = len(tokens)
             tokens.append(token)
-            # No spaces here! This forces the LLM to see it as part of the word
-            return f"[#_{idx}_]" 
+            # Use @@ format - doesn't match any of our patterns and is visible to AI
+            return f"@@PLACEHOLDER_{idx}@@" 
         
         masked_text = re.sub(combined_pattern, replace_func, text)
         return masked_text.strip(), tokens
@@ -27,8 +27,14 @@ class Masker:
     def unmask(self, masked_text: str, tokens: list):
         unmasked_text = masked_text
         for i, token in enumerate(tokens):
-            pattern = re.escape(f"[#_{i}_]") + r"\s?"
-            unmasked_text = re.sub(pattern, token, unmasked_text)
+            # Try exact match first
+            placeholder = f"@@PLACEHOLDER_{i}@@"
+            if placeholder in unmasked_text:
+                unmasked_text = unmasked_text.replace(placeholder, token)
+            else:
+                # Try with optional spaces (in case AI added them)
+                pattern = r"@@\s*PLACEHOLDER_" + str(i) + r"\s*@@"
+                unmasked_text = re.sub(pattern, token, unmasked_text)
             
         return unmasked_text.strip()
 
