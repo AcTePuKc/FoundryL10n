@@ -17,6 +17,7 @@ from PySide6.QtGui import QIcon, QFont
 class SettingsTab(QWidget):
     font_changed = Signal(float)
     profile_loaded = Signal()
+    language_changed = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -330,6 +331,7 @@ class SettingsTab(QWidget):
         s.setValue("ui_language", lang)
 
         self.retranslate_ui()
+        self.language_changed.emit(lang)
 
     def retranslate_ui(self):
         # Groups

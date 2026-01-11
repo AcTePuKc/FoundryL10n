@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
                                QPushButton, QLabel, QHeaderView, QHBoxLayout)
+from core.i18n import I18N
 
 
 class IntegrityTab(QWidget):
@@ -8,25 +9,34 @@ class IntegrityTab(QWidget):
         layout = QVBoxLayout(self)
         
         top_layout = QHBoxLayout()
-        self.btn_auto_normalize = QPushButton("🪄 Auto-Normalize All (Use Most Frequent)")
-        self.btn_auto_normalize.setToolTip("Automatically fixes all conflicts by picking the most common translation in the DB.")
+        self.btn_auto_normalize = QPushButton(
+            I18N.t("btn_auto_normalize_all")
+        )
+        self.btn_auto_normalize.setToolTip(
+            I18N.t("tip_auto_normalize_all")
+        )
         self.btn_auto_normalize.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold;")
         
         top_layout.addWidget(self.btn_auto_normalize)
         top_layout.addStretch()
         layout.insertLayout(1, top_layout) # Insert after the title labels
 
-        layout.addWidget(QLabel("<b>Project Consistency Audit</b>"))
-        layout.addWidget(
-            QLabel("The following terms have inconsistent translations in the database:"))
+        self.title_label = QLabel(I18N.t("ui_project_consistency_title"))
+        self.subtitle_label = QLabel(I18N.t("ui_project_consistency_subtitle"))
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.subtitle_label)
 
         self.table = QTableWidget(0, 3)
         self.table.setHorizontalHeaderLabels(
-            ["Source", "Detected Variants", "Action"])
+            [
+                I18N.t("header_source"),
+                I18N.t("header_detected_variants"),
+                I18N.t("header_action"),
+            ])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.table)
 
-        self.btn_refresh = QPushButton("🔄 Scan Database for Conflicts")
+        self.btn_refresh = QPushButton(I18N.t("btn_scan_conflicts"))
         self.btn_refresh.setMinimumHeight(40)
         layout.addWidget(self.btn_refresh)
 
@@ -34,7 +44,11 @@ class IntegrityTab(QWidget):
         """Displays every single translation stored for this project."""
         self.table.setRowCount(len(project_records))
         self.table.setHorizontalHeaderLabels(
-            ["Source", "Current Translation", "Status"])
+            [
+                I18N.t("header_source"),
+                I18N.t("header_current_translation"),
+                I18N.t("header_status"),
+            ])
         for i, r in enumerate(project_records):
             self.table.setItem(i, 0, QTableWidgetItem(r.source_text))
             self.table.setItem(i, 1, QTableWidgetItem(r.translation))
@@ -53,6 +67,24 @@ class IntegrityTab(QWidget):
             self.table.setItem(i, 1, QTableWidgetItem(variant_str))
 
             # Column 2: Resolve Button
-            btn_resolve = QPushButton("Normalize...")
+            btn_resolve = QPushButton(I18N.t("btn_normalize"))
             # We'll connect this in the main window
             self.table.setCellWidget(i, 2, btn_resolve)
+
+    def retranslate_ui(self):
+        self.btn_auto_normalize.setText(I18N.t("btn_auto_normalize_all"))
+        self.btn_auto_normalize.setToolTip(I18N.t("tip_auto_normalize_all"))
+        self.title_label.setText(I18N.t("ui_project_consistency_title"))
+        self.subtitle_label.setText(I18N.t("ui_project_consistency_subtitle"))
+        self.btn_refresh.setText(I18N.t("btn_scan_conflicts"))
+        self.table.setHorizontalHeaderLabels(
+            [
+                I18N.t("header_source"),
+                I18N.t("header_detected_variants"),
+                I18N.t("header_action"),
+            ]
+        )
+        for row in range(self.table.rowCount()):
+            btn = self.table.cellWidget(row, 2)
+            if isinstance(btn, QPushButton):
+                btn.setText(I18N.t("btn_normalize"))
