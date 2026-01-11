@@ -39,6 +39,9 @@ def load_theme(theme_name: str) -> None:
     from PySide6.QtWidgets import QApplication
 
     theme_path = base_path / "resources" / "themes" / f"{theme_name}.qss"
+    if not theme_path.exists():
+        print(f"[yellow]Warning:[/yellow] Theme file not found: {theme_path}")
+        return
     qss_text = theme_path.read_text(encoding="utf-8")
     qt_app = QApplication.instance()
     if qt_app is None:
