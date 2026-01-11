@@ -45,14 +45,42 @@ def main():
 
 @app.command(name="gui")
 def launch_gui():
-    """Launch the graphical interface (PySide6)."""
-    try:
-        from ui.main_window import run_gui
-        run_gui()
-    except Exception as e:
-        print(f"[red]CRITICAL ERROR: Could not load GUI components.[/red]")
-        print(f"Details: {e}")
-        input("Press Enter to close...")
+    """Launch the graphical interface with a FORCED Dark Theme."""
+    from PySide6.QtWidgets import QApplication
+    from ui.main_window import FoundryGUI
+    
+    qt_app = QApplication(sys.argv)
+    
+    # HERO FIX: Global Application Stylesheet
+    # This forces every window, dialog, and popup to be dark, 
+    # regardless of the user's Windows settings.
+    qt_app.setStyleSheet("""
+        QMainWindow, QDialog, QWidget {
+            background-color: #1e1e1e;
+            color: #dcdcdc;
+        }
+        QTabWidget::pane { border: 1px solid #333; }
+        QTabBar::tab {
+            background: #2d2d2d;
+            padding: 8px 12px;
+            margin-right: 2px;
+        }
+        QTabBar::tab:selected { background: #3d3d3d; border-bottom: 2px solid #007acc; }
+        QHeaderView::section {
+            background-color: #2d2d2d;
+            color: #aaa;
+            padding: 4px;
+            border: 1px solid #1e1e1e;
+        }
+        QTableWidget {
+            gridline-color: #333;
+            alternate-background-color: #252525;
+        }
+    """)
+    
+    window = FoundryGUI()
+    window.show()
+    sys.exit(qt_app.exec())
 
 @app.command(name="file")
 def translate_file(

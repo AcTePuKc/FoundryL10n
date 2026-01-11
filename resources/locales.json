@@ -1,0 +1,32 @@
+{
+    "EN": {
+        "ui_general": "General",
+        "ui_model": "Model",
+        "ui_project": "Project",
+        "ui_save": "Save Profile",
+        "ui_load": "Load Profile",
+        "ui_start_bulk": "Start Bulk Translation",
+        "ui_stop": "Stop",
+        "btn_start": "Start Bulk Translation",
+        "btn_stop": "Stop",
+        "btn_save": "Save Manual Changes",
+        "lbl_stats": "🟢 Verified | 🟡 Draft | 🔴 Error",
+        "menu_copy": "Copy Source",
+        "menu_purge": "Purge Record"
+    },
+    "BG": {
+        "ui_general": "Общи настройки",
+        "ui_model": "Модел",
+        "ui_project": "Проект",
+        "ui_save": "Запази профил",
+        "ui_load": "Зареди профил",
+        "ui_start_bulk": "Започни масов превод",
+        "ui_stop": "Спри",
+        "btn_start": "Започни превод",
+        "btn_stop": "Спри",
+        "btn_save": "Запази промените",
+        "lbl_stats": "🟢 Проверени | 🟡 Проект | 🔴 Грешка",
+        "menu_copy": "Копирай оригинала",
+        "menu_purge": "Изтрий записа"
+    }
+}

@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 from core.database import TranslationRecord, Session, engine, global_replace_in_db
+from core.i18n import I18N
 from sqlmodel import SQLModel, delete, col
 from services.llm_service import LLMService
 from PySide6.QtWidgets import (
@@ -25,39 +26,38 @@ class SettingsTab(QWidget):
         # Global styling
         # =====================================================
         self.setStyleSheet("""
+        QWidget {
+            background-color: #2b2b2b;
+            color: #eeeeee;
+        }
         QGroupBox {
-            border: 1px solid #d0d0d0;
+            border: 1px solid #444444;
             border-radius: 6px;
             margin-top: 12px;
-            font-weight: 600;
+            background-color: #323232;
         }
-
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 6px;
-        }
-
         QLineEdit, QTextEdit, QComboBox, QDoubleSpinBox {
-            padding: 4px 6px;
-            min-height: 24px;
+            background-color: #1e1e1e;
+            border: 1px solid #555555;
+            color: #ffffff;
+            padding: 4px;
         }
-
         QPushButton {
-            padding: 6px 10px;
+            background-color: #454545;
+            border: 1px solid #666666;
+            padding: 6px;
         }
-
-        QPushButton[danger="true"] {
-            background-color: #c62828;
+        QPushButton:hover {
+            background-color: #555555;
+        }
+        QHeaderView::section {
+            background-color: #3c3f41;
             color: white;
+            border: 1px solid #222222;
         }
-
-        QGroupBox[class="danger"] {
-            border: 1px solid #c62828;
-        }
-
-        QGroupBox[class="danger"]::title {
-            color: #c62828;
+        QTableWidget {
+            gridline-color: #444444;
+            background-color: #2b2b2b;
         }
         """)
 
@@ -80,13 +80,14 @@ class SettingsTab(QWidget):
         # =====================================================
         # GENERAL (single dense row)
         # =====================================================
-        general_group = self.create_group("General")
+        general_group = self.create_group(I18N.t("ui_general"))
         gen = QHBoxLayout(general_group)
         gen.setSpacing(8)
         
 
         self.target_lang_input = QLineEdit("BG")
         self.target_lang_input.setMaximumWidth(50)
+        self.target_lang_input.textChanged.connect(self.update_ui_language)
 
         self.project_name = QLineEdit("default_game")
         self.project_name.setMaximumWidth(140)
@@ -272,6 +273,11 @@ class SettingsTab(QWidget):
         # =====================================================
         self.refresh_models()
         self.load_settings()
+    
+    def update_ui_language(self):
+        lang = self.target_lang_input.text().upper()
+        if lang in ["BG", "EN"]:
+            I18N.set_language(lang)
 
     def create_group(self, title: str) -> QGroupBox:
         group = QGroupBox(title)
