@@ -1,5 +1,6 @@
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from typing import Optional
+from collections import Counter
 import hashlib
 import json
 
@@ -128,7 +129,6 @@ def auto_normalize_all_conflicts(project_name: str, target_lang: str):
         records = session.exec(statement).all()
         
         # 2. Group by source -> {translation: count}
-        from collections import Counter
         source_map = {}
         for r in records:
             if r.source_text not in source_map:
@@ -139,8 +139,9 @@ def auto_normalize_all_conflicts(project_name: str, target_lang: str):
         for src, trans_list in source_map.items():
             variants = Counter(trans_list)
             if len(variants) > 1:
-                # Get the most common translation
-                best_translation = variants.most_common(1)[0][0]
+                # This ensures if 'A' and 'B' both have 5 counts, 'A' is always picked.
+                sorted_variants = sorted(variants.items(), key=lambda x: (-x[1], x[0]))
+                best_translation = sorted_variants[0][0]
                 
                 # 3. Update all records for this source
                 stmt = select(TranslationRecord).where(
@@ -159,7 +160,7 @@ def auto_normalize_all_conflicts(project_name: str, target_lang: str):
         session.commit()
         return updated_count
     
-    
+
 def normalize_project_term(project_name: str, target_lang: str, source_text: str, correct_translation: str):
     """Force-updates all instances of a source text to a single translation."""
     with Session(engine) as session:

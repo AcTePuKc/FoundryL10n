@@ -4,7 +4,7 @@ from core.masker import Masker
 from core.database import (get_cached_record, save_translation, engine,
                            TranslationRecord)
 from services.llm_service import LLMService, validate_placeholders
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 
 
 class TranslationEngine:
@@ -27,7 +27,10 @@ class TranslationEngine:
     ):
         for i, seg in enumerate(segments):
             
-            if getattr(seg, 'is_verified', False):
+            is_verified = getattr(seg, 'is_verified', False)
+            is_skip = getattr(seg, 'never_translate', False)
+
+            if is_verified or is_skip:
                 continue
             # 1. Restore from DB for THIS project (optional but useful)
             record = get_cached_record(
@@ -128,18 +131,20 @@ class TranslationEngine:
         return False
 
     def find_fuzzy_match(
-        self,
-        source_text: str,
-        project_name: str,
-        target_lang: str,
-        threshold: float = 0.7
-    ):
-        """Searches the DB for the most similar English string within a project/lang."""
+            self, 
+            source_text: str, 
+            project_name: str, 
+            target_lang: str, 
+            threshold=0.7
+            ):
+        """Searches the DB for the most similar string with optimized performance."""
         with Session(engine) as session:
+            # HERO FIX: Use col() to satisfy Pylance for .desc()
             statement = select(TranslationRecord).where(
-                TranslationRecord.project_name == project_name,
-                TranslationRecord.target_lang == target_lang
-            )
+                col(TranslationRecord.project_name) == project_name,
+                col(TranslationRecord.target_lang) == target_lang
+            ).order_by(col(TranslationRecord.id).desc()).limit(2000)
+            
             records = session.exec(statement).all()
 
             best_ratio = 0.0

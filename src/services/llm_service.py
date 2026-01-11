@@ -87,21 +87,29 @@ class LLMService:
                         break
                 translation = best_line
 
-            # 4. STRIP POLITE JUNK (Fixes the 'match' error and removes clutter)
+            # 4. STRIP POLITE JUNK (safe)
             polite_junk = [
-                "Certainly", "Sure", "Here is", "I have fixed",
-                "Let's correct", "Разбира се", "Ето превода", "Ето и превода"
+                "Certainly", "Sure", "Here is",
+                "I have fixed", "Let's correct",
+                "Разбира се", "Ето превода", "Ето и превода"
             ]
 
-            # Remove prefixes like "Sure! " or "Certainly: "
+            cleaned = translation
             for junk in polite_junk:
-                if translation.lower().startswith(junk.lower()):
-                    translation = translation[len(junk):].strip().lstrip(":! ")
+                if cleaned.lower().startswith(junk.lower()):
+                    candidate = cleaned[len(junk):].strip().lstrip(":! ")
+                    # HERO FIX: don't allow full deletion
+                    if candidate:
+                        cleaned = candidate
 
-            # 5. ANTI-CHEAT (CJK)
-            cjk_langs = ["JA", "ZH", "KO", "JAPANESE", "CHINESE", "KOREAN"]
-            if target_lang.upper() not in cjk_langs:
-                # Removes Chinese/Japanese/Korean characters
+            translation = cleaned
+
+            # 5. ANTI-CHEAT (CJK-safe)
+            lang_upper = target_lang.upper()
+            is_cjk = any(x in lang_upper for x in (
+                "JA", "JP", "ZH", "CH", "KO", "KR"))
+
+            if not is_cjk:
                 translation = re.sub(r'[一-龥]|[ぁ-ん]|[ァ-ン]', '', translation)
 
             return translation.strip(), thought
