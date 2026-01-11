@@ -16,6 +16,7 @@ from sqlmodel import select, col
 from services.resource_service import ResourceLoader
 from core.parser import FoundryParser
 from core.engine import TranslationEngine
+from core.masker import Masker
 from ui.worker import TranslationWorker
 from ui.settings_tab import SettingsTab
 from ui.editor_panel import EditorPanel
@@ -684,9 +685,16 @@ class FoundryGUI(QMainWindow):
         # 1. Update text fields
         self.editor.source_edit.setText(seg.source_text)
         self.editor.ai_draft_display.setText(seg.ai_draft)
-        self.editor.trans_edit.setPlainText(
-            seg.translation.replace("[TAG ERROR] ", "")
-        )
+        raw_translation = (seg.translation or "").strip()
+        
+        if not raw_translation:
+            m = Masker()
+            skeleton = m.get_tag_skeleton(seg.source_text)
+            self.editor.trans_edit.setPlainText(skeleton)
+        else:
+            self.editor.trans_edit.setPlainText(
+                raw_translation.replace("[TAG ERROR] ", "")
+            )
 
         # Unblock after loading is finished
         self.editor.trans_edit.blockSignals(False)

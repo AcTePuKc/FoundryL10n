@@ -37,6 +37,14 @@ class Masker:
                 unmasked_text = re.sub(pattern, token, unmasked_text)
             
         return unmasked_text.strip()
+    
+    def get_tag_skeleton(self, text: str) -> str:
+        """Extracts only the tags from the text and returns them joined with a space."""
+        combined_pattern = f"({'|'.join(self.patterns)})"
+        tags = re.findall(combined_pattern, text)
+        # re.findall returns tuples when there are groups, so we clean them up:
+        clean_tags = [t[0] if isinstance(t, tuple) else t for t in tags if t]
+        return " ".join(clean_tags)
 
 
 # Quick Test

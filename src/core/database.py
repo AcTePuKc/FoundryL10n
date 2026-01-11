@@ -28,7 +28,12 @@ def init_db():
     SQLModel.metadata.create_all(engine)
 
 
-def global_replace_in_db(project_name: str, target_lang: str, find_text: str, replace_text: str, search_source=False):
+def global_replace_in_db(
+        project_name: str, 
+        target_lang: str, 
+        find_text: str, 
+        replace_text: str, 
+        search_source=False):
     """
     Nuclear Fix: Replaces text in the DB.
     search_source=True: search English (source_text)
@@ -61,7 +66,10 @@ def global_replace_in_db(project_name: str, target_lang: str, find_text: str, re
         return len(records)
 
 
-def get_cached_record(source_text: str, target_lang: str, project_name: str) -> Optional[TranslationRecord]:
+def get_cached_record(
+        source_text: str, 
+        target_lang: str, 
+        project_name: str) -> Optional[TranslationRecord]:
     """Strict Lookup: Must match Source AND Language AND Project."""
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
