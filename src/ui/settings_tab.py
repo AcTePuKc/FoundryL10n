@@ -84,13 +84,16 @@ class SettingsTab(QWidget):
         gen = QHBoxLayout(self.general_group)
         gen.setSpacing(8)
 
+        self.lang_label = QLabel(I18N.t("ui_lang"))
         self.target_lang_input = QLineEdit("BG")
         self.target_lang_input.setMaximumWidth(50)
         self.target_lang_input.textChanged.connect(self.update_ui_language)
 
+        self.project_label = QLabel(I18N.t("ui_project"))
         self.project_name = QLineEdit("default_game")
         self.project_name.setMaximumWidth(140)
 
+        self.profile_label = QLabel(I18N.t("ui_profile"))
         self.profile_name = QLineEdit("New_Profile")
         self.profile_name.setMaximumWidth(140)
 
@@ -109,18 +112,21 @@ class SettingsTab(QWidget):
         btn_refresh.setIcon(QIcon.fromTheme("view-refresh"))
         btn_refresh.clicked.connect(self.refresh_models)
 
+        self.model_label = QLabel(I18N.t("ui_model"))
         self.temp_spin = QDoubleSpinBox()
         self.temp_spin.setRange(0.0, 1.0)
         self.temp_spin.setSingleStep(0.1)
         self.temp_spin.setValue(0.1)
         self.temp_spin.setMaximumWidth(70)
 
+        self.temp_label = QLabel(I18N.t("ui_temp"))
         self.font_size_spin = QDoubleSpinBox()
         self.font_size_spin.setRange(8, 30)
         self.font_size_spin.setValue(12)
         self.font_size_spin.setMaximumWidth(70)
         self.font_size_spin.valueChanged.connect(self.font_changed.emit)
 
+        self.font_label = QLabel(I18N.t("ui_font"))
         self.strict_mode = QCheckBox(I18N.t("ui_strict"))
         self.strict_mode.setChecked(True)
 
@@ -131,21 +137,21 @@ class SettingsTab(QWidget):
         self.ui_lang_combo.currentTextChanged.connect(
             self.change_interface_language)
 
-        gen.addWidget(QLabel(I18N.t("ui_lang")))
+        gen.addWidget(self.lang_label)
         gen.addWidget(self.target_lang_input)
-        gen.addWidget(QLabel(I18N.t("ui_project")))
+        gen.addWidget(self.project_label)
         gen.addWidget(self.project_name)
-        gen.addWidget(QLabel(I18N.t("ui_profile")))
+        gen.addWidget(self.profile_label)
         gen.addWidget(self.profile_name)
         gen.addWidget(self.btn_save)
         gen.addWidget(self.btn_load)
         gen.addSpacing(12)
-        gen.addWidget(QLabel(I18N.t("ui_model")))
+        gen.addWidget(self.model_label)
         gen.addWidget(self.model_dropdown)
         gen.addWidget(btn_refresh)
-        gen.addWidget(QLabel(I18N.t("ui_temp")))
+        gen.addWidget(self.temp_label)
         gen.addWidget(self.temp_spin)
-        gen.addWidget(QLabel(I18N.t("ui_font")))
+        gen.addWidget(self.font_label)
         gen.addWidget(self.font_size_spin)
         gen.addWidget(self.strict_mode)
 
@@ -174,26 +180,26 @@ class SettingsTab(QWidget):
         resources = [
             ("ui_glossary",
              self.gloss_path,
-             "TSV (*.tsv *.csv)",
-             I18N.t("tip_glossary")),
+             "filter_tsv",
+             "tip_glossary"),
             ("ui_style_guide",
              self.style_path,
-             "Text (*.md *.txt)",
-             I18N.t("tip_style_guide")),
+             "filter_text",
+             "tip_style_guide"),
             ("ui_forbidden_terms",
              self.forbidden_path,
-             "Text (*.txt)",
-             I18N.t("tip_forbidden_terms")),
+             "filter_text",
+             "tip_forbidden_terms"),
         ]
 
-        for i, (label_key, edit, filt, tip) in enumerate(resources):
+        for i, (label_key, edit, filter_key, tip_key) in enumerate(resources):
             col = i % 3
             row = i // 3
 
             browse = QPushButton(I18N.t("btn_browse"))
             browse.setIcon(QIcon.fromTheme("document-open"))
             browse.clicked.connect(
-                lambda _, e=edit, f=filt: self.browse_file(e, f)
+                lambda _, e=edit, f=filter_key: self.browse_file(e, f)
             )
             self.browse_buttons.append(browse)
 
@@ -202,10 +208,12 @@ class SettingsTab(QWidget):
             h.addWidget(browse)
 
             label_widget = QLabel(I18N.t(label_key))
-            if tip:
-                label_widget.setToolTip(tip)
+            if tip_key:
+                label_widget.setToolTip(I18N.t(tip_key))
 
-            self.resource_labels.append((label_widget, label_key))
+            self.resource_labels.append(
+                (label_widget, label_key, tip_key)
+            )
 
             res.addWidget(label_widget, row * 2, col)
             res.addLayout(h, row * 2 + 1, col)
@@ -239,9 +247,7 @@ class SettingsTab(QWidget):
         self.prompt_editor = QTextEdit()
         self.prompt_editor.setAcceptRichText(False)
         self.prompt_editor.setFont(QFont("Consolas", 10))
-        self.prompt_editor.setPlaceholderText(
-            "{target_lang}, {glossary}, {style}, {forbidden}, {source}"
-        )
+        self.prompt_editor.setPlaceholderText(I18N.t("ui_prompt_placeholder"))
         self.prompt_editor.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding
@@ -303,7 +309,9 @@ class SettingsTab(QWidget):
         s = QSettings("FoundryL10n", "Workstation")
         ui_lang = str(s.value("ui_language", "EN")).upper()
         I18N.set_language(ui_lang)
+        self.ui_lang_combo.blockSignals(True)
         self.ui_lang_combo.setCurrentText(ui_lang)
+        self.ui_lang_combo.blockSignals(False)
         self.retranslate_ui()
 
         # =====================================================
@@ -316,14 +324,11 @@ class SettingsTab(QWidget):
         """Change Language"""
         lang = lang_code.upper()
 
-        # 1) сменяме езика глобално
         I18N.set_language(lang)
 
-        # 2) записваме в QSettings, за да помним избора
         s = QSettings("FoundryL10n", "Workstation")
         s.setValue("ui_language", lang)
 
-        # 3) ретранслейтваме текущия таб
         self.retranslate_ui()
 
     def retranslate_ui(self):
@@ -338,7 +343,16 @@ class SettingsTab(QWidget):
         self.strict_mode.setText(I18N.t("ui_strict"))
 
         # Stuff
+        self.lang_label.setText(I18N.t("ui_lang"))
+        self.project_label.setText(I18N.t("ui_project"))
+        self.profile_label.setText(I18N.t("ui_profile"))
+        self.model_label.setText(I18N.t("ui_model"))
+        self.temp_label.setText(I18N.t("ui_temp"))
+        self.font_label.setText(I18N.t("ui_font"))
         self.ui_lang_label.setText(I18N.t("ui_interface_lang"))
+        self.prompt_editor.setPlaceholderText(
+            I18N.t("ui_prompt_placeholder")
+        )
 
         # Template label + combo items
         self.template_label.setText(I18N.t("ui_template"))
@@ -352,18 +366,21 @@ class SettingsTab(QWidget):
         self.btn_clear_errors.setText(I18N.t("btn_clear_errors"))
         self.btn_wipe.setText(I18N.t("btn_wipe_all"))
         self.btn_save.setText(I18N.t("btn_save"))
+        self.btn_load.setText(I18N.t("btn_load"))
 
         # Browse buttons
         for btn in self.browse_buttons:
             btn.setText(I18N.t("btn_browse"))
 
-        for lbl, key in self.resource_labels:
+        for lbl, key, tip_key in self.resource_labels:
             lbl.setText(I18N.t(key))
+            if tip_key:
+                lbl.setToolTip(I18N.t(tip_key))
 
     def update_ui_language(self):
         lang = self.target_lang_input.text().upper()
-        if lang in ["BG", "EN"]:
-            I18N.set_language(lang)
+        if lang in ["BG", "EN"] and self.target_lang_input.text() != lang:
+            self.target_lang_input.setText(lang)
 
     def create_group(self, title: str) -> QGroupBox:
         group = QGroupBox(title)
@@ -487,27 +504,16 @@ class SettingsTab(QWidget):
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Load Profile",
+            I18N.t("dlg_load_profile_title"),
             "profiles",
-            "JSON Files (*.json)",
+            I18N.t("filter_json"),
         )
 
         if file_path:
             self.apply_profile_from_file(file_path)
 
     def get_default_prompt(self):
-        return (
-            "### STORY CONTEXT (Reference only):\n"
-            "{context}\n\n"
-            "### ROLE: Expert {target_lang} Game Localizer\n"
-            "### TASK: Translate the Source Text.\n\n"
-            "### RULES:\n"
-            "1. GLOSSARY: {glossary}\n"
-            "2. TAGS: Keep [#_0_] anchors in place.\n\n"
-            "### SOURCE:\n"
-            "{source}\n\n"
-            "### TRANSLATION:\n"
-        )
+        return I18N.t("prompt_default")
 
     def apply_profile_from_file(self, path: str, show_message: bool = True):
         """Reads JSON and force-updates all UI fields."""
@@ -571,21 +577,11 @@ class SettingsTab(QWidget):
             self.prompt_editor.setPlainText(self.get_default_prompt())
         elif idx == 1:  # Fixer
             self.prompt_editor.setPlainText(
-                "### ROLE: Technical Fixer\n"
-                "I have a translation that broke the technical tags. \n"
-                "1. FIX the tags [#_x_] based on the Source.\n"
-                "2. IMPROVE the Bulgarian grammar in the Existing Translation.\n\n"
-                "### SOURCE (English):\n{source}\n\n"
-                "### EXISTING TRANSLATION (BG):\n{translation}\n\n"
-                "### CORRECTED TRANSLATION:\n"
+                I18N.t("prompt_template_technical")
             )
         elif idx == 2:  # Creative
             self.prompt_editor.setPlainText(
-                "### ROLE: Fantasy Writer\n"
-                "Re-write this {target_lang} translation to be more epic and poetic.\n"
-                "Glossary: {glossary}\n"
-                "Source: {source}\n"
-                "Target:"
+                I18N.t("prompt_template_creative")
             )
 
     def browse_file(self, line_edit, file_filter):
@@ -593,7 +589,7 @@ class SettingsTab(QWidget):
             self,
             I18N.t("dlg_select_file_title"),
             "",
-            file_filter
+            I18N.t(file_filter)
         )
 
         if file_path:
