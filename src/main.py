@@ -35,6 +35,16 @@ QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
     Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
 )
 
+def load_theme(theme_name: str) -> None:
+    from PySide6.QtWidgets import QApplication
+
+    theme_path = base_path / "resources" / "themes" / f"{theme_name}.qss"
+    qss_text = theme_path.read_text(encoding="utf-8")
+    qt_app = QApplication.instance()
+    if qt_app is None:
+        raise RuntimeError("QApplication instance not initialized.")
+    qt_app.setStyleSheet(qss_text)
+
 # Initialize Typer
 app = typer.Typer(help="FoundryL10n: Professional Local-First Game Translator")
 
@@ -51,32 +61,7 @@ def launch_gui():
     
     qt_app = QApplication(sys.argv)
     
-    # Global Application Stylesheet
-    # This forces every window, dialog, and popup to be dark, 
-    # regardless of the user's Windows settings.
-    qt_app.setStyleSheet("""
-        QMainWindow, QDialog, QWidget {
-            background-color: #1e1e1e;
-            color: #dcdcdc;
-        }
-        QTabWidget::pane { border: 1px solid #333; }
-        QTabBar::tab {
-            background: #2d2d2d;
-            padding: 8px 12px;
-            margin-right: 2px;
-        }
-        QTabBar::tab:selected { background: #3d3d3d; border-bottom: 2px solid #007acc; }
-        QHeaderView::section {
-            background-color: #2d2d2d;
-            color: #aaa;
-            padding: 4px;
-            border: 1px solid #1e1e1e;
-        }
-        QTableWidget {
-            gridline-color: #333;
-            alternate-background-color: #252525;
-        }
-    """)
+    load_theme("dark")
     
     window = FoundryGUI()
     window.show()
