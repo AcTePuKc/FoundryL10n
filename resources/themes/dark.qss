@@ -1,0 +1,21 @@
+        QMainWindow, QDialog, QWidget {
+            background-color: #1e1e1e;
+            color: #dcdcdc;
+        }
+        QTabWidget::pane { border: 1px solid #333; }
+        QTabBar::tab {
+            background: #2d2d2d;
+            padding: 8px 12px;
+            margin-right: 2px;
+        }
+        QTabBar::tab:selected { background: #3d3d3d; border-bottom: 2px solid #007acc; }
+        QHeaderView::section {
+            background-color: #2d2d2d;
+            color: #aaa;
+            padding: 4px;
+            border: 1px solid #1e1e1e;
+        }
+        QTableWidget {
+            gridline-color: #333;
+            alternate-background-color: #252525;
+        }

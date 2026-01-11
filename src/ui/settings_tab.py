@@ -24,53 +24,6 @@ class SettingsTab(QWidget):
         self.llm_service = LLMService()
 
         # =====================================================
-        # Global styling
-        # =====================================================
-        self.setStyleSheet("""
-        QWidget {
-            background-color: #2b2b2b;
-            color: #eeeeee;
-        }
-        QGroupBox {
-            border: 1px solid #444444;
-            border-radius: 6px;
-            margin-top: 10px;
-            padding-top: 2px;
-            background-color: #323232;
-        }
-        QGroupBox::title {
-            subcontrol-origin: margin;
-            left: 10px;
-            padding: 0 5px;
-            top: -1px; 
-        
-        }
-        QLineEdit, QTextEdit, QComboBox, QDoubleSpinBox {
-            background-color: #1e1e1e;
-            border: 1px solid #555555;
-            color: #ffffff;
-            padding: 4px;
-        }
-        QPushButton {
-            background-color: #454545;
-            border: 1px solid #666666;
-            padding: 6px;
-        }
-        QPushButton:hover {
-            background-color: #555555;
-        }
-        QHeaderView::section {
-            background-color: #3c3f41;
-            color: white;
-            border: 1px solid #222222;
-        }
-        QTableWidget {
-            gridline-color: #444444;
-            background-color: #2b2b2b;
-        }
-        """)
-
-        # =====================================================
         # Main layout + scroll
         # =====================================================
         main_layout = QVBoxLayout(self)
