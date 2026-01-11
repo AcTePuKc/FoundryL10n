@@ -10,9 +10,10 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
                                QScrollArea, QApplication)
-from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon
+from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon, QAction
 from PySide6.QtCore import Qt, QSettings
 from sqlmodel import select, col
+from services.resource_service import ResourceLoader
 from core.parser import FoundryParser
 from core.engine import TranslationEngine
 from ui.worker import TranslationWorker
@@ -76,6 +77,8 @@ class FoundryGUI(QMainWindow):
         self.integrity_tab = IntegrityTab()
         self.integrity_tab.btn_refresh.clicked.connect(self.run_integrity_scan)
         self.tabs.addTab(self.integrity_tab, "Integrity Report")
+        self.integrity_tab.btn_auto_normalize.clicked.connect(
+            self.run_auto_normalize)
 
         # Load states
         self.load_ui_state()
@@ -165,6 +168,11 @@ class FoundryGUI(QMainWindow):
         self.editor.request_next_needed.connect(self.nav_next_needed)
         self.editor.history_list.itemDoubleClicked.connect(
             self.restore_from_history_list)
+
+        self.editor.history_list.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu)
+        self.editor.history_list.customContextMenuRequested.connect(
+            self.show_history_context_menu)
 
         self.splitter.addWidget(self.table)
         self.splitter.addWidget(self.editor_container)
@@ -298,6 +306,49 @@ class FoundryGUI(QMainWindow):
             # Restore your preferred widths from the saved state
             self.load_ui_state()
 
+    def run_auto_normalize(self):
+        settings = self.settings_tab.get_settings()
+        reply = QMessageBox.question(self, "Auto-Normalize",
+                                     "This will pick the most frequent translation for every conflict in the database and apply it. Proceed?")
+        if reply == QMessageBox.StandardButton.Yes:
+            from core.database import auto_normalize_all_conflicts
+            count = auto_normalize_all_conflicts(
+                settings['project_name'], settings['lang'])
+            QMessageBox.information(
+                self, "Success", f"Cleaned up {count} inconsistent records in Memory.")
+            self.run_integrity_scan()  # Refresh the list
+            self.refresh_table_from_db()  # Refresh the workstation icons
+
+    def remove_current_from_memory(self):
+        """Wipes the current selection from the database entirely."""
+        indices = self.table.selectionModel().selectedRows()
+        if not indices:
+            return
+
+        reply = QMessageBox.question(self, "Forget Translation",
+                                     f"Delete {len(indices)} rows from permanent memory?\nThis cannot be undone.",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            from core.database import delete_record
+            settings = self.settings_tab.get_settings()
+
+            for idx in indices:
+                row = idx.row()
+                seg = self.segments[row]
+                # 1. Kill it in the DB
+                delete_record(seg.source_text,
+                              settings['lang'], settings['project_name'])
+                # 2. Reset the UI segment
+                seg.translation = ""
+                seg.is_verified = False
+                seg.thought = "Purged from memory"
+                self.update_row_visuals(row)
+
+            self.update_stats()
+            QMessageBox.information(
+                self, "Success", "Segments purged from database.")
+
     def clear_selected_rows(self):
         """Wipes translations for all highlighted rows in UI and DB."""
         # Get unique selected row indices
@@ -425,7 +476,7 @@ class FoundryGUI(QMainWindow):
         count = len(selected_indices)
 
         # 1. Start with fresh stats
-        v, qa, risk, err, lock, pend, conflict = 0, 0, 0, 0, 0, 0, 0
+        v, qa, risk, err, pend, conflict = 0, 0, 0, 0, 0, 0
         for i in range(self.table.rowCount()):
             item = self.table.item(i, 0)
             if item:
@@ -438,14 +489,12 @@ class FoundryGUI(QMainWindow):
                     risk += 1
                 elif txt == "🔴":
                     err += 1
-                elif txt == "🔒":
-                    lock += 1
                 elif txt == "🔵":
                     conflict += 1
                 else:
                     pend += 1
 
-        stats_text = f"🟢 {v} | 🟡 {qa} | 🔶 {risk} | 🔴 {err} | 🔵 {conflict} | 🔒 {lock} | ⚪ {pend}"
+        stats_text = f"🟢 {v} | 🟡 {qa} | 🔶 {risk} | 🔴 {err} | 🔵 {conflict} | ⚪ {pend}"
 
         # 2. Add selection info ONLY if more than 1 is selected
         # HERO FIX: We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
@@ -463,7 +512,7 @@ class FoundryGUI(QMainWindow):
         self.current_row = row
         seg = self.segments[row]
 
-        # Block signals so the editor doesn't try to sync 
+        # Block signals so the editor doesn't try to sync
         # back to the table while we are just loading the row data.
         self.editor.trans_edit.blockSignals(True)
         self.editor.source_edit.blockSignals(True)
@@ -474,7 +523,7 @@ class FoundryGUI(QMainWindow):
         self.editor.trans_edit.setPlainText(
             seg.translation.replace("[TAG ERROR] ", "")
         )
-        
+
         # Unblock after loading is finished
         self.editor.trans_edit.blockSignals(False)
         self.editor.source_edit.blockSignals(False)
@@ -486,7 +535,6 @@ class FoundryGUI(QMainWindow):
         self.editor.history_list.clear()
         try:
             settings = self.settings_tab.get_settings()
-            from core.database import get_cached_record
             record = get_cached_record(
                 seg.source_text,
                 settings.get("lang", "BG"),
@@ -494,7 +542,6 @@ class FoundryGUI(QMainWindow):
             )
 
             if record and record.history_json:
-                import json
                 history_data = json.loads(record.history_json or "[]")
                 for old_ver in reversed(history_data):
                     if old_ver.strip():
@@ -673,33 +720,40 @@ class FoundryGUI(QMainWindow):
 
     def show_context_menu(self, pos):
         """Right-click menu for the table."""
+        # If nothing is selected, try to select the row under the mouse
+        if not self.table.selectionModel().hasSelection():
+            item = self.table.itemAt(pos)
+            if item:
+                self.table.selectRow(item.row())
+
         selected_indices = self.table.selectionModel().selectedRows()
         if not selected_indices:
             return
 
-        menu = QMenu()
-        # Define 'count' immediately after getting indices
+        menu = QMenu(self)
         count = len(selected_indices)
 
         if count > 1:
             # --- MULTI-ROW ACTIONS ---
-            v_act = menu.addAction(f"🟢 Verify {count} Rows")
-            v_act.triggered.connect(
+            menu.addAction(f"🟢 Verify {count} Rows").triggered.connect(
                 lambda: self.bulk_verify_selected(selected_indices))
 
-            # The line that was causing the 'count' error:
-            unverify_act = menu.addAction(f"⚪ Unverify {count} Rows")
-            unverify_act.triggered.connect(
+            menu.addAction(f"⚪ Unverify {count} Rows").triggered.connect(
                 lambda: self.bulk_unverify_selected(selected_indices))
 
-            s_act = menu.addAction(f"⚪ Skip {count} (Never Translate)")
-            s_act.triggered.connect(
+            menu.addAction(f"⚪ Skip {count} (Never Translate)").triggered.connect(
                 lambda: self.bulk_skip_selected(selected_indices))
 
             menu.addSeparator()
+            menu.addAction("🔥 Purge from Memory (Delete Record)").triggered.connect(
+                self.remove_current_from_memory)
 
-            c_act = menu.addAction(f"🗑️ Clear {count} Translations")
-            c_act.triggered.connect(self.clear_selected_rows)
+            menu.addSeparator()
+            menu.addAction("🧪 Generate Pseudo-Loc").triggered.connect(self.run_pseudo_batch)
+            menu.addAction("🔥 Purge Record").triggered.connect(self.remove_current_from_memory)
+
+            menu.addAction(f"🗑️ Clear {count} Translations").triggered.connect(
+                self.clear_selected_rows)
         else:
             # --- SINGLE-ROW ACTIONS ---
             row = selected_indices[0].row()
@@ -712,6 +766,8 @@ class FoundryGUI(QMainWindow):
             menu.addSeparator()
             menu.addAction("🗑️ Clear Translation (Del)").triggered.connect(
                 lambda: self.quick_action(row, "clear"))
+            menu.addAction("🔥 Purge Record").triggered.connect(
+                self.remove_current_from_memory)
 
         # --- GLOBAL ACTIONS ---
         menu.addSeparator()
@@ -720,7 +776,8 @@ class FoundryGUI(QMainWindow):
         menu.addAction("📦 Export Verified to Glossary...").triggered.connect(
             self.export_verified_glossary)
 
-        menu.exec(QCursor.pos())
+        # Map local table coordinates to global screen coordinates correctly
+        menu.exec(self.table.viewport().mapToGlobal(pos))
 
     def bulk_verify_selected(self, indices):
         if not indices:
@@ -803,7 +860,7 @@ class FoundryGUI(QMainWindow):
 
         seg = self.segments[row_idx]
 
-        # Ensure items exist for state and translation columns
+        # Ensure items exist
         for column_index in (0, 3):
             if not self.table.item(row_idx, column_index):
                 self.table.setItem(row_idx, column_index, QTableWidgetItem())
@@ -811,19 +868,18 @@ class FoundryGUI(QMainWindow):
         state_item = self.table.item(row_idx, 0)
         trans_item = self.table.item(row_idx, 3)
 
-        # --- FLAGS / STATE ---
+        # --- FLAGS ---
         is_skip = getattr(seg, "never_translate", False)
         is_verified = getattr(seg, "is_verified", False)
-        # safe, even ако още не го ползваме
         is_conflict = getattr(seg, "has_conflict", False)
 
         translation = seg.translation or ""
         thought = seg.thought or ""
 
         has_tag_error = "[TAG ERROR]" in translation
-        has_risk = "⚠️ MISSING TERMS" in thought or "⚠️ RISK" in thought
+        has_risk = "⚠️" in thought
 
-        # --- PRIORITY LOGIC ---
+        # --- PRIORITY RESOLUTION (single source of truth) ---
         if is_conflict:
             icon, color = "🔵", QColor("#1a237e")
         elif is_skip:
@@ -839,7 +895,7 @@ class FoundryGUI(QMainWindow):
         else:
             icon, color = "⚪", QColor("#222222")
 
-        # --- APPLY TO TABLE ---
+        # --- APPLY VISUALS ---
         if state_item:
             state_item.setText(icon)
         if trans_item:
@@ -850,6 +906,43 @@ class FoundryGUI(QMainWindow):
             if item:
                 item.setBackground(color)
                 item.setForeground(QColor("#eeeeee"))
+
+        # --- TOOLTIP LOGIC (derived from resolved state) ---
+        status_msg = f"Status: {icon}\n"
+
+        if is_skip:
+            status_msg += "Row is LOCKED and invisible to AI."
+        elif is_conflict:
+            status_msg += "CONFLICT: Database has multiple translations for this text."
+        elif has_tag_error:
+            status_msg += "TAG MISMATCH: AI moved or deleted anchors."
+        elif has_risk:
+            # Extract first audit warning safely
+            status_msg += f"AUDIT ALERT: {thought.split('|')[0].strip()}"
+        elif is_verified:
+            status_msg += "VERIFIED: Human checked and approved."
+        elif translation:
+            status_msg += "AI DRAFT: Needs human review."
+        else:
+            status_msg += "UNTRANSLATED."
+
+        if state_item:
+            state_item.setToolTip(status_msg)
+
+        # QoL: show full text on hover
+        if trans_item:
+            trans_item.setToolTip(translation)
+
+        src_item = self.table.item(row_idx, 2)
+        if src_item:
+            src_item.setToolTip(seg.source_text)
+
+    def run_pseudo_batch(self):
+        engine = TranslationEngine(self.llm_service)
+        engine.run_pseudo_localization(self.segments)
+        for i in range(self.table.rowCount()):
+            self.update_row_visuals(i)
+        self.update_stats()
 
     def show_find_replace(self):
         text_find, ok1 = QInputDialog.getText(self, "Find", "Text to find:")
@@ -880,25 +973,80 @@ class FoundryGUI(QMainWindow):
             # Re-scan the database for the new project name/lang
             self.refresh_table_from_db()
 
-    def refresh_table_from_db(self):
-        """Force-syncs table with DB, but PRESERVES current session errors."""
-        settings = self.settings_tab.get_settings()
-        
-        for i, seg in enumerate(self.segments):
+    def show_history_context_menu(self, pos):
+        """Right-click menu for the history list to purge bad versions."""
+        item = self.editor.history_list.itemAt(pos)
+        if not item:
+            return
+
+        menu = QMenu()
+        # Simply add the action without assigning it to a variable
+        menu.addAction("🗑️ Delete this version from history")
+
+        # If the user clicks the action, menu.exec returns the action object (True-ish)
+        if menu.exec(QCursor.pos()):
+            settings = self.settings_tab.get_settings()
+            seg = self.segments[self.current_row]
+
+            from core.database import get_cached_record, Session, engine
             record = get_cached_record(
-                seg.source_text, 
-                settings['lang'], 
-                project_name=settings['project_name'])
+                seg.source_text,
+                settings['lang'],
+                project_name=settings.get('project_name', 'default')
+            )
+
+            if record and record.history_json:
+                try:
+                    h_data = json.loads(record.history_json)
+                    # Filter out the specific text from this history item
+                    new_h = [v for v in h_data if v != item.text()]
+
+                    with Session(engine) as session:
+                        session.add(record)
+                        record.history_json = json.dumps(new_h)
+                        session.commit()
+
+                    # Refresh the side panel to show the updated list
+                    self.on_row_selected()
+                except Exception as e:
+                    print(f"History purge error: {e}")
+
+    def refresh_table_from_db(self):
+        """Force-syncs table with DB, preserving session-specific errors and risks."""
+        settings = self.settings_tab.get_settings()
+        p_name = settings.get('project_name', 'default')
+        lang = settings['lang']
+
+        for i, seg in enumerate(self.segments):
+            # 1. PRESERVE TRANSIENT STATE
+            # Store current session info before we look at the DB
+            current_is_error = "[TAG ERROR]" in seg.translation
+            current_thought = seg.thought or ""
+            has_warning = "⚠️" in current_thought
+
+            # 2. DATABASE LOOKUP
+            record = get_cached_record(
+                seg.source_text, lang, project_name=p_name)
+
             if record:
-                # Only overwrite if the DB has a translation
-                seg.translation = record.translation
-                seg.is_verified = record.is_verified
-                seg.never_translate = record.never_translate
-                seg.ai_draft = record.ai_draft
+                # HERO LOGIC: Only overwrite if the DB has a VERIFIED translation
+                # OR if we don't currently have an error marker.
+                if record.is_verified or not current_is_error:
+                    seg.translation = record.translation
+                    seg.is_verified = record.is_verified
+                    seg.never_translate = record.never_translate
+                    seg.ai_draft = record.ai_draft
+
+                    # Only overwrite the thought if it doesn't contain a session warning
+                    if not has_warning:
+                        seg.thought = "Restored from Memory"
             else:
+                # If no record in DB, we keep what we have in memory (preserving [TAG ERROR])
                 pass
-            
+
+            # 3. VISUAL UPDATE
             self.update_row_visuals(i)
+
         self.update_stats()
 
     def run_integrity_scan(self):
@@ -957,10 +1105,10 @@ class FoundryGUI(QMainWindow):
         settings = self.settings_tab.get_settings()
         p_name = settings.get('project_name', 'default')
         lang = settings['lang']
-        
+
         # This returns a list of normalized source strings that have conflicts
         conflicts = find_translation_conflicts(p_name, lang)
-        
+
         if not conflicts:
             # Clear any old blue markers if conflicts were resolved
             for seg in self.segments:
@@ -971,16 +1119,17 @@ class FoundryGUI(QMainWindow):
         for i, seg in enumerate(self.segments):
             # HERO FIX: Normalize the segment source text exactly like the DB does
             norm_seg_src = " ".join(seg.source_text.lower().split())
-            
+
             if norm_seg_src in conflicts:
                 seg.has_conflict = True
                 self.update_row_visuals(i)
                 count += 1
             else:
                 seg.has_conflict = False
-        
+
         if count > 0:
-            self.thought_log.append(f"<b>[INTEGRITY]</b>: Found {count} rows with inconsistent translations (🔵)")
+            self.thought_log.append(
+                f"<b>[INTEGRITY]</b>: Found {count} rows with inconsistent translations (🔵)")
             self.update_stats()
 
     def global_db_replace(self):
@@ -1024,7 +1173,6 @@ class FoundryGUI(QMainWindow):
                     if r.translation:
                         r.translation = r.translation.replace(
                             text_find, text_replace)
-                        # по предложение: маркираме като финално
                         r.is_verified = True
                         session.add(r)
                 session.commit()
@@ -1110,24 +1258,35 @@ class FoundryGUI(QMainWindow):
             self.segments = FoundryParser().parse_tsv(self.input_path)
             self.table.setRowCount(len(self.segments))
 
-            # 2. Get current project settings (target language)
+            # 2. Get current project settings
             settings = self.settings_tab.get_settings()
             target_lang = settings["lang"]
             project_name = self.get_current_project()
 
-            # 3. Load cached translations from DB
+            # 3. Load the glossary dictionary specifically for the audit
+
+            engine_helper = TranslationEngine(self.llm_service)
+            # We load it from the path defined in your settings tab
+            glossary_dict = ResourceLoader.load_glossary_dict(
+                settings["glossary_path"])
+
+            # 4. Load cached translations + audit-on-load
             for i, seg in enumerate(self.segments):
                 record = get_cached_record(
-                    seg.source_text, target_lang, project_name)
+                    seg.source_text, target_lang, project_name
+                )
                 if record:
                     seg.translation = record.translation
                     seg.is_verified = record.is_verified
-                    # Restore persisted lock state so the engine respects user intent
                     seg.never_translate = record.never_translate
                     seg.ai_draft = record.ai_draft
                     seg.thought = "Restored from Memory"
 
-                # 4. Populate Table Row
+                    # Run audit immediately so 🔶 appears on rows already in DB
+                    if seg.translation and "[TAG ERROR]" not in seg.translation:
+                        engine_helper.audit_segment(seg, glossary_dict)
+
+                # 5. Populate Table Row
                 self.table.setItem(i, 0, QTableWidgetItem("⚪"))
                 self.table.setItem(i, 1, QTableWidgetItem(seg.key))
                 self.table.setItem(i, 2, QTableWidgetItem(seg.source_text))
@@ -1137,16 +1296,19 @@ class FoundryGUI(QMainWindow):
                 self.update_row_visuals(i)
 
         finally:
-            # Re-enable table updates/signals
             self.table.blockSignals(False)
             self.table.setUpdatesEnabled(True)
 
-        # Enable run button & progress bar
+        # UI Refresh
         self.btn_run.setEnabled(True)
         self.progress_bar.setMaximum(len(self.segments))
         self.update_stats()
 
-        # Re-run DB consistency audit for this project/lang
+        # Set progress bar to current completion level
+        finished_count = sum(1 for s in self.segments if s.is_verified)
+        self.progress_bar.setValue(finished_count)
+
+        # Final consistency audit for 🔵 markers
         self.audit_database_consistency()
 
     def handle_run_clicked(self):
@@ -1172,7 +1334,6 @@ class FoundryGUI(QMainWindow):
             style_path=settings['style_path'],
             forbidden_path=settings['forbidden_path'],
             prompt_template=settings['prompt_template'],
-            # VITAL FIX:
             project_name=settings.get('project_name', 'default'),
             temp=settings['temp']
         )
@@ -1424,35 +1585,53 @@ class FoundryGUI(QMainWindow):
         settings.setValue("current_tab", self.tabs.currentIndex())
 
     def load_ui_state(self):
-        """Restores window geometry, splitter, table header, and current tab safely."""
+        """
+        Restores window geometry, splitter, table header, and current tab safely.
+        Includes a safety check to ensure the window fits on the current screen.
+        """
         settings = QSettings("FoundryL10n", "Workstation")
         try:
-            # 1) Restore window size/position first
+            # 1) Restore window geometry (position and size)
             geom = settings.value("window_geometry")
             if geom is not None:
                 self.restoreGeometry(geom)
 
-            # 2) Restore internal window state (maximized, dock layout, etc.)
+            # 2) TV/Screen Safety Check: 
+            # If the restored geometry is larger than the actual TV/Monitor resolution,
+            # or if it's positioned off-screen, force it to a safe default.
+            screen_geo = self.screen().availableGeometry()
+            if self.width() > screen_geo.width() or self.height() > screen_geo.height():
+                # Fallback to a safe workstation size if the saved state is "impossible"
+                self.resize(1200, 800)
+                # Center the window on the current screen
+                self.move(
+                    (screen_geo.width() - self.width()) // 2,
+                    (screen_geo.height() - self.height()) // 2
+                )
+
+            # 3) Restore internal window state (maximized, etc.)
             state = settings.value("window_state")
             if state is not None:
                 self.restoreState(state)
 
-            # 3) Restore splitter layout
+            # 4) Restore splitter layout (Table vs Editor ratio)
             splitter_state = settings.value("splitter_sizes")
             if splitter_state is not None:
                 self.splitter.restoreState(splitter_state)
 
-            # 4) Restore table header state (column widths)
+            # 5) Restore table header state (Column widths)
             header_state = settings.value("table_header_state")
             if header_state is not None:
                 self.table.horizontalHeader().restoreState(header_state)
 
-            # 5) Restore active tab
+            # 6) Restore active tab with Pylance-safe casting
             raw_tab = settings.value("current_tab", 0)
             idx = int(str(raw_tab))
             if 0 <= idx < self.tabs.count():
                 self.tabs.setCurrentIndex(idx)
+
         except Exception as exc:
+            # We use a simple print here so startup doesn't crash if config is corrupted
             print(f"UI Restore Warning: {exc}")
 
     def closeEvent(self, event):

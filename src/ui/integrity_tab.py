@@ -1,11 +1,20 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem,
-                               QPushButton, QLabel, QHeaderView)
+                               QPushButton, QLabel, QHeaderView, QHBoxLayout)
 
 
 class IntegrityTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
+        
+        top_layout = QHBoxLayout()
+        self.btn_auto_normalize = QPushButton("🪄 Auto-Normalize All (Use Most Frequent)")
+        self.btn_auto_normalize.setToolTip("Automatically fixes all conflicts by picking the most common translation in the DB.")
+        self.btn_auto_normalize.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold;")
+        
+        top_layout.addWidget(self.btn_auto_normalize)
+        top_layout.addStretch()
+        layout.insertLayout(1, top_layout) # Insert after the title labels
 
         layout.addWidget(QLabel("<b>Project Consistency Audit</b>"))
         layout.addWidget(

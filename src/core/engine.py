@@ -39,9 +39,17 @@ class TranslationEngine:
                 seg.ai_draft = record.ai_draft
                 seg.thought = "Restored from Memory"
 
-            # 2. Context
+            # 2. IMPROVED CONTEXT: Previous + Next Line
             prev_text = segments[i-1].source_text if i > 0 else ""
-            context_snippet = f"PREVIOUS LINE: {prev_text}" if prev_text else ""
+            next_text = segments[i+1].source_text if i < len(segments)-1 else ""
+            
+            context_bits = []
+            if prev_text: 
+                context_bits.append(f"PREVIOUS: {prev_text}")
+            if next_text: 
+                context_bits.append(f"NEXT: {next_text}")
+            
+            context_snippet = "\n".join(context_bits)
 
             # 3. Translate
             processed = self.translate_single_segment(
@@ -78,6 +86,20 @@ class TranslationEngine:
                     skip=seg.never_translate,
                     ai_draft=seg.ai_draft,
                 )
+    
+    def run_pseudo_localization(self, segments):
+        """Turns all untranslated rows into expanded 'Fake' text for font testing."""
+        for seg in segments:
+            if seg.is_verified or seg.translation:
+                continue
+            
+            # Simple expansion and wrapping
+            # [!! Text becomes longér !!]
+            source = seg.source_text
+            # Replace some letters with accented ones to test font support
+            pseudo = source.replace("a", "á").replace("e", "é").replace("o", "ó").replace("i", "í")
+            seg.translation = f"[!! {pseudo} !!]"
+            seg.thought = "Pseudo-Localization Pass"
 
     def audit_segment(self, seg, glossary_dict=None) -> bool:
         """Runs terminology and risk checks for a single segment."""

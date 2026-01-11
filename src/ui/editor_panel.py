@@ -1,8 +1,9 @@
+import re
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
                                QPushButton, QHBoxLayout, QCheckBox, QListWidget)
-from PySide6.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QFont, QTextDocument
+from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
+                           QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent
-import re
 
 
 class TagHighlighter(QSyntaxHighlighter):
@@ -69,9 +70,14 @@ class EditorPanel(QWidget):
         self.btn_rollback = QPushButton("↺ Reset to AI Draft")
         self.btn_prev = QPushButton("<< Prev")
         self.btn_next = QPushButton("Next >>")
+        self.btn_invisibles = QPushButton("Show ¶")
+        self.btn_invisibles.setCheckable(True)
+        self.btn_invisibles.setFixedWidth(60)
+        self.btn_invisibles.clicked.connect(self.toggle_invisibles)
         nav_layout.addWidget(self.btn_rollback)
         nav_layout.addWidget(self.btn_prev)
         nav_layout.addWidget(self.btn_next)
+        nav_layout.addWidget(self.btn_invisibles)
         layout.addLayout(nav_layout)
 
         layout.addWidget(QLabel("History:"))
@@ -100,6 +106,18 @@ class EditorPanel(QWidget):
         # 3. Shortcuts
         self.trans_edit.installEventFilter(self)
 
+    def toggle_invisibles(self):
+
+        option = self.trans_edit.document().defaultTextOption()
+        if self.btn_invisibles.isChecked():
+            # Show spaces as dots and line breaks as symbols
+            option.setFlags(QTextOption.Flag.ShowTabsAndSpaces |
+                            QTextOption.Flag.ShowLineAndParagraphSeparators)
+        else:
+            option.setFlags(QTextOption.Flag.IncludeTrailingSpaces)  # Default
+
+        self.trans_edit.document().setDefaultTextOption(option)
+        self.source_edit.document().setDefaultTextOption(option)
 
     def eventFilter(self, obj, event):
         """Fixed: Using QEvent constants for stability."""

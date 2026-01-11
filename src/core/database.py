@@ -72,28 +72,27 @@ def get_cached_record(source_text: str, target_lang: str, project_name: str) -> 
 
 def get_project_integrity_report(project_name: str, target_lang: str):
     """Generates the data for the Integrity Hub, including history variants."""
-    import json
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
             TranslationRecord.target_lang == target_lang
         )
         records = session.exec(statement).all()
-        
-    master_map = {} # normalized_src -> { "original_sources": set(), "variants": set() }
+
+    master_map = {}  # normalized_src -> { "original_sources": set(), "variants": set() }
 
     for r in records:
         norm_src = " ".join(r.source_text.lower().split()).strip("!.?")
-        
+
         if norm_src not in master_map:
             master_map[norm_src] = {"sources": set(), "variants": set()}
-        
+
         master_map[norm_src]["sources"].add(r.source_text)
-        
+
         # Add Active
         if r.translation and r.translation.strip():
             master_map[norm_src]["variants"].add(r.translation.strip())
-            
+
         # Add History
         if r.history_json:
             try:
@@ -101,7 +100,7 @@ def get_project_integrity_report(project_name: str, target_lang: str):
                 for h_trans in h_list:
                     if h_trans.strip():
                         master_map[norm_src]["variants"].add(h_trans.strip())
-            except: 
+            except:
                 pass
 
     report = []
@@ -110,11 +109,57 @@ def get_project_integrity_report(project_name: str, target_lang: str):
             # We show all original English versions found (e.g. "Open" / "open")
             report.append({
                 "source": " / ".join(data["sources"]),
-                "variants": {v: 1 for v in data["variants"]} # Count simplified to 1 for UI
+                # Count simplified to 1 for UI
+                "variants": {v: 1 for v in data["variants"]}
             })
     return report
 
-
+def auto_normalize_all_conflicts(project_name: str, target_lang: str):
+    """
+    Finds all conflicts and automatically picks the most frequent 
+    translation for each source text.
+    """
+    with Session(engine) as session:
+        # 1. Get all records
+        statement = select(TranslationRecord).where(
+            TranslationRecord.project_name == project_name,
+            TranslationRecord.target_lang == target_lang
+        )
+        records = session.exec(statement).all()
+        
+        # 2. Group by source -> {translation: count}
+        from collections import Counter
+        source_map = {}
+        for r in records:
+            if r.source_text not in source_map:
+                source_map[r.source_text] = []
+            source_map[r.source_text].append(r.translation)
+            
+        updated_count = 0
+        for src, trans_list in source_map.items():
+            variants = Counter(trans_list)
+            if len(variants) > 1:
+                # Get the most common translation
+                best_translation = variants.most_common(1)[0][0]
+                
+                # 3. Update all records for this source
+                stmt = select(TranslationRecord).where(
+                    TranslationRecord.project_name == project_name,
+                    TranslationRecord.target_lang == target_lang,
+                    TranslationRecord.source_text == src
+                )
+                to_update = session.exec(stmt).all()
+                for rec in to_update:
+                    if rec.translation != best_translation:
+                        rec.translation = best_translation
+                        rec.is_verified = True # Mark as fixed
+                        session.add(rec)
+                        updated_count += 1
+        
+        session.commit()
+        return updated_count
+    
+    
 def normalize_project_term(project_name: str, target_lang: str, source_text: str, correct_translation: str):
     """Force-updates all instances of a source text to a single translation."""
     with Session(engine) as session:
@@ -131,10 +176,25 @@ def normalize_project_term(project_name: str, target_lang: str, source_text: str
         session.commit()
 
 
+def delete_record(source_text: str, target_lang: str, project_name: str):
+    """Surgically removes a translation from the memory database."""
+    with Session(engine) as session:
+        statement = select(TranslationRecord).where(
+            TranslationRecord.source_text == source_text,
+            TranslationRecord.target_lang == target_lang,
+            TranslationRecord.project_name == project_name
+        )
+        record = session.exec(statement).first()
+        if record:
+            session.delete(record)
+            session.commit()
+            return True
+    return False
+
+
 def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]:
     """Finds English strings that have inconsistent translations (checking active + history)."""
-    import json
-    
+
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
@@ -143,22 +203,22 @@ def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]
         records = session.exec(statement).all()
 
     source_map: dict[str, set[str]] = {}
-    
+
     for r in records:
         if not r.source_text:
             continue
-            
+
         # We normalize the source slightly (ignore case/extra spaces) to find "hidden" conflicts
         # Example: "Spider-Man" and "spider-man" should be grouped together
         norm_source = " ".join(r.source_text.lower().split())
-        
+
         if norm_source not in source_map:
             source_map[norm_source] = set()
-            
+
         # 1. Add current active translation
         if r.translation and r.translation.strip():
             source_map[norm_source].add(r.translation.strip())
-            
+
         # 2. Add History (Finding 1 fix: Look where the variants are hiding!)
         if r.history_json:
             try:
