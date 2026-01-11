@@ -8,7 +8,7 @@ from services.llm_service import LLMService
 from PySide6.QtWidgets import (
     QWidget, QComboBox, QDoubleSpinBox, QLineEdit, QPushButton, QInputDialog,
     QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QTextEdit, QLabel,
-    QVBoxLayout, QGroupBox, QGridLayout, QScrollArea, QSizePolicy
+    QVBoxLayout, QGroupBox, QFormLayout, QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import QSettings, Signal
 from PySide6.QtGui import QIcon, QFont
@@ -40,24 +40,29 @@ class SettingsTab(QWidget):
         main_layout.addWidget(scroll)
 
         # =====================================================
-        # GENERAL (single dense row)
+        # GENERAL
         # =====================================================
         self.general_group = self.create_group(I18N.t("ui_general"))
-        gen = QHBoxLayout(self.general_group)
-        gen.setSpacing(8)
+        gen = QFormLayout(self.general_group)
+        gen.setContentsMargins(12, 10, 12, 12)
+        gen.setHorizontalSpacing(12)
+        gen.setVerticalSpacing(8)
+        gen.setLabelAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.lang_label = QLabel(I18N.t("ui_lang"))
         self.target_lang_input = QLineEdit("BG")
-        self.target_lang_input.setMaximumWidth(50)
+        self.target_lang_input.setMaximumWidth(60)
         self.target_lang_input.textChanged.connect(self.update_ui_language)
 
         self.project_label = QLabel(I18N.t("ui_project"))
         self.project_name = QLineEdit("default_game")
-        self.project_name.setMaximumWidth(140)
+        self.project_name.setMaximumWidth(200)
 
         self.profile_label = QLabel(I18N.t("ui_profile"))
         self.profile_name = QLineEdit("New_Profile")
-        self.profile_name.setMaximumWidth(140)
+        self.profile_name.setMaximumWidth(200)
 
         self.btn_save = QPushButton(I18N.t("btn_save"))
         self.btn_save.setIcon(QIcon.fromTheme("document-save"))
@@ -67,70 +72,103 @@ class SettingsTab(QWidget):
         self.btn_load.setIcon(QIcon.fromTheme("document-open"))
         self.btn_load.clicked.connect(self.load_profile_dialog)
 
+        profile_row = QHBoxLayout()
+        profile_row.setSpacing(8)
+        profile_row.addWidget(self.profile_name)
+        profile_row.addWidget(self.btn_save)
+        profile_row.addWidget(self.btn_load)
+        profile_row.addStretch()
+
+        gen.addRow(self.lang_label, self.target_lang_input)
+        gen.addRow(self.project_label, self.project_name)
+        gen.addRow(self.profile_label, profile_row)
+
+        layout.addWidget(self.general_group)
+
+        # =====================================================
+        # TRANSLATION
+        # =====================================================
+        self.translation_group = self.create_group(I18N.t("ui_translation"))
+        translation_layout = QFormLayout(self.translation_group)
+        translation_layout.setContentsMargins(12, 10, 12, 12)
+        translation_layout.setHorizontalSpacing(12)
+        translation_layout.setVerticalSpacing(8)
+        translation_layout.setLabelAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.model_label = QLabel(I18N.t("ui_model"))
         self.model_dropdown = QComboBox()
-        self.model_dropdown.setMinimumWidth(160)
+        self.model_dropdown.setMinimumWidth(200)
 
         btn_refresh = QPushButton()
         btn_refresh.setIcon(QIcon.fromTheme("view-refresh"))
         btn_refresh.clicked.connect(self.refresh_models)
 
-        self.model_label = QLabel(I18N.t("ui_model"))
+        model_row = QHBoxLayout()
+        model_row.setSpacing(8)
+        model_row.addWidget(self.model_dropdown)
+        model_row.addWidget(btn_refresh)
+        model_row.addStretch()
+
+        self.temp_label = QLabel(I18N.t("ui_temp"))
         self.temp_spin = QDoubleSpinBox()
         self.temp_spin.setRange(0.0, 1.0)
         self.temp_spin.setSingleStep(0.1)
         self.temp_spin.setValue(0.1)
         self.temp_spin.setMaximumWidth(70)
 
-        self.temp_label = QLabel(I18N.t("ui_temp"))
+        self.strict_mode = QCheckBox(I18N.t("ui_strict"))
+        self.strict_mode.setChecked(True)
+
+        translation_layout.addRow(self.model_label, model_row)
+        translation_layout.addRow(self.temp_label, self.temp_spin)
+        translation_layout.addRow(self.strict_mode)
+
+        layout.addWidget(self.translation_group)
+
+        # =====================================================
+        # APPEARANCE
+        # =====================================================
+        self.appearance_group = self.create_group(I18N.t("ui_appearance"))
+        appearance_layout = QFormLayout(self.appearance_group)
+        appearance_layout.setContentsMargins(12, 10, 12, 12)
+        appearance_layout.setHorizontalSpacing(12)
+        appearance_layout.setVerticalSpacing(8)
+        appearance_layout.setLabelAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        self.font_label = QLabel(I18N.t("ui_font"))
         self.font_size_spin = QDoubleSpinBox()
         self.font_size_spin.setRange(8, 30)
         self.font_size_spin.setValue(12)
         self.font_size_spin.setMaximumWidth(70)
         self.font_size_spin.valueChanged.connect(self.font_changed.emit)
 
-        self.font_label = QLabel(I18N.t("ui_font"))
-        self.strict_mode = QCheckBox(I18N.t("ui_strict"))
-        self.strict_mode.setChecked(True)
-
         self.ui_lang_label = QLabel(I18N.t("ui_interface_lang"))
         self.ui_lang_combo = QComboBox()
         self.ui_lang_combo.addItems(["EN", "BG"])
-        self.ui_lang_combo.setMaximumWidth(60)
+        self.ui_lang_combo.setMaximumWidth(80)
         self.ui_lang_combo.currentTextChanged.connect(
             self.change_interface_language)
 
-        gen.addWidget(self.lang_label)
-        gen.addWidget(self.target_lang_input)
-        gen.addWidget(self.project_label)
-        gen.addWidget(self.project_name)
-        gen.addWidget(self.profile_label)
-        gen.addWidget(self.profile_name)
-        gen.addWidget(self.btn_save)
-        gen.addWidget(self.btn_load)
-        gen.addSpacing(12)
-        gen.addWidget(self.model_label)
-        gen.addWidget(self.model_dropdown)
-        gen.addWidget(btn_refresh)
-        gen.addWidget(self.temp_label)
-        gen.addWidget(self.temp_spin)
-        gen.addWidget(self.font_label)
-        gen.addWidget(self.font_size_spin)
-        gen.addWidget(self.strict_mode)
+        appearance_layout.addRow(self.font_label, self.font_size_spin)
+        appearance_layout.addRow(self.ui_lang_label, self.ui_lang_combo)
 
-        gen.addWidget(self.ui_lang_label)
-        gen.addWidget(self.ui_lang_combo)
-
-        gen.addStretch()
-
-        layout.addWidget(self.general_group)
+        layout.addWidget(self.appearance_group)
 
         # =====================================================
-        # RESOURCES (max 2 rows)
+        # RESOURCES
         # =====================================================
         self.res_group = self.create_group(I18N.t("ui_recources"))
-        res = QGridLayout(self.res_group)
+        res = QFormLayout(self.res_group)
+        res.setContentsMargins(12, 10, 12, 12)
         res.setHorizontalSpacing(12)
-        res.setVerticalSpacing(6)
+        res.setVerticalSpacing(8)
+        res.setLabelAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.gloss_path = QLineEdit("glossary.tsv")
         self.style_path = QLineEdit("style.md")
@@ -154,10 +192,7 @@ class SettingsTab(QWidget):
              "tip_forbidden_terms"),
         ]
 
-        for i, (label_key, edit, filter_key, tip_key) in enumerate(resources):
-            col = i % 3
-            row = i // 3
-
+        for label_key, edit, filter_key, tip_key in resources:
             browse = QPushButton(I18N.t("btn_browse"))
             browse.setIcon(QIcon.fromTheme("document-open"))
             browse.clicked.connect(
@@ -177,8 +212,7 @@ class SettingsTab(QWidget):
                 (label_widget, label_key, tip_key)
             )
 
-            res.addWidget(label_widget, row * 2, col)
-            res.addLayout(h, row * 2 + 1, col)
+            res.addRow(label_widget, h)
 
         layout.addWidget(self.res_group)
         # =====================================================
@@ -297,6 +331,8 @@ class SettingsTab(QWidget):
     def retranslate_ui(self):
         # Groups
         self.general_group.setTitle(I18N.t("ui_general"))
+        self.translation_group.setTitle(I18N.t("ui_translation"))
+        self.appearance_group.setTitle(I18N.t("ui_appearance"))
         self.res_group.setTitle(I18N.t("ui_recources"))
         self.prompt_group.setTitle(I18N.t("ui_prompt"))
         self.tools_group.setTitle(I18N.t("ui_database_tools"))
