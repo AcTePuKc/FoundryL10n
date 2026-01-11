@@ -98,7 +98,6 @@ class LLMService:
             for junk in polite_junk:
                 if cleaned.lower().startswith(junk.lower()):
                     candidate = cleaned[len(junk):].strip().lstrip(":! ")
-                    # HERO FIX: don't allow full deletion
                     if candidate:
                         cleaned = candidate
 

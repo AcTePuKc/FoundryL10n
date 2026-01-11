@@ -140,7 +140,7 @@ class TranslationEngine:
             ):
         """Searches the DB for the most similar string with optimized performance."""
         with Session(engine) as session:
-            # HERO FIX: Use col() to satisfy Pylance for .desc()
+            # Use col() to satisfy Pylance for .desc()
             statement = select(TranslationRecord).where(
                 col(TranslationRecord.project_name) == project_name,
                 col(TranslationRecord.target_lang) == target_lang

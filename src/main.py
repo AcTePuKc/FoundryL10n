@@ -51,7 +51,7 @@ def launch_gui():
     
     qt_app = QApplication(sys.argv)
     
-    # HERO FIX: Global Application Stylesheet
+    # Global Application Stylesheet
     # This forces every window, dialog, and popup to be dark, 
     # regardless of the user's Windows settings.
     qt_app.setStyleSheet("""

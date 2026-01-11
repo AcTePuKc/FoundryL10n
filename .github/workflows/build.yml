@@ -4,7 +4,7 @@ on:
   push:
     tags: ['v*']
 
-# HERO FIX: Explicitly allow the action to write to the repository
+# Explicitly allow the action to write to the repository
 permissions:
   contents: write
 

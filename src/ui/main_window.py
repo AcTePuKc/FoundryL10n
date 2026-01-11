@@ -656,7 +656,7 @@ class FoundryGUI(QMainWindow):
         stats_text = self._format_stats_text(v, qa, risk, err, conflict, pend)
 
         # 2. Add selection info ONLY if more than 1 is selected
-        # HERO FIX: We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
+        # We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
         if count > 1:
             self.lbl_stats.setText(
                 I18N.t("stats_selected_template").format(
@@ -1169,7 +1169,7 @@ class FoundryGUI(QMainWindow):
                 seg.source_text, lang, project_name=p_name)
 
             if record:
-                # HERO LOGIC: Only overwrite if the DB has a VERIFIED translation
+                # Only overwrite if the DB has a VERIFIED translation
                 # OR if we don't currently have an error marker.
                 if record.is_verified or not current_is_error:
                     seg.translation = record.translation
@@ -1257,7 +1257,7 @@ class FoundryGUI(QMainWindow):
 
         count = 0
         for i, seg in enumerate(self.segments):
-            # HERO FIX: Normalize the segment source text exactly like the DB does
+            # Normalize the segment source text exactly like the DB does
             norm_seg_src = " ".join(seg.source_text.lower().split())
 
             if norm_seg_src in conflicts:
