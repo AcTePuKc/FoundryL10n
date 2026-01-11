@@ -17,14 +17,14 @@ class IntegrityTab(QWidget):
         )
         self.btn_auto_normalize.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold;")
         
-        top_layout.addWidget(self.btn_auto_normalize)
-        top_layout.addStretch()
-        layout.insertLayout(1, top_layout) # Insert after the title labels
-
         self.title_label = QLabel(I18N.t("ui_project_consistency_title"))
         self.subtitle_label = QLabel(I18N.t("ui_project_consistency_subtitle"))
         layout.addWidget(self.title_label)
         layout.addWidget(self.subtitle_label)
+        
+        top_layout.addWidget(self.btn_auto_normalize)
+        top_layout.addStretch()
+        layout.addLayout(top_layout)
 
         self.table = QTableWidget(0, 3)
         self.table.setHorizontalHeaderLabels(
