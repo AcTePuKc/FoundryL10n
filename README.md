@@ -27,25 +27,41 @@ Optional but recommended:
 ## Installation
 
 1. **Create a virtual environment**
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
    ```
 
 2. **Install dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
+
    or, with `uv`:
+
    ```bash
    uv sync
    ```
 
 3. **Prepare Ollama**
+
    ```bash
    ollama pull qwen2.5:7b
    ```
+
    Adjust the model name in the CLI/GUI settings if you use a different one.
+
+   3.1 **"Best" Bulgarian Model so far**
+
+      ```bash
+      ollama pull s_emanuilov/BgGPT-v1.0:9b
+      ```
+
+      Feel free to change to `s_emanuilov/BgGPT-v1.0:2.6b` or `s_emanuilov/BgGPT-v1.0:27b` or any other hit search and type `bggpt` depending on your hardware capabilities.
+
+4. **Hit refresh models in the GUI settings after pulling new ones.**
 
 ## Usage
 
@@ -67,6 +83,7 @@ Common options:
 - `--style / -s` – Path to a Markdown style guide.
 
 Example:
+
 ```bash
 python main.py file dialogue.tsv --lang "French" --glossary profiles/french_glossary.tsv --style profiles/french_style.md
 ```
@@ -112,7 +129,7 @@ python main.py gui
 
 ## Project Structure
 
-```
+```bash
 src/
 ├── core/           # Parsing, masking, translation engine, database helpers
 ├── services/       # LLM/Ollama integration and resource loaders
@@ -136,9 +153,11 @@ Supporting assets:
 
 - Run linting or formatting tools as needed (none are enforced by default).
 - Execute the automated tests (if/when added) with:
+
   ```bash
   pytest
   ```
+
 - PyInstaller specs are provided (`FoundryL10n.spec`) for packaging desktop builds.
 
 ## Contributing

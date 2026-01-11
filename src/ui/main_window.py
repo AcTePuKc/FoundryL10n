@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QTableWidgetItem, QHeaderView, QProgressBar,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
-                               QScrollArea)
+                               QScrollArea, QApplication)
 from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings
 from sqlmodel import select, col
@@ -52,6 +52,7 @@ class FoundryGUI(QMainWindow):
         # Main Layout: Tabs
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
+        self.setMinimumSize(800, 600)
 
         self.init_translate_tab()
 
@@ -89,7 +90,6 @@ class FoundryGUI(QMainWindow):
         self.btn_open = QPushButton("Open TSV")
         self.btn_open.clicked.connect(self.open_file)
 
-        # FIXED: Re-added file_label definition
         self.file_label = QLabel("No file selected")
         self.file_label.setStyleSheet("color: #888; font-style: italic;")
 
@@ -195,7 +195,8 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setMinimumHeight(40)
         self.btn_run.setStyleSheet("font-weight: bold;")
 
-        self.lbl_stats = QLabel("\U0001f7e2 0 | \U0001f7e1 0 | \U0001f536 0 | \U0001f534 0 | \U0001f535 0 | \u26aa 0")
+        self.lbl_stats = QLabel(
+            "\U0001f7e2 0 | \U0001f7e1 0 | \U0001f536 0 | \U0001f534 0 | \U0001f535 0 | \u26aa 0")
         self.lbl_stats.setToolTip(
             "\U0001f7e2 QA Done (Verified)\\n"
             "\U0001f7e1 AI Draft (Needs Review)\\n"
@@ -417,16 +418,44 @@ class FoundryGUI(QMainWindow):
             seg.translation.replace("[TAG ERROR] ", ""))
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
         self.update_stats()
-    
+
     def update_selection_info(self):
-        selected = self.table.selectionModel().selectedRows()
-        if len(selected) > 1:
-            self.lbl_stats.setText(f"SELECTED: {len(selected)} rows | " + self.lbl_stats.text())
+        """Updates the status bar with selection count without making the window explode."""
+        selected_indices = self.table.selectionModel().selectedRows()
+        count = len(selected_indices)
+
+        # 1. Start with fresh stats
+        v, qa, risk, err, lock, pend, conflict = 0, 0, 0, 0, 0, 0, 0
+        for i in range(self.table.rowCount()):
+            item = self.table.item(i, 0)
+            if item:
+                txt = item.text()
+                if txt == "🟢":
+                    v += 1
+                elif txt == "🟡":
+                    qa += 1
+                elif txt == "🔶":
+                    risk += 1
+                elif txt == "🔴":
+                    err += 1
+                elif txt == "🔒":
+                    lock += 1
+                elif txt == "🔵":
+                    conflict += 1
+                else:
+                    pend += 1
+
+        stats_text = f"🟢 {v} | 🟡 {qa} | 🔶 {risk} | 🔴 {err} | 🔵 {conflict} | 🔒 {lock} | ⚪ {pend}"
+
+        # 2. Add selection info ONLY if more than 1 is selected
+        # HERO FIX: We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
+        if count > 1:
+            self.lbl_stats.setText(f"SELECTED: {count} rows | {stats_text}")
         else:
-            self.update_stats()
+            self.lbl_stats.setText(stats_text)
 
     def on_row_selected(self):
-        """When a row is clicked, load data and focus the editor."""
+        """When a row is clicked, load data into the editor safely."""
         row = self.table.currentRow()
         if row < 0:
             return
@@ -434,58 +463,53 @@ class FoundryGUI(QMainWindow):
         self.current_row = row
         seg = self.segments[row]
 
+        # Block signals so the editor doesn't try to sync 
+        # back to the table while we are just loading the row data.
+        self.editor.trans_edit.blockSignals(True)
+        self.editor.source_edit.blockSignals(True)
+
         # 1. Update text fields
         self.editor.source_edit.setText(seg.source_text)
         self.editor.ai_draft_display.setText(seg.ai_draft)
         self.editor.trans_edit.setPlainText(
             seg.translation.replace("[TAG ERROR] ", "")
         )
+        
+        # Unblock after loading is finished
+        self.editor.trans_edit.blockSignals(False)
+        self.editor.source_edit.blockSignals(False)
 
         # 2. Sync checkboxes with segment flags
         self.editor.cb_verified.setChecked(getattr(seg, "is_verified", False))
 
         # 3. LOAD HISTORY LIST
         self.editor.history_list.clear()
-
         try:
             settings = self.settings_tab.get_settings()
-            lang = settings.get("lang", "BG")
-            project_name = self.get_current_project()
-
             from core.database import get_cached_record
             record = get_cached_record(
                 seg.source_text,
-                lang,
-                project_name=project_name,
+                settings.get("lang", "BG"),
+                project_name=settings.get("project_name", "default"),
             )
 
             if record and record.history_json:
                 import json
                 history_data = json.loads(record.history_json or "[]")
-                # Newest first
                 for old_ver in reversed(history_data):
                     if old_ver.strip():
                         self.editor.history_list.addItem(old_ver)
         except Exception:
             pass
 
-        # 4. Focus editor and move cursor to end
-        cursor = self.editor.trans_edit.textCursor()
-        cursor.movePosition(cursor.MoveOperation.End)
-        self.editor.trans_edit.setTextCursor(cursor)
-        self.editor.trans_edit.setFocus() # Ensure focus for typing
-
-        # 5. Conditional Fuzzy Match Search
-        # Only search for suggestions if we actually need to work on this row
+        # 4. Conditional Fuzzy Match Search
         is_verified = getattr(seg, 'is_verified', False)
         is_skip = getattr(seg, 'never_translate', False)
 
         if is_verified or is_skip:
-            # Hide the suggestion box for rows that are already done or ignored
             self.editor.fuzzy_display.clear()
             self.editor.btn_use_fuzzy.setVisible(False)
         else:
-            # Only run the similarity scan if the row needs human attention
             self.search_fuzzy_matches(seg.source_text)
 
     def search_fuzzy_matches(self, text):
@@ -573,6 +597,7 @@ class FoundryGUI(QMainWindow):
         # 5) UI refresh
         self.update_row_visuals(self.current_row)
         self.update_stats()
+        self.table.setFocus()
 
         # 6) QoL: auto-jump to next line that needs attention
         self.nav_next_needed()
@@ -754,7 +779,6 @@ class FoundryGUI(QMainWindow):
             # Mark as manually verified
             is_ver = True
 
-
         # Persist to DB with full context
         save_translation(
             seg.source_text,
@@ -857,23 +881,23 @@ class FoundryGUI(QMainWindow):
             self.refresh_table_from_db()
 
     def refresh_table_from_db(self):
-        """Force-syncs the table with the DB without reloading the TSV file."""
+        """Force-syncs table with DB, but PRESERVES current session errors."""
         settings = self.settings_tab.get_settings()
-        from core.database import get_cached_record
-
+        
         for i, seg in enumerate(self.segments):
             record = get_cached_record(
-                seg.source_text,
-                settings['lang'],
+                seg.source_text, 
+                settings['lang'], 
                 project_name=settings['project_name'])
             if record:
+                # Only overwrite if the DB has a translation
                 seg.translation = record.translation
                 seg.is_verified = record.is_verified
                 seg.never_translate = record.never_translate
+                seg.ai_draft = record.ai_draft
             else:
-                # If no record in the NEW project, clear the memory flags
-                seg.is_verified = False
-
+                pass
+            
             self.update_row_visuals(i)
         self.update_stats()
 
@@ -929,27 +953,35 @@ class FoundryGUI(QMainWindow):
             self.audit_database_consistency()
 
     def audit_database_consistency(self):
-        """Scans the DB for conflicts and marks rows in the current table."""
+        """Scans the DB for conflicts and marks rows using normalized comparison."""
         settings = self.settings_tab.get_settings()
-        project_name = settings.get("project_name", "default")
-        lang = settings.get("lang", "BG")
-
-        conflicts = find_translation_conflicts(project_name, lang)
+        p_name = settings.get('project_name', 'default')
+        lang = settings['lang']
+        
+        # This returns a list of normalized source strings that have conflicts
+        conflicts = find_translation_conflicts(p_name, lang)
+        
         if not conflicts:
+            # Clear any old blue markers if conflicts were resolved
+            for seg in self.segments:
+                seg.has_conflict = False
             return
 
-        conflicts_set = set(conflicts)
         count = 0
         for i, seg in enumerate(self.segments):
-            if seg.source_text in conflicts_set:
+            # HERO FIX: Normalize the segment source text exactly like the DB does
+            norm_seg_src = " ".join(seg.source_text.lower().split())
+            
+            if norm_seg_src in conflicts:
                 seg.has_conflict = True
                 self.update_row_visuals(i)
                 count += 1
-
+            else:
+                seg.has_conflict = False
+        
         if count > 0:
-            self.thought_log.append(
-                f"<b>[INTEGRITY]</b>: Found {count} rows with inconsistent translations in the DB! (Marked with 🔵)"
-            )
+            self.thought_log.append(f"<b>[INTEGRITY]</b>: Found {count} rows with inconsistent translations (🔵)")
+            self.update_stats()
 
     def global_db_replace(self):
         """Finds and replaces text across the ENTIRE database for this project/lang."""
@@ -1004,16 +1036,16 @@ class FoundryGUI(QMainWindow):
         )
 
     def keyPressEvent(self, event):
-        """Handle keyboard shortcuts for the whole window."""
-        # If 'Delete' is pressed while the table is active
+        """Standard window-level shortcut for the Delete key."""
         if event.key() == Qt.Key.Key_Delete:
+            # Only trigger if the table is the active widget
             if self.table.hasFocus():
                 self.clear_selected_rows()
         super().keyPressEvent(event)
 
     def update_stats(self):
         """Calculates and updates the bottom bar dashboard counters."""
-        v = qa = risk = err =  pend = conflict = 0
+        v = qa = risk = err = pend = conflict = 0
 
         for i in range(self.table.rowCount()):
             item = self.table.item(i, 0)
@@ -1439,7 +1471,6 @@ class FoundryGUI(QMainWindow):
 
 
 def run_gui():
-    from PySide6.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = FoundryGUI()
     window.show()

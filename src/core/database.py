@@ -70,34 +70,49 @@ def get_cached_record(source_text: str, target_lang: str, project_name: str) -> 
         return session.exec(statement).first()
 
 
-def get_project_integrity_report(project_name: str, target_lang: str) -> list[dict]:
-    """
-    Returns a list of source texts that have inconsistent translations.
-    Format: [ { "source": "...", "variants": { "translation1": count, "translation2": count } }, ... ]
-    """
+def get_project_integrity_report(project_name: str, target_lang: str):
+    """Generates the data for the Integrity Hub, including history variants."""
+    import json
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
-            TranslationRecord.target_lang == target_lang,
+            TranslationRecord.target_lang == target_lang
         )
         records = session.exec(statement).all()
+        
+    master_map = {} # normalized_src -> { "original_sources": set(), "variants": set() }
 
-        master_map: dict[str, list[str]] = {}
-        for r in records:
-            src = r.source_text or ""
-            trans = r.translation or ""
-            if not src:
-                continue
-            master_map.setdefault(src, []).append(trans)
+    for r in records:
+        norm_src = " ".join(r.source_text.lower().split()).strip("!.?")
+        
+        if norm_src not in master_map:
+            master_map[norm_src] = {"sources": set(), "variants": set()}
+        
+        master_map[norm_src]["sources"].add(r.source_text)
+        
+        # Add Active
+        if r.translation and r.translation.strip():
+            master_map[norm_src]["variants"].add(r.translation.strip())
+            
+        # Add History
+        if r.history_json:
+            try:
+                h_list = json.loads(r.history_json)
+                for h_trans in h_list:
+                    if h_trans.strip():
+                        master_map[norm_src]["variants"].add(h_trans.strip())
+            except: 
+                pass
 
-        report: list[dict] = []
-        for src, trans_list in master_map.items():
-            unique_trans = set(trans_list)
-            if len(unique_trans) > 1:
-                variants = {t: trans_list.count(t) for t in unique_trans}
-                report.append({"source": src, "variants": variants})
-
-        return report
+    report = []
+    for norm_src, data in master_map.items():
+        if len(data["variants"]) > 1:
+            # We show all original English versions found (e.g. "Open" / "open")
+            report.append({
+                "source": " / ".join(data["sources"]),
+                "variants": {v: 1 for v in data["variants"]} # Count simplified to 1 for UI
+            })
+    return report
 
 
 def normalize_project_term(project_name: str, target_lang: str, source_text: str, correct_translation: str):
@@ -117,7 +132,9 @@ def normalize_project_term(project_name: str, target_lang: str, source_text: str
 
 
 def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]:
-    """Finds English strings that have multiple different translations in the same project/lang."""
+    """Finds English strings that have inconsistent translations (checking active + history)."""
+    import json
+    
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
@@ -126,17 +143,33 @@ def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]
         records = session.exec(statement).all()
 
     source_map: dict[str, set[str]] = {}
+    
     for r in records:
-        if not r.translation:
+        if not r.source_text:
             continue
-        norm = r.translation.strip()
-        if not norm:
-            continue
+            
+        # We normalize the source slightly (ignore case/extra spaces) to find "hidden" conflicts
+        # Example: "Spider-Man" and "spider-man" should be grouped together
+        norm_source = " ".join(r.source_text.lower().split())
+        
+        if norm_source not in source_map:
+            source_map[norm_source] = set()
+            
+        # 1. Add current active translation
+        if r.translation and r.translation.strip():
+            source_map[norm_source].add(r.translation.strip())
+            
+        # 2. Add History (Finding 1 fix: Look where the variants are hiding!)
+        if r.history_json:
+            try:
+                h_list = json.loads(r.history_json)
+                for h_trans in h_list:
+                    if h_trans.strip():
+                        source_map[norm_source].add(h_trans.strip())
+            except Exception:
+                pass
 
-        if r.source_text not in source_map:
-            source_map[r.source_text] = set()
-        source_map[r.source_text].add(norm)
-
+    # 3. Clean Return: Only return sources that have more than 1 unique translation variant
     return [src for src, trans_set in source_map.items() if len(trans_set) > 1]
 
 
