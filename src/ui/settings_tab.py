@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QTextEdit, QLabel,
     QVBoxLayout, QGroupBox, QGridLayout, QScrollArea, QSizePolicy
 )
-from PySide6.QtCore import Qt, QSettings, Signal
+from PySide6.QtCore import QSettings, Signal
 from PySide6.QtGui import QIcon, QFont
 
 
@@ -80,10 +80,9 @@ class SettingsTab(QWidget):
         # =====================================================
         # GENERAL (single dense row)
         # =====================================================
-        general_group = self.create_group(I18N.t("ui_general"))
-        gen = QHBoxLayout(general_group)
+        self.general_group = self.create_group(I18N.t("ui_general"))
+        gen = QHBoxLayout(self.general_group)
         gen.setSpacing(8)
-        
 
         self.target_lang_input = QLineEdit("BG")
         self.target_lang_input.setMaximumWidth(50)
@@ -95,13 +94,13 @@ class SettingsTab(QWidget):
         self.profile_name = QLineEdit("New_Profile")
         self.profile_name.setMaximumWidth(140)
 
-        btn_save = QPushButton("Save")
-        btn_save.setIcon(QIcon.fromTheme("document-save"))
-        btn_save.clicked.connect(self.save_current_profile)
+        self.btn_save = QPushButton(I18N.t("btn_save"))
+        self.btn_save.setIcon(QIcon.fromTheme("document-save"))
+        self.btn_save.clicked.connect(self.save_current_profile)
 
-        btn_load = QPushButton("Load")
-        btn_load.setIcon(QIcon.fromTheme("document-open"))
-        btn_load.clicked.connect(self.load_profile_dialog)
+        self.btn_load = QPushButton(I18N.t("btn_load"))
+        self.btn_load.setIcon(QIcon.fromTheme("document-open"))
+        self.btn_load.clicked.connect(self.load_profile_dialog)
 
         self.model_dropdown = QComboBox()
         self.model_dropdown.setMinimumWidth(160)
@@ -122,35 +121,46 @@ class SettingsTab(QWidget):
         self.font_size_spin.setMaximumWidth(70)
         self.font_size_spin.valueChanged.connect(self.font_changed.emit)
 
-        self.strict_mode = QCheckBox("Strict tags")
+        self.strict_mode = QCheckBox(I18N.t("ui_strict"))
         self.strict_mode.setChecked(True)
 
-        gen.addWidget(QLabel("Lang"))
+        self.ui_lang_label = QLabel(I18N.t("ui_interface_lang"))
+        self.ui_lang_combo = QComboBox()
+        self.ui_lang_combo.addItems(["EN", "BG"])
+        self.ui_lang_combo.setMaximumWidth(60)
+        self.ui_lang_combo.currentTextChanged.connect(
+            self.change_interface_language)
+
+        gen.addWidget(QLabel(I18N.t("ui_lang")))
         gen.addWidget(self.target_lang_input)
-        gen.addWidget(QLabel("Project"))
+        gen.addWidget(QLabel(I18N.t("ui_project")))
         gen.addWidget(self.project_name)
-        gen.addWidget(QLabel("Profile"))
+        gen.addWidget(QLabel(I18N.t("ui_profile")))
         gen.addWidget(self.profile_name)
-        gen.addWidget(btn_save)
-        gen.addWidget(btn_load)
+        gen.addWidget(self.btn_save)
+        gen.addWidget(self.btn_load)
         gen.addSpacing(12)
-        gen.addWidget(QLabel("Model"))
+        gen.addWidget(QLabel(I18N.t("ui_model")))
         gen.addWidget(self.model_dropdown)
         gen.addWidget(btn_refresh)
-        gen.addWidget(QLabel("Temp"))
+        gen.addWidget(QLabel(I18N.t("ui_temp")))
         gen.addWidget(self.temp_spin)
-        gen.addWidget(QLabel("Font"))
+        gen.addWidget(QLabel(I18N.t("ui_font")))
         gen.addWidget(self.font_size_spin)
         gen.addWidget(self.strict_mode)
+
+        gen.addWidget(self.ui_lang_label)
+        gen.addWidget(self.ui_lang_combo)
+
         gen.addStretch()
 
-        layout.addWidget(general_group)
+        layout.addWidget(self.general_group)
 
         # =====================================================
         # RESOURCES (max 2 rows)
         # =====================================================
-        res_group = self.create_group("Resources")
-        res = QGridLayout(res_group)
+        self.res_group = self.create_group(I18N.t("ui_recources"))
+        res = QGridLayout(self.res_group)
         res.setHorizontalSpacing(12)
         res.setVerticalSpacing(6)
 
@@ -158,51 +168,73 @@ class SettingsTab(QWidget):
         self.style_path = QLineEdit("style.md")
         self.forbidden_path = QLineEdit("forbidden.txt")
 
+        self.resource_labels = []
+        self.browse_buttons = []
+
         resources = [
-            ("Glossary", self.gloss_path, "TSV (*.tsv *.csv)"),
-            ("Style", self.style_path, "Text (*.md *.txt)"),
-            ("Forbidden", self.forbidden_path, "Text (*.txt)")
+            ("ui_glossary",
+             self.gloss_path,
+             "TSV (*.tsv *.csv)",
+             I18N.t("tip_glossary")),
+            ("ui_style_guide",
+             self.style_path,
+             "Text (*.md *.txt)",
+             I18N.t("tip_style_guide")),
+            ("ui_forbidden_terms",
+             self.forbidden_path,
+             "Text (*.txt)",
+             I18N.t("tip_forbidden_terms")),
         ]
 
-        for i, (label, edit, filt) in enumerate(resources):
+        for i, (label_key, edit, filt, tip) in enumerate(resources):
             col = i % 3
             row = i // 3
 
-            browse = QPushButton("Browse")
+            browse = QPushButton(I18N.t("btn_browse"))
             browse.setIcon(QIcon.fromTheme("document-open"))
             browse.clicked.connect(
-                lambda _, e=edit, f=filt: self.browse_file(e, f))
+                lambda _, e=edit, f=filt: self.browse_file(e, f)
+            )
+            self.browse_buttons.append(browse)
 
             h = QHBoxLayout()
             h.addWidget(edit)
             h.addWidget(browse)
 
-            res.addWidget(QLabel(label), row * 2, col)
+            label_widget = QLabel(I18N.t(label_key))
+            if tip:
+                label_widget.setToolTip(tip)
+
+            self.resource_labels.append((label_widget, label_key))
+
+            res.addWidget(label_widget, row * 2, col)
             res.addLayout(h, row * 2 + 1, col)
 
-        layout.addWidget(res_group)
-
+        layout.addWidget(self.res_group)
         # =====================================================
         # PROMPT (dominant)
         # =====================================================
-        prompt_group = self.create_group("Prompt")
-        prompt_layout = QVBoxLayout(prompt_group)
-        prompt_group.setMinimumHeight(300)
-
+        self.prompt_group = self.create_group(I18N.t("ui_prompt"))
+        prompt_layout = QVBoxLayout(self.prompt_group)
+        self.prompt_group.setMinimumHeight(300)
 
         header = QHBoxLayout()
-        header.addWidget(QLabel("Template"))
+
+        self.template_label = QLabel(I18N.t("ui_template"))
+        header.addWidget(self.template_label)
 
         self.template_combo = QComboBox()
         self.template_combo.addItems([
-            "Standard Localizer",
-            "Technical Fixer (Pass 2)",
-            "Creative Polish"
+            I18N.t("tmpl_standard"),
+            I18N.t("tmpl_technical_pass2"),
+            I18N.t("tmpl_creative_polish")
         ])
         self.template_combo.currentIndexChanged.connect(self.apply_template)
 
         header.addWidget(self.template_combo)
+
         header.addStretch()
+        header.setContentsMargins(0, 0, 0, 0)
 
         self.prompt_editor = QTextEdit()
         self.prompt_editor.setAcceptRichText(False)
@@ -218,62 +250,116 @@ class SettingsTab(QWidget):
         prompt_layout.addLayout(header)
         prompt_layout.addWidget(self.prompt_editor)
 
-        layout.addWidget(prompt_group, 1)
+        layout.addWidget(self.prompt_group, 1)
 
         # =====================================================
         # DATABASE TOOLS + DANGER (same row)
         # =====================================================
-        tools_group = self.create_group("Database tools")
-        tools = QHBoxLayout(tools_group)
-        tools_group.setSizePolicy(
+        self.tools_group = self.create_group(I18N.t("ui_database_tools"))
+        tools = QHBoxLayout(self.tools_group)
+        self.tools_group.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Preferred
         )
 
-        btn_replace = QPushButton("Global replace")
-        btn_replace.clicked.connect(self.run_global_db_replace)
+        self.btn_replace = QPushButton(I18N.t("btn_global_replace"))
+        self.btn_replace.clicked.connect(self.run_global_db_replace)
 
-        btn_purge = QPushButton("Purge unverified")
-        btn_purge.clicked.connect(self.purge_unverified_records)
+        self.btn_purge = QPushButton(I18N.t("btn_purge_unverified"))
+        self.btn_purge.clicked.connect(self.purge_unverified_records)
 
-        tools.addWidget(btn_replace)
-        tools.addWidget(btn_purge)
+        tools.addWidget(self.btn_replace)
+        tools.addWidget(self.btn_purge)
         tools.addStretch()
 
-        danger_group = self.create_group("Danger zone")
-        danger_group.setProperty("class", "danger")
-        danger = QHBoxLayout(danger_group)
+        self.danger_group = self.create_group(I18N.t("ui_danger_zone"))
+        self.danger_group.setProperty("class", "danger")
+        danger = QHBoxLayout(self.danger_group)
 
-        danger_group.setSizePolicy(
+        self.danger_group.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Preferred
         )
 
-        btn_clear_errors = QPushButton("Clear errors")
-        btn_clear_errors.clicked.connect(self.clear_mismatches)
+        self.btn_clear_errors = QPushButton(I18N.t("btn_clear_errors"))
+        self.btn_clear_errors.clicked.connect(self.clear_mismatches)
 
-        btn_wipe = QPushButton("Wipe all")
-        btn_wipe.setProperty("danger", True)
-        btn_wipe.clicked.connect(self.clear_memory)
+        self.btn_wipe = QPushButton(I18N.t("btn_wipe_all"))
+        self.btn_wipe.setProperty("danger", True)
+        self.btn_wipe.clicked.connect(self.clear_memory)
 
-        danger.addWidget(btn_clear_errors)
-        danger.addWidget(btn_wipe)
+        danger.addWidget(self.btn_clear_errors)
+        danger.addWidget(self.btn_wipe)
         danger.addStretch()
 
         bottom = QHBoxLayout()
-        bottom.addWidget(tools_group, 1)
-        bottom.addWidget(danger_group, 1)
+        bottom.addWidget(self.tools_group, 1)
+        bottom.addWidget(self.danger_group, 1)
 
         layout.addStretch(1)
 
         layout.addLayout(bottom)
+
+        s = QSettings("FoundryL10n", "Workstation")
+        ui_lang = str(s.value("ui_language", "EN")).upper()
+        I18N.set_language(ui_lang)
+        self.ui_lang_combo.setCurrentText(ui_lang)
+        self.retranslate_ui()
 
         # =====================================================
         # Init
         # =====================================================
         self.refresh_models()
         self.load_settings()
-    
+
+    def change_interface_language(self, lang_code: str):
+        """Change Language"""
+        lang = lang_code.upper()
+
+        # 1) сменяме езика глобално
+        I18N.set_language(lang)
+
+        # 2) записваме в QSettings, за да помним избора
+        s = QSettings("FoundryL10n", "Workstation")
+        s.setValue("ui_language", lang)
+
+        # 3) ретранслейтваме текущия таб
+        self.retranslate_ui()
+
+    def retranslate_ui(self):
+        # Groups
+        self.general_group.setTitle(I18N.t("ui_general"))
+        self.res_group.setTitle(I18N.t("ui_recources"))
+        self.prompt_group.setTitle(I18N.t("ui_prompt"))
+        self.tools_group.setTitle(I18N.t("ui_database_tools"))
+        self.danger_group.setTitle(I18N.t("ui_danger_zone"))
+
+        # Checkbox
+        self.strict_mode.setText(I18N.t("ui_strict"))
+
+        # Stuff
+        self.ui_lang_label.setText(I18N.t("ui_interface_lang"))
+
+        # Template label + combo items
+        self.template_label.setText(I18N.t("ui_template"))
+        self.template_combo.setItemText(0, I18N.t("tmpl_standard"))
+        self.template_combo.setItemText(1, I18N.t("tmpl_technical_pass2"))
+        self.template_combo.setItemText(2, I18N.t("tmpl_creative_polish"))
+
+        # Buttons
+        self.btn_replace.setText(I18N.t("btn_global_replace"))
+        self.btn_purge.setText(I18N.t("btn_purge_unverified"))
+        self.btn_clear_errors.setText(I18N.t("btn_clear_errors"))
+        self.btn_wipe.setText(I18N.t("btn_wipe_all"))
+        self.btn_save.setText(I18N.t("btn_save"))
+
+        # Browse buttons
+        for btn in self.browse_buttons:
+            btn.setText(I18N.t("btn_browse"))
+
+        for lbl, key in self.resource_labels:
+            lbl.setText(I18N.t(key))
+
     def update_ui_language(self):
         lang = self.target_lang_input.text().upper()
         if lang in ["BG", "EN"]:
@@ -293,11 +379,10 @@ class SettingsTab(QWidget):
 
         reply = QMessageBox.question(
             self,
-            "Purge Memory",
-            (
-                f"This will delete all AI-generated translations (🟡/🔴) "
-                f"from Memory for project '{p_name}' [{lang}].\n\n"
-                "Only Human-Verified (🟢) lines will stay. Proceed?"
+            I18N.t("dlg_purge_memory_title"),
+            I18N.t("dlg_purge_memory_text").format(
+                project=p_name,
+                lang=lang,
             ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
@@ -307,37 +392,40 @@ class SettingsTab(QWidget):
 
         try:
             with Session(engine) as session:
-                # Use .is_(False) to satisfy Ruff E712
-                # AND add filters so we only purge the CURRENT project
                 stmt = delete(TranslationRecord).where(
                     col(TranslationRecord.project_name) == p_name,
                     col(TranslationRecord.target_lang) == lang,
                     col(TranslationRecord.is_verified).is_(False)
                 )
-
                 session.exec(stmt)
                 session.commit()
 
             QMessageBox.information(
-                self, "Success", "Database purged of unverified entries.")
+                self,
+                I18N.t("dlg_success_title"),
+                I18N.t("dlg_purge_memory_success"),
+            )
         except Exception as e:
             QMessageBox.critical(
-                self, "Error", f"Failed to purge database: {e}")
+                self,
+                I18N.t("dlg_error_title"),
+                I18N.t("dlg_purge_memory_error").format(error=e),
+            )
 
     def run_global_db_replace(self):
         """Triggers the Global Replace logic via input dialogs."""
         find_t, ok1 = QInputDialog.getText(
             self,
-            "Global DB Replace",
-            "Find text in the translations:",
+            I18N.t("dlg_global_replace_title"),
+            I18N.t("msg_global_find")
         )
         if not ok1 or not find_t:
             return
 
         repl_t, ok2 = QInputDialog.getText(
             self,
-            "Global DB Replace",
-            f"Replace '{find_t}' with:",
+            I18N.t("dlg_global_replace_title"),
+            I18N.t("msg_global_replace_with").format(text=find_t),
         )
         if not ok2:
             return
@@ -351,8 +439,8 @@ class SettingsTab(QWidget):
 
         QMessageBox.information(
             self,
-            "Success",
-            f"Updated {count} records in Memory.\nReload your file to see changes.",
+            I18N.t("dlg_success_title"),
+            I18N.t("dlg_memory_update_success").format(count=count)
         )
 
     def save_current_profile(self):
@@ -361,7 +449,11 @@ class SettingsTab(QWidget):
         safe_name = os.path.basename(raw_name)
 
         if not safe_name or safe_name in {".", ".."}:
-            QMessageBox.warning(self, "Error", "Please enter a profile name.")
+            QMessageBox.warning(
+                self,
+                I18N.t("dlg_error_title"),
+                I18N.t("msg_profile_name_required")
+            )
             return
 
         os.makedirs("profiles", exist_ok=True)
@@ -378,10 +470,16 @@ class SettingsTab(QWidget):
             settings.setValue("last_profile_path", str(save_path.resolve()))
 
             QMessageBox.information(
-                self, "Success", f"Profile '{safe_name}' saved to profiles folder."
+                self,
+                I18N.t("dlg_success_title"),
+                I18N.t("msg_profile_saved").format(name=safe_name)
             )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save profile: {e}")
+            QMessageBox.critical(
+                self,
+                I18N.t("dlg_error_title"),
+                I18N.t("msg_profile_save_failed").format(error=e)
+            )
 
     def load_profile_dialog(self):
         """Opens a file dialog to pick a profile JSON."""
@@ -449,21 +547,22 @@ class SettingsTab(QWidget):
 
             profile_base = os.path.basename(path).replace(".json", "")
             self.profile_name.setText(profile_base)
-
-            # Save to QSettings so it persists
             self.save_settings()
-
-            # Emit signal so MainWindow може да реагира (audit и т.н.)
             self.profile_loaded.emit()
 
-            # Покажи popup само ако изрично е разрешено
             if show_message:
                 QMessageBox.information(
-                    self, "Success", f"Profile '{profile_base}' loaded!"
+                    self,
+                    I18N.t("dlg_success_title"),
+                    I18N.t("msg_profile_loaded").format(name=profile_base),
                 )
 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load profile: {e}")
+            QMessageBox.critical(
+                self,
+                I18N.t("dlg_error_title"),
+                I18N.t("msg_profile_load_failed").format(error=e),
+            )
 
     def apply_template(self):
         """Pre-loads specific prompt structures based on selection."""
@@ -491,7 +590,12 @@ class SettingsTab(QWidget):
 
     def browse_file(self, line_edit, file_filter):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select File", "", file_filter)
+            self,
+            I18N.t("dlg_select_file_title"),
+            "",
+            file_filter
+        )
+
         if file_path:
             line_edit.setText(file_path)
 
@@ -576,7 +680,10 @@ class SettingsTab(QWidget):
     def clear_mismatches(self):
         """Fixed: Using col() to satisfy Pylance type checking."""
         reply = QMessageBox.question(
-            self, "Retry Errors", "Clear ONLY tag mismatches from memory?")
+            self,
+            I18N.t("dlg_retry_errors_title"),
+            I18N.t("msg_retry_errors_clear_tags")
+        )
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 with Session(engine) as session:
@@ -588,19 +695,36 @@ class SettingsTab(QWidget):
                     session.exec(statement)
                     session.commit()
                 QMessageBox.information(
-                    self, "Success", "Error rows cleared from memory.")
+                    self,
+                    I18N.t("dlg_success_title"),
+                    I18N.t("msg_errors_cleared")
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Database Error",
-                                     f"Could not clear errors: {e}")
+                QMessageBox.critical(
+                    self,
+                    I18N.t("dlg_database_error_title"),
+                    I18N.t("msg_clear_errors_failed").format(error=e)
+                )
 
     def clear_memory(self):
-        reply = QMessageBox.question(self, "Wipe All", "Delete ALL saved translations?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            I18N.t("dlg_wipe_all_title"),
+            I18N.t("msg_wipe_all_confirm"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
         if reply == QMessageBox.StandardButton.Yes:
             try:
                 SQLModel.metadata.drop_all(engine)
                 SQLModel.metadata.create_all(engine)
                 QMessageBox.information(
-                    self, "Success", "Memory is now empty.")
+                    self,
+                    I18N.t("dlg_success_title"),
+                    I18N.t("msg_memory_wiped")
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to wipe DB: {e}")
+                QMessageBox.critical(
+                    self,
+                    I18N.t("dlg_error_title"),
+                    I18N.t("msg_wipe_failed").format(error=e)
+                )

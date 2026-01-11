@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
                                QScrollArea, QApplication)
-from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon, QAction
+from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings
 from sqlmodel import select, col
 from services.resource_service import ResourceLoader
@@ -21,6 +21,7 @@ from ui.settings_tab import SettingsTab
 from ui.editor_panel import EditorPanel
 from ui.integrity_tab import IntegrityTab
 from services.llm_service import LLMService
+from core.i18n import I18N
 from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
                            find_translation_conflicts, get_project_integrity_report,
@@ -30,7 +31,7 @@ from core.database import (save_translation, get_cached_record,
 class FoundryGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("FoundryL10n - Workstation")
+        self.setWindowTitle(f"FoundryL10n - {I18N.t('ui_workstation')}")
         self.segments = []
         self.current_row = -1
         self.input_path = Path()
@@ -63,7 +64,8 @@ class FoundryGUI(QMainWindow):
             self.on_profile_loaded_profile)
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
-        self.tabs.addTab(self.settings_tab, "Settings")
+        self.tabs.addTab(self.settings_tab, I18N.t("tab_settings"))
+
 
         # Connect editor actions
         self.editor.btn_translate_now.clicked.connect(
@@ -76,7 +78,7 @@ class FoundryGUI(QMainWindow):
         # Integrity Tab
         self.integrity_tab = IntegrityTab()
         self.integrity_tab.btn_refresh.clicked.connect(self.run_integrity_scan)
-        self.tabs.addTab(self.integrity_tab, "Integrity Report")
+        self.tabs.addTab(self.integrity_tab, I18N.t("tab_integrity"))
         self.integrity_tab.btn_auto_normalize.clicked.connect(
             self.run_auto_normalize)
 
@@ -225,11 +227,9 @@ class FoundryGUI(QMainWindow):
 
     # --- LOGIC & SLOTS ---
     def on_profile_loaded_profile(self):
-        # ако няма заредени сегменти — няма какво да правим
         if not hasattr(self, "segments"):
             return
 
-        # ре-аудит
         self.audit_database_consistency()
         self.update_stats()
         self.thought_log.append("Profile Loaded -> Re-Audit Done")
