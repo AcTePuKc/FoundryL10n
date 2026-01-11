@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
                                QScrollArea, QApplication)
-from PySide6.QtGui import QColor, QCursor, QFont, QFontDatabase, QIcon
+from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings
 from sqlmodel import select, col
 from services.resource_service import ResourceLoader
@@ -35,6 +35,11 @@ class FoundryGUI(QMainWindow):
         self.segments = []
         self.current_row = -1
         self.input_path = Path()
+        self._file_loaded = False
+        self._context_menu_indices = []
+        self._context_menu_row = None
+        self._context_menu_count = 0
+        self._history_menu_item = None
         self.llm_service = LLMService()
 
         # Icon
@@ -55,6 +60,7 @@ class FoundryGUI(QMainWindow):
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
         self.setMinimumSize(800, 600)
+        self._init_actions()
 
         self.init_translate_tab()
 
@@ -62,6 +68,8 @@ class FoundryGUI(QMainWindow):
         self.settings_tab.font_changed.connect(self.apply_font_size)
         self.settings_tab.profile_loaded.connect(
             self.on_profile_loaded_profile)
+        if hasattr(self.settings_tab, "language_changed"):
+            self.settings_tab.language_changed.connect(self.retranslate_ui)
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
         self.tabs.addTab(self.settings_tab, I18N.t("tab_settings"))
@@ -85,39 +93,41 @@ class FoundryGUI(QMainWindow):
         # Load states
         self.load_ui_state()
         self.settings_tab.load_settings()
+        self.retranslate_ui()
 
     def init_translate_tab(self):
-        page = QWidget()
-        layout = QVBoxLayout(page)
+        self.translate_tab = QWidget()
+        layout = QVBoxLayout(self.translate_tab)
 
         # --- TOP CONTROL BAR ---
         top_bar = QHBoxLayout()
-        self.btn_open = QPushButton("Open TSV")
+        self.btn_open = QPushButton(I18N.t("btn_open_tsv"))
         self.btn_open.clicked.connect(self.open_file)
 
-        self.file_label = QLabel("No file selected")
+        self.file_label = QLabel(I18N.t("ui_no_file_selected"))
         self.file_label.setStyleSheet("color: #888; font-style: italic;")
 
         self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Filter keys or text...")
+        self.search_bar.setPlaceholderText(I18N.t("ui_search_placeholder"))
         self.search_bar.textChanged.connect(self.filter_table)
 
-        self.cb_only_errors = QCheckBox("Show Only Errors")
+        self.cb_only_errors = QCheckBox(I18N.t("ui_show_only_errors"))
         self.cb_only_errors.toggled.connect(self.filter_table)
 
-        self.btn_toggle_editor = QPushButton("Toggle Editor")
+        self.btn_toggle_editor = QPushButton(I18N.t("btn_toggle_editor"))
         self.btn_toggle_editor.setCheckable(True)
         self.btn_toggle_editor.setChecked(True)
         self.btn_toggle_editor.clicked.connect(self.toggle_editor)
 
-        self.btn_zen = QPushButton("Zen Mode")
+        self.btn_zen = QPushButton(I18N.t("btn_zen_mode"))
         self.btn_zen.setCheckable(True)
         self.btn_zen.clicked.connect(self.toggle_zen_mode)
         top_bar.addWidget(self.btn_zen)
 
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.file_label, 1)  # Give it stretch
-        top_bar.addWidget(QLabel("Search:"))
+        self.search_label = QLabel(I18N.t("ui_search_label"))
+        top_bar.addWidget(self.search_label)
         top_bar.addWidget(self.search_bar)
         top_bar.addWidget(self.cb_only_errors)
         top_bar.addWidget(self.btn_toggle_editor)
@@ -137,7 +147,12 @@ class FoundryGUI(QMainWindow):
 
         # Headers
         self.table.setHorizontalHeaderLabels(
-            ["State", "Key", "Source", "Translation"])
+            [
+                I18N.t("header_state"),
+                I18N.t("header_key"),
+                I18N.t("header_source"),
+                I18N.t("header_translation"),
+            ])
 
         # Column resize: Excel-like (drag)
         header = self.table.horizontalHeader()
@@ -197,24 +212,16 @@ class FoundryGUI(QMainWindow):
         bottom = QHBoxLayout()
         self.progress_bar = QProgressBar()
 
-        self.cb_follow = QCheckBox("Follow")
+        self.cb_follow = QCheckBox(I18N.t("ui_follow"))
         self.cb_follow.setChecked(True)
 
-        self.btn_run = QPushButton("Start Bulk Translation")
+        self.btn_run = QPushButton(I18N.t("ui_start_bulk"))
         self.btn_run.clicked.connect(self.handle_run_clicked)
         self.btn_run.setMinimumHeight(40)
         self.btn_run.setStyleSheet("font-weight: bold;")
 
         self.lbl_stats = QLabel(
-            "\U0001f7e2 0 | \U0001f7e1 0 | \U0001f536 0 | \U0001f534 0 | \U0001f535 0 | \u26aa 0")
-        self.lbl_stats.setToolTip(
-            "\U0001f7e2 QA Done (Verified)\\n"
-            "\U0001f7e1 AI Draft (Needs Review)\\n"
-            "\U0001f536 Risk Alert (Term Missing/Anomaly)\\n"
-            "\U0001f534 Tag Error\\n"
-            "\U0001f535 Translation Conflict\\n"
-            "\u26aa Pending"
-        )
+            self._format_stats_text(0, 0, 0, 0, 0, 0))
 
         bottom.addWidget(self.progress_bar)
         bottom.addWidget(self.cb_follow)
@@ -222,8 +229,134 @@ class FoundryGUI(QMainWindow):
         bottom.addWidget(self.btn_run)
         layout.addLayout(bottom)
 
-        self.tabs.addTab(page, "Workstation")
+        self.tabs.addTab(self.translate_tab, I18N.t("tab_workstation"))
         self.table.itemChanged.connect(self.on_table_cell_edited)
+
+    def _init_actions(self):
+        self.action_verify_rows = QAction(self)
+        self.action_verify_rows.triggered.connect(self._handle_bulk_verify)
+
+        self.action_unverify_rows = QAction(self)
+        self.action_unverify_rows.triggered.connect(self._handle_bulk_unverify)
+
+        self.action_skip_rows = QAction(self)
+        self.action_skip_rows.triggered.connect(self._handle_bulk_skip)
+
+        self.action_clear_translations = QAction(self)
+        self.action_clear_translations.triggered.connect(
+            self._handle_clear_selected_translations)
+
+        self.action_purge_memory = QAction(self)
+        self.action_purge_memory.triggered.connect(self.remove_current_from_memory)
+
+        self.action_generate_pseudo = QAction(self)
+        self.action_generate_pseudo.triggered.connect(self.run_pseudo_batch)
+
+        self.action_purge_record = QAction(self)
+        self.action_purge_record.triggered.connect(self.remove_current_from_memory)
+
+        self.action_copy_source = QAction(self)
+        self.action_copy_source.triggered.connect(self._handle_copy_source)
+
+        self.action_mark_verified = QAction(self)
+        self.action_mark_verified.triggered.connect(self._handle_mark_verified)
+
+        self.action_never_translate = QAction(self)
+        self.action_never_translate.triggered.connect(self._handle_never_translate)
+
+        self.action_clear_translation = QAction(self)
+        self.action_clear_translation.triggered.connect(self._handle_clear_translation)
+
+        self.action_search_replace = QAction(self)
+        self.action_search_replace.triggered.connect(self.show_find_replace)
+
+        self.action_export_verified = QAction(self)
+        self.action_export_verified.triggered.connect(self.export_verified_glossary)
+
+        self.action_history_delete = QAction(self)
+        self.action_history_delete.triggered.connect(self._handle_history_delete)
+
+    def _update_context_menu_texts(self, count: int) -> None:
+        self.action_verify_rows.setText(
+            I18N.t("menu_verify_rows").format(count=count)
+        )
+        self.action_unverify_rows.setText(
+            I18N.t("menu_unverify_rows").format(count=count)
+        )
+        self.action_skip_rows.setText(
+            I18N.t("menu_skip_rows").format(count=count)
+        )
+        self.action_clear_translations.setText(
+            I18N.t("menu_clear_translations").format(count=count)
+        )
+        self.action_purge_memory.setText(I18N.t("menu_purge_memory"))
+        self.action_generate_pseudo.setText(I18N.t("menu_generate_pseudo"))
+        self.action_purge_record.setText(I18N.t("menu_purge_record"))
+        self.action_copy_source.setText(I18N.t("menu_copy_source"))
+        self.action_mark_verified.setText(I18N.t("menu_mark_verified"))
+        self.action_never_translate.setText(I18N.t("menu_never_translate"))
+        self.action_clear_translation.setText(I18N.t("menu_clear_translation"))
+        self.action_search_replace.setText(I18N.t("menu_search_replace"))
+        self.action_export_verified.setText(I18N.t("menu_export_verified"))
+        self.action_history_delete.setText(I18N.t("menu_history_delete"))
+
+    def _handle_bulk_verify(self):
+        if self._context_menu_indices:
+            self.bulk_verify_selected(self._context_menu_indices)
+
+    def _handle_bulk_unverify(self):
+        if self._context_menu_indices:
+            self.bulk_unverify_selected(self._context_menu_indices)
+
+    def _handle_bulk_skip(self):
+        if self._context_menu_indices:
+            self.bulk_skip_selected(self._context_menu_indices)
+
+    def _handle_clear_selected_translations(self):
+        if self._context_menu_indices:
+            self.clear_selected_rows()
+
+    def _handle_copy_source(self):
+        if self._context_menu_row is not None:
+            self.quick_action(self._context_menu_row, "copy")
+
+    def _handle_mark_verified(self):
+        if self._context_menu_row is not None:
+            self.quick_action(self._context_menu_row, "verify")
+
+    def _handle_never_translate(self):
+        if self._context_menu_row is not None:
+            self.quick_action(self._context_menu_row, "skip")
+
+    def _handle_clear_translation(self):
+        if self._context_menu_row is not None:
+            self.quick_action(self._context_menu_row, "clear")
+
+    def _handle_history_delete(self):
+        if not self._history_menu_item:
+            return
+        settings = self.settings_tab.get_settings()
+        seg = self.segments[self.current_row]
+
+        record = get_cached_record(
+            seg.source_text,
+            settings['lang'],
+            project_name=settings.get('project_name', 'default')
+        )
+
+        if record and record.history_json:
+            try:
+                h_data = json.loads(record.history_json)
+                new_h = [v for v in h_data if v != self._history_menu_item.text()]
+
+                with Session(engine) as session:
+                    session.add(record)
+                    record.history_json = json.dumps(new_h)
+                    session.commit()
+
+                self.on_row_selected()
+            except Exception as e:
+                print(f"History purge error: {e}")
 
     # --- LOGIC & SLOTS ---
     def on_profile_loaded_profile(self):
@@ -232,7 +365,7 @@ class FoundryGUI(QMainWindow):
 
         self.audit_database_consistency()
         self.update_stats()
-        self.thought_log.append("Profile Loaded -> Re-Audit Done")
+        self.thought_log.append(I18N.t("log_profile_loaded"))
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
@@ -273,7 +406,7 @@ class FoundryGUI(QMainWindow):
             if "[TAG ERROR]" in seg.translation or not seg.translation or not seg.is_verified:
                 self.table.setCurrentCell(i, 1)
                 return
-        self.thought_log.append("<b>[INFO]</b>: Reached the end of the file.")
+        self.thought_log.append(I18N.t("log_end_of_file"))
 
     def _auto_fit_column(self, index):
         if index > 0:  # Don't auto-fit the icon column
@@ -308,14 +441,20 @@ class FoundryGUI(QMainWindow):
 
     def run_auto_normalize(self):
         settings = self.settings_tab.get_settings()
-        reply = QMessageBox.question(self, "Auto-Normalize",
-                                     "This will pick the most frequent translation for every conflict in the database and apply it. Proceed?")
+        reply = QMessageBox.question(
+            self,
+            I18N.t("dlg_auto_normalize_title"),
+            I18N.t("msg_auto_normalize_confirm"),
+        )
         if reply == QMessageBox.StandardButton.Yes:
             from core.database import auto_normalize_all_conflicts
             count = auto_normalize_all_conflicts(
                 settings['project_name'], settings['lang'])
             QMessageBox.information(
-                self, "Success", f"Cleaned up {count} inconsistent records in Memory.")
+                self,
+                I18N.t("dlg_success_title"),
+                I18N.t("msg_auto_normalize_success").format(count=count),
+            )
             self.run_integrity_scan()  # Refresh the list
             self.refresh_table_from_db()  # Refresh the workstation icons
 
@@ -325,9 +464,12 @@ class FoundryGUI(QMainWindow):
         if not indices:
             return
 
-        reply = QMessageBox.question(self, "Forget Translation",
-                                     f"Delete {len(indices)} rows from permanent memory?\nThis cannot be undone.",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            I18N.t("dlg_forget_translation_title"),
+            I18N.t("msg_forget_translation_confirm").format(count=len(indices)),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
 
         if reply == QMessageBox.StandardButton.Yes:
             from core.database import delete_record
@@ -342,12 +484,15 @@ class FoundryGUI(QMainWindow):
                 # 2. Reset the UI segment
                 seg.translation = ""
                 seg.is_verified = False
-                seg.thought = "Purged from memory"
+                seg.thought = I18N.t("thought_purged_memory")
                 self.update_row_visuals(row)
 
             self.update_stats()
             QMessageBox.information(
-                self, "Success", "Segments purged from database.")
+                self,
+                I18N.t("dlg_success_title"),
+                I18N.t("msg_segments_purged"),
+            )
 
     def clear_selected_rows(self):
         """Wipes translations for all highlighted rows in UI and DB."""
@@ -356,9 +501,12 @@ class FoundryGUI(QMainWindow):
         if not indices:
             return
 
-        reply = QMessageBox.question(self, "Clear Selected",
-                                     f"Wipe translations for {len(indices)} selected rows?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(
+            self,
+            I18N.t("dlg_clear_selected_title"),
+            I18N.t("msg_clear_selected_confirm").format(count=len(indices)),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        )
 
         if reply == QMessageBox.StandardButton.Yes:
             settings = self.settings_tab.get_settings()
@@ -376,7 +524,7 @@ class FoundryGUI(QMainWindow):
                 seg.translation = ""
                 seg.is_verified = False
                 seg.never_translate = False
-                seg.thought = "Wiped by user"
+                seg.thought = I18N.t("thought_wiped_by_user")
 
                 # Update Database (Save as empty string)
                 save_translation(
@@ -421,11 +569,11 @@ class FoundryGUI(QMainWindow):
         if self.current_row < 0:
             return
 
-        # Ако вече има работещ single_worker → това действие е STOP
+        # If a single worker is already running, this action is STOP.
         if hasattr(self, "single_worker") and self.single_worker.isRunning():
             self.single_worker.stop()
-            # по желание: self.single_worker.terminate() ако stop() не стига
-            self.editor.btn_translate_now.setText("🤖 Translate Line")
+            # Optional: self.single_worker.terminate() if stop() is insufficient.
+            self.editor.btn_translate_now.setText(I18N.t("btn_translate_line"))
             self.editor.btn_translate_now.setStyleSheet(
                 "background-color: #34495e; color: white;"
             )
@@ -434,8 +582,8 @@ class FoundryGUI(QMainWindow):
         seg = self.segments[self.current_row]
         settings = self.settings_tab.get_settings()
 
-        # Влизаме в режим "мисли"
-        self.editor.btn_translate_now.setText("🛑 Stop Thinking")
+        # Enter the "thinking" mode.
+        self.editor.btn_translate_now.setText(I18N.t("btn_stop_thinking"))
         self.editor.btn_translate_now.setStyleSheet(
             "background-color: #c0392b; color: white;"
         )
@@ -460,7 +608,7 @@ class FoundryGUI(QMainWindow):
 
     def on_single_done(self, result):
         self.editor.btn_translate_now.setEnabled(True)
-        self.editor.btn_translate_now.setText("🤖 Translate Line")
+        self.editor.btn_translate_now.setText(I18N.t("btn_translate_line"))
 
         # Update visuals and editor content
         self.update_row_visuals(self.current_row)
@@ -469,6 +617,16 @@ class FoundryGUI(QMainWindow):
             seg.translation.replace("[TAG ERROR] ", ""))
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
         self.update_stats()
+
+    def _format_stats_text(self, verified, draft, risk, error, conflict, pending):
+        return I18N.t("stats_template").format(
+            verified=verified,
+            draft=draft,
+            risk=risk,
+            error=error,
+            conflict=conflict,
+            pending=pending,
+        )
 
     def update_selection_info(self):
         """Updates the status bar with selection count without making the window explode."""
@@ -494,12 +652,17 @@ class FoundryGUI(QMainWindow):
                 else:
                     pend += 1
 
-        stats_text = f"🟢 {v} | 🟡 {qa} | 🔶 {risk} | 🔴 {err} | 🔵 {conflict} | ⚪ {pend}"
+        stats_text = self._format_stats_text(v, qa, risk, err, conflict, pend)
 
         # 2. Add selection info ONLY if more than 1 is selected
         # HERO FIX: We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
         if count > 1:
-            self.lbl_stats.setText(f"SELECTED: {count} rows | {stats_text}")
+            self.lbl_stats.setText(
+                I18N.t("stats_selected_template").format(
+                    count=count,
+                    stats=stats_text,
+                )
+            )
         else:
             self.lbl_stats.setText(stats_text)
 
@@ -583,9 +746,9 @@ class FoundryGUI(QMainWindow):
 
         if match:
             info = (
-                f"Score: {match['score']}%\n"
-                f"Source: {match['source']}\n"
-                f"Suggestion: {match['translation']}"
+                f"{I18N.t('fuzzy_score').format(score=match['score'])}\n"
+                f"{I18N.t('fuzzy_source').format(source=match['source'])}\n"
+                f"{I18N.t('fuzzy_suggestion').format(translation=match['translation'])}"
             )
             self.editor.fuzzy_display.setText(info)
             self.editor.btn_use_fuzzy.setVisible(True)
@@ -596,7 +759,7 @@ class FoundryGUI(QMainWindow):
         self.editor.trans_edit.setPlainText(text)
         self.editor.btn_use_fuzzy.setVisible(False)
         self.thought_log.append(
-            "<b>[SMART]</b>: Applied fuzzy match suggestion.")
+            I18N.t("log_fuzzy_applied"))
 
     def nav_error(self, direction):
         """Navigates to the next or previous Red row."""
@@ -622,7 +785,7 @@ class FoundryGUI(QMainWindow):
         # 2) Update segment state (SYNC is important)
         seg.translation = new_text
         seg.is_verified = True  # Save always verifies
-        seg.thought = "Verified by Human"
+        seg.thought = I18N.t("thought_verified_by_human")
         self.editor.cb_verified.setChecked(True)
 
         # 3) Project/Lang
@@ -730,51 +893,39 @@ class FoundryGUI(QMainWindow):
         if not selected_indices:
             return
 
+        self._context_menu_indices = selected_indices
+        self._context_menu_row = selected_indices[0].row()
         menu = QMenu(self)
         count = len(selected_indices)
+        self._context_menu_count = count
+        self._update_context_menu_texts(count)
 
         if count > 1:
             # --- MULTI-ROW ACTIONS ---
-            menu.addAction(f"🟢 Verify {count} Rows").triggered.connect(
-                lambda: self.bulk_verify_selected(selected_indices))
-
-            menu.addAction(f"⚪ Unverify {count} Rows").triggered.connect(
-                lambda: self.bulk_unverify_selected(selected_indices))
-
-            menu.addAction(f"⚪ Skip {count} (Never Translate)").triggered.connect(
-                lambda: self.bulk_skip_selected(selected_indices))
+            menu.addAction(self.action_verify_rows)
+            menu.addAction(self.action_unverify_rows)
+            menu.addAction(self.action_skip_rows)
 
             menu.addSeparator()
-            menu.addAction("🔥 Purge from Memory (Delete Record)").triggered.connect(
-                self.remove_current_from_memory)
+            menu.addAction(self.action_purge_memory)
 
             menu.addSeparator()
-            menu.addAction("🧪 Generate Pseudo-Loc").triggered.connect(self.run_pseudo_batch)
-            menu.addAction("🔥 Purge Record").triggered.connect(self.remove_current_from_memory)
-
-            menu.addAction(f"🗑️ Clear {count} Translations").triggered.connect(
-                self.clear_selected_rows)
+            menu.addAction(self.action_generate_pseudo)
+            menu.addAction(self.action_purge_record)
+            menu.addAction(self.action_clear_translations)
         else:
             # --- SINGLE-ROW ACTIONS ---
-            row = selected_indices[0].row()
-            menu.addAction("📋 Copy Source").triggered.connect(
-                lambda: self.quick_action(row, "copy"))
-            menu.addAction("🟢 Mark Verified").triggered.connect(
-                lambda: self.quick_action(row, "verify"))
-            menu.addAction("⚪ Never Translate").triggered.connect(
-                lambda: self.quick_action(row, "skip"))
+            menu.addAction(self.action_copy_source)
+            menu.addAction(self.action_mark_verified)
+            menu.addAction(self.action_never_translate)
             menu.addSeparator()
-            menu.addAction("🗑️ Clear Translation (Del)").triggered.connect(
-                lambda: self.quick_action(row, "clear"))
-            menu.addAction("🔥 Purge Record").triggered.connect(
-                self.remove_current_from_memory)
+            menu.addAction(self.action_clear_translation)
+            menu.addAction(self.action_purge_record)
 
         # --- GLOBAL ACTIONS ---
         menu.addSeparator()
-        menu.addAction("🔍 Search & Replace...").triggered.connect(
-            self.show_find_replace)
-        menu.addAction("📦 Export Verified to Glossary...").triggered.connect(
-            self.export_verified_glossary)
+        menu.addAction(self.action_search_replace)
+        menu.addAction(self.action_export_verified)
 
         # Map local table coordinates to global screen coordinates correctly
         menu.exec(self.table.viewport().mapToGlobal(pos))
@@ -908,23 +1059,25 @@ class FoundryGUI(QMainWindow):
                 item.setForeground(QColor("#eeeeee"))
 
         # --- TOOLTIP LOGIC (derived from resolved state) ---
-        status_msg = f"Status: {icon}\n"
+        status_msg = I18N.t("status_header").format(icon=icon) + "\n"
 
         if is_skip:
-            status_msg += "Row is LOCKED and invisible to AI."
+            status_msg += I18N.t("status_locked")
         elif is_conflict:
-            status_msg += "CONFLICT: Database has multiple translations for this text."
+            status_msg += I18N.t("status_conflict")
         elif has_tag_error:
-            status_msg += "TAG MISMATCH: AI moved or deleted anchors."
+            status_msg += I18N.t("status_tag_error")
         elif has_risk:
             # Extract first audit warning safely
-            status_msg += f"AUDIT ALERT: {thought.split('|')[0].strip()}"
+            status_msg += I18N.t("status_audit_alert").format(
+                issue=thought.split('|')[0].strip()
+            )
         elif is_verified:
-            status_msg += "VERIFIED: Human checked and approved."
+            status_msg += I18N.t("status_verified")
         elif translation:
-            status_msg += "AI DRAFT: Needs human review."
+            status_msg += I18N.t("status_ai_draft")
         else:
-            status_msg += "UNTRANSLATED."
+            status_msg += I18N.t("status_untranslated")
 
         if state_item:
             state_item.setToolTip(status_msg)
@@ -945,11 +1098,18 @@ class FoundryGUI(QMainWindow):
         self.update_stats()
 
     def show_find_replace(self):
-        text_find, ok1 = QInputDialog.getText(self, "Find", "Text to find:")
+        text_find, ok1 = QInputDialog.getText(
+            self,
+            I18N.t("dlg_find_title"),
+            I18N.t("msg_find_text"),
+        )
         if not ok1 or not text_find:
             return
         text_replace, ok2 = QInputDialog.getText(
-            self, "Replace", f"Replace '{text_find}' with:")
+            self,
+            I18N.t("dlg_replace_title"),
+            I18N.t("msg_replace_with").format(text=text_find),
+        )
         if not ok2:
             return
 
@@ -965,7 +1125,10 @@ class FoundryGUI(QMainWindow):
             self.update_row_visuals(i)
 
         QMessageBox.information(
-            self, "Finished", f"Replaced {count} occurrences.")
+            self,
+            I18N.t("dlg_replace_complete_title"),
+            I18N.t("msg_replace_complete").format(count=count),
+        )
 
     def on_tab_changed(self, index):
         """If returning to the workstation, refresh the icons based on current project."""
@@ -979,37 +1142,10 @@ class FoundryGUI(QMainWindow):
         if not item:
             return
 
+        self._history_menu_item = item
         menu = QMenu()
-        # Simply add the action without assigning it to a variable
-        menu.addAction("🗑️ Delete this version from history")
-
-        # If the user clicks the action, menu.exec returns the action object (True-ish)
-        if menu.exec(QCursor.pos()):
-            settings = self.settings_tab.get_settings()
-            seg = self.segments[self.current_row]
-
-            from core.database import get_cached_record, Session, engine
-            record = get_cached_record(
-                seg.source_text,
-                settings['lang'],
-                project_name=settings.get('project_name', 'default')
-            )
-
-            if record and record.history_json:
-                try:
-                    h_data = json.loads(record.history_json)
-                    # Filter out the specific text from this history item
-                    new_h = [v for v in h_data if v != item.text()]
-
-                    with Session(engine) as session:
-                        session.add(record)
-                        record.history_json = json.dumps(new_h)
-                        session.commit()
-
-                    # Refresh the side panel to show the updated list
-                    self.on_row_selected()
-                except Exception as e:
-                    print(f"History purge error: {e}")
+        menu.addAction(self.action_history_delete)
+        menu.exec(QCursor.pos())
 
     def refresh_table_from_db(self):
         """Force-syncs table with DB, preserving session-specific errors and risks."""
@@ -1039,7 +1175,7 @@ class FoundryGUI(QMainWindow):
 
                     # Only overwrite the thought if it doesn't contain a session warning
                     if not has_warning:
-                        seg.thought = "Restored from Memory"
+                        seg.thought = I18N.t("thought_restored_from_memory")
             else:
                 # If no record in DB, we keep what we have in memory (preserving [TAG ERROR])
                 pass
@@ -1081,8 +1217,8 @@ class FoundryGUI(QMainWindow):
 
         choice, ok = QInputDialog.getItem(
             self,
-            "Resolve Conflict",
-            f"Pick the correct translation for:\n\n{source}",
+            I18N.t("dlg_resolve_conflict_title"),
+            I18N.t("msg_resolve_conflict_prompt").format(source=source),
             variants,
             0,
             False,
@@ -1092,8 +1228,8 @@ class FoundryGUI(QMainWindow):
             normalize_project_term(project_name, lang, source, choice)
             QMessageBox.information(
                 self,
-                "Success",
-                "Database normalized. Run the scan again to verify updated conflicts.",
+                I18N.t("dlg_success_title"),
+                I18N.t("msg_resolve_conflict_success"),
             )
 
             # Refresh Integrity Hub and table markers
@@ -1129,19 +1265,23 @@ class FoundryGUI(QMainWindow):
 
         if count > 0:
             self.thought_log.append(
-                f"<b>[INTEGRITY]</b>: Found {count} rows with inconsistent translations (🔵)")
+                I18N.t("log_integrity_found").format(count=count))
             self.update_stats()
 
     def global_db_replace(self):
         """Finds and replaces text across the ENTIRE database for this project/lang."""
         text_find, ok1 = QInputDialog.getText(
-            self, "Global DB Fix", "Find in Database (Translation column):"
+            self,
+            I18N.t("dlg_global_db_fix_title"),
+            I18N.t("msg_global_db_find"),
         )
         if not ok1 or not text_find:
             return
 
         text_replace, ok2 = QInputDialog.getText(
-            self, "Global DB Fix", f"Replace '{text_find}' with:"
+            self,
+            I18N.t("dlg_global_db_fix_title"),
+            I18N.t("msg_global_db_replace_with").format(text=text_find),
         )
         if not ok2:
             return
@@ -1160,13 +1300,16 @@ class FoundryGUI(QMainWindow):
 
             if not records:
                 QMessageBox.information(
-                    self, "Global Fix", "No matches found in database.")
+                    self,
+                    I18N.t("dlg_global_db_fix_title"),
+                    I18N.t("msg_global_db_no_matches"),
+                )
                 return
 
             reply = QMessageBox.question(
                 self,
-                "Confirm Global Fix",
-                f"This will update {len(records)} entries in your permanent memory. Proceed?",
+                I18N.t("dlg_global_db_confirm_title"),
+                I18N.t("msg_global_db_confirm").format(count=len(records)),
             )
             if reply == QMessageBox.StandardButton.Yes:
                 for r in records:
@@ -1179,8 +1322,8 @@ class FoundryGUI(QMainWindow):
 
         QMessageBox.information(
             self,
-            "Success",
-            f"Updated {len(records)} records in Memory. Reload file to see changes.",
+            I18N.t("dlg_success_title"),
+            I18N.t("msg_global_db_success").format(count=len(records)),
         )
 
     def keyPressEvent(self, event):
@@ -1215,7 +1358,7 @@ class FoundryGUI(QMainWindow):
 
         # 1. Update the text with clear separators
         self.lbl_stats.setText(
-            f"🟢 {v} | 🟡 {qa} | 🔶 {risk} | 🔴 {err} | 🔵 {conflict} |  ⚪ {pend}"
+            self._format_stats_text(v, qa, risk, err, conflict, pend)
         )
         self.lbl_stats.setStyleSheet("""
             QLabel { 
@@ -1230,24 +1373,42 @@ class FoundryGUI(QMainWindow):
 
         # 2. Update the Tooltip (Hover info)
         self.lbl_stats.setToolTip(
-            "<b>Foundry Dashboard Status:</b><br>"
-            "🟢 QA Done (Human Verified)<br>"
-            "🟡 AI Draft (Needs Review)<br>"
-            "🔶 Risk Alert (Term Missing or Length Anomaly)<br>"
-            "🔴 Tag Error (Technical Mismatch)<br>"
-            "🔵 Consistency Conflict (Same English has different BG in DB)<br>"
-            "⚪ Pending (Untouched)"
+            I18N.t("stats_tooltip").format(
+                title=I18N.t("stats_tooltip_title"),
+                verified=I18N.t("stats_tooltip_verified"),
+                draft=I18N.t("stats_tooltip_draft"),
+                risk=I18N.t("stats_tooltip_risk"),
+                error=I18N.t("stats_tooltip_error"),
+                conflict=I18N.t("stats_tooltip_conflict"),
+                pending=I18N.t("stats_tooltip_pending"),
+            )
         )
+
+    def _update_run_button_text(self):
+        if hasattr(self, 'worker') and self.worker.isRunning():
+            self.btn_run.setText(I18N.t("ui_stop_bulk"))
+        else:
+            self.btn_run.setText(I18N.t("ui_start_bulk"))
+
+    def _update_translate_button_text(self):
+        if hasattr(self, "single_worker") and self.single_worker.isRunning():
+            self.editor.btn_translate_now.setText(I18N.t("btn_stop_thinking"))
+        else:
+            self.editor.btn_translate_now.setText(I18N.t("btn_translate_line"))
 
     def open_file(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Open TSV", "", "TSV Files (*.tsv)"
+            self,
+            I18N.t("dlg_open_tsv_title"),
+            "",
+            I18N.t("filter_tsv"),
         )
         if not path:
             return
 
         self.input_path = Path(path)
         self.file_label.setText(str(self.input_path))
+        self._file_loaded = True
 
         # PERFORMANCE: Freeze table updates while we populate rows
         self.table.setUpdatesEnabled(False)
@@ -1280,7 +1441,7 @@ class FoundryGUI(QMainWindow):
                     seg.is_verified = record.is_verified
                     seg.never_translate = record.never_translate
                     seg.ai_draft = record.ai_draft
-                    seg.thought = "Restored from Memory"
+                    seg.thought = I18N.t("thought_restored_from_memory")
 
                     # Run audit immediately so 🔶 appears on rows already in DB
                     if seg.translation and "[TAG ERROR]" not in seg.translation:
@@ -1314,14 +1475,14 @@ class FoundryGUI(QMainWindow):
     def handle_run_clicked(self):
         if hasattr(self, 'worker') and self.worker.isRunning():
             self.worker.stop()
-            self.btn_run.setText("Start Bulk")
+            self.btn_run.setText(I18N.t("ui_start_bulk"))
             self.progress_bar.setValue(0)  # RESET BAR
         else:
             self.start_translation()
 
     def start_translation(self):
         settings = self.settings_tab.get_settings()
-        self.btn_run.setText("Stop Bulk Translation")
+        self.btn_run.setText(I18N.t("ui_stop_bulk"))
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
 
@@ -1366,7 +1527,7 @@ class FoundryGUI(QMainWindow):
         """When you double-click a history item, it puts it in the editor."""
         version_text = item.text()
         self.editor.trans_edit.setPlainText(version_text)
-        self.thought_log.append("Restored version from history list.")
+        self.thought_log.append(I18N.t("log_history_restored"))
 
     def rollback_to_ai(self):
         """Restores the translation to the original AI draft."""
@@ -1376,15 +1537,21 @@ class FoundryGUI(QMainWindow):
 
         if seg.ai_draft:
             self.editor.trans_edit.setPlainText(seg.ai_draft)
-            self.thought_log.append("Rolled back to original AI Draft.")
+            self.thought_log.append(I18N.t("log_rollback_ai"))
         else:
             QMessageBox.information(
-                self, "No History", "No AI Draft found for this line.")
+                self,
+                I18N.t("dlg_no_history_title"),
+                I18N.t("msg_no_ai_draft"),
+            )
 
     def bulk_skip_selected(self, indices):
         """Marks all selected rows as 'Never Translate'."""
-        reply = QMessageBox.question(self, "Never Translate",
-                                     f"Mark {len(indices)} rows as 'Never Translate'? They will be skipped by the AI.")
+        reply = QMessageBox.question(
+            self,
+            I18N.t("dlg_never_translate_title"),
+            I18N.t("msg_never_translate_confirm").format(count=len(indices)),
+        )
         if reply == QMessageBox.StandardButton.Yes:
             settings = self.settings_tab.get_settings()
             lang = settings.get('lang', 'BG')
@@ -1397,7 +1564,7 @@ class FoundryGUI(QMainWindow):
                 seg.translation = seg.source_text
                 seg.is_verified = False
                 seg.never_translate = True
-                seg.thought = "Never Translate (Bulk)"
+                seg.thought = I18N.t("thought_never_translate_bulk")
                 # skip=True tells the DB to never send this to LLM
                 save_translation(
                     seg.source_text,
@@ -1447,7 +1614,10 @@ class FoundryGUI(QMainWindow):
             s for s in self.segments if getattr(s, "is_verified", False)]
         if not verified_segments:
             QMessageBox.warning(
-                self, "Export", "No verified segments found to export.")
+                self,
+                I18N.t("dlg_export_title"),
+                I18N.t("msg_export_no_verified"),
+            )
             return
 
         # 2) Build default filename from project + language
@@ -1459,9 +1629,9 @@ class FoundryGUI(QMainWindow):
         # 3) Ask user where to save
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Save Verified Glossary",
+            I18N.t("dlg_save_verified_glossary_title"),
             default_name,
-            "TSV Files (*.tsv)",
+            I18N.t("filter_tsv"),
         )
         if not path:
             return
@@ -1492,8 +1662,11 @@ class FoundryGUI(QMainWindow):
                             if term and trans:
                                 existing_pairs.add((term, trans))
             except (OSError, csv.Error) as e:
-                QMessageBox.critical(self, "Export Error",
-                                     f"Failed to read existing glossary:\n{e}")
+                QMessageBox.critical(
+                    self,
+                    I18N.t("dlg_export_error_title"),
+                    I18N.t("msg_export_read_failed").format(error=e),
+                )
                 return
 
         # 6) Append new lines without duplicates
@@ -1528,22 +1701,28 @@ class FoundryGUI(QMainWindow):
                     existing_pairs.add(key)
                     exported_count += 1
         except OSError as e:
-            QMessageBox.critical(self, "Export Error",
-                                 f"Failed to write glossary:\n{e}")
+            QMessageBox.critical(
+                self,
+                I18N.t("dlg_export_error_title"),
+                I18N.t("msg_export_write_failed").format(error=e),
+            )
             return
 
         # 7) User feedback
         if exported_count > 0:
             QMessageBox.information(
                 self,
-                "Export Complete",
-                f"Added {exported_count} new terms to glossary:\n{os.path.basename(path)}",
+                I18N.t("dlg_export_complete_title"),
+                I18N.t("msg_export_complete").format(
+                    count=exported_count,
+                    filename=os.path.basename(path),
+                ),
             )
         else:
             QMessageBox.information(
                 self,
-                "No New Terms",
-                "All verified term/translation pairs are already in this glossary.",
+                I18N.t("dlg_export_no_new_terms_title"),
+                I18N.t("msg_export_no_new_terms"),
             )
 
     def update_row_ui(self, val):
@@ -1555,7 +1734,7 @@ class FoundryGUI(QMainWindow):
 
     def on_done(self, result):
         self.btn_run.setEnabled(True)
-        self.btn_run.setText("Start Bulk Translation")
+        self.btn_run.setText(I18N.t("ui_start_bulk"))
         self.btn_run.setStyleSheet("font-weight: bold;")
         self.save_ui_state()
         self.settings_tab.save_settings()
@@ -1564,7 +1743,9 @@ class FoundryGUI(QMainWindow):
         settings = self.settings_tab.get_settings()
         out = Path("out") / settings['lang'] / self.input_path.name
         parser.save_tsv(result, out)
-        self.file_label.setText(f"Finished! Saved to: {out}")
+        self.file_label.setText(
+            I18N.t("msg_file_saved").format(path=out)
+        )
 
     def save_ui_state(self):
         """Saves window geometry, splitter, table header, and current tab."""
@@ -1633,6 +1814,57 @@ class FoundryGUI(QMainWindow):
         except Exception as exc:
             # We use a simple print here so startup doesn't crash if config is corrupted
             print(f"UI Restore Warning: {exc}")
+
+    def retranslate_ui(self):
+        self.setWindowTitle(f"FoundryL10n - {I18N.t('ui_workstation')}")
+
+        if hasattr(self, "translate_tab"):
+            self.tabs.setTabText(
+                self.tabs.indexOf(self.translate_tab),
+                I18N.t("tab_workstation"),
+            )
+        self.tabs.setTabText(
+            self.tabs.indexOf(self.settings_tab),
+            I18N.t("tab_settings"),
+        )
+        if hasattr(self, "integrity_tab"):
+            self.tabs.setTabText(
+                self.tabs.indexOf(self.integrity_tab),
+                I18N.t("tab_integrity"),
+            )
+
+        self.btn_open.setText(I18N.t("btn_open_tsv"))
+        if not self._file_loaded:
+            self.file_label.setText(I18N.t("ui_no_file_selected"))
+        self.search_label.setText(I18N.t("ui_search_label"))
+        self.search_bar.setPlaceholderText(I18N.t("ui_search_placeholder"))
+        self.cb_only_errors.setText(I18N.t("ui_show_only_errors"))
+        self.btn_toggle_editor.setText(I18N.t("btn_toggle_editor"))
+        self.btn_zen.setText(I18N.t("btn_zen_mode"))
+        self.cb_follow.setText(I18N.t("ui_follow"))
+
+        self.table.setHorizontalHeaderLabels(
+            [
+                I18N.t("header_state"),
+                I18N.t("header_key"),
+                I18N.t("header_source"),
+                I18N.t("header_translation"),
+            ]
+        )
+
+        self._update_run_button_text()
+        if hasattr(self, "editor"):
+            self._update_translate_button_text()
+
+        self._update_context_menu_texts(self._context_menu_count)
+        self.update_stats()
+
+        if hasattr(self.settings_tab, "retranslate_ui"):
+            self.settings_tab.retranslate_ui()
+        if hasattr(self, "integrity_tab") and hasattr(
+            self.integrity_tab, "retranslate_ui"
+        ):
+            self.integrity_tab.retranslate_ui()
 
     def closeEvent(self, event):
         """Stops all threads and saves settings before exiting."""
