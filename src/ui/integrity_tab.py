@@ -24,7 +24,7 @@ class IntegrityTab(QWidget):
         
         top_layout.addWidget(self.btn_auto_normalize)
         top_layout.addStretch()
-        layout.insertLayout(layout.count(), top_layout)
+        layout.addLayout(top_layout)
 
         self.table = QTableWidget(0, 3)
         self.table.setHorizontalHeaderLabels(
