@@ -32,6 +32,7 @@ from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
                            find_translation_conflicts, get_project_integrity_report,
                            normalize_project_term)
+from core.parser import TranslationSegment
 
 
 class FoundryGUI(QMainWindow):
@@ -470,11 +471,27 @@ class FoundryGUI(QMainWindow):
         self.update_sync_action_state()
 
     def update_sync_action_state(self) -> None:
-        provider_id, _ = self._get_active_provider()
-        token = self.token_storage.get_token(provider_id) if provider_id else None
+        token = self._get_provider_token()
         is_enabled = bool(token)
         self.action_fetch_segments.setEnabled(is_enabled)
         self.action_submit_suggestion.setEnabled(is_enabled)
+
+    def _get_provider_token(self) -> str | None:
+        provider_id, _ = self._get_active_provider()
+        if not provider_id:
+            return None
+        return self.token_storage.get_token(provider_id)
+
+    def _get_provider_and_token(self) -> tuple[str, dict, str] | None:
+        provider_id, provider = self._get_active_provider()
+        if not provider_id or not provider:
+            return None
+        token = self.token_storage.get_token(provider_id)
+        if not token:
+            self.thought_log.append(I18N.t("log_sync_auth_required"))
+            self.update_sync_action_state()
+            return None
+        return provider_id, provider, token
 
     def _get_active_provider(self) -> tuple[str, dict] | tuple[None, None]:
         if not self.plugin_registry or not self._active_provider_id:
@@ -484,7 +501,7 @@ class FoundryGUI(QMainWindow):
             return None, None
         return self._active_provider_id, provider
 
-    def _resolve_segment_id(self, seg) -> str | None:
+    def _resolve_segment_id(self, seg: TranslationSegment) -> str | None:
         if hasattr(seg, "segment_id") and getattr(seg, "segment_id"):
             return str(getattr(seg, "segment_id"))
         row = getattr(seg, "original_row", {}) or {}
@@ -494,38 +511,74 @@ class FoundryGUI(QMainWindow):
                 return str(value)
         return None
 
+    def _build_segments_from_provider(
+        self,
+        items: list[dict[str, object]],
+    ) -> list[TranslationSegment]:
+        segments: list[TranslationSegment] = []
+        for item in items:
+            segment_id = item.get("segment_id") or item.get("id")
+            source_text = item.get("source") or ""
+            translation = item.get("target") or ""
+            ai_draft = item.get("local_draft") or ""
+            key = str(segment_id) if segment_id else source_text[:40] or "remote"
+            seg = TranslationSegment(
+                key=key,
+                source_text=str(source_text),
+                translation=str(translation),
+                ai_draft=str(ai_draft),
+                original_row={"segment_id": segment_id},
+            )
+            segments.append(seg)
+        return segments
+
+    def _load_segments_into_table(self, segments: list[TranslationSegment]) -> None:
+        self.segments = segments
+        self.table.setUpdatesEnabled(False)
+        self.table.blockSignals(True)
+        try:
+            self.table.setRowCount(len(self.segments))
+            for i, seg in enumerate(self.segments):
+                self.table.setItem(i, 0, QTableWidgetItem("⚪"))
+                self.table.setItem(i, 1, QTableWidgetItem(seg.key))
+                self.table.setItem(i, 2, QTableWidgetItem(seg.source_text))
+                self.table.setItem(i, 3, QTableWidgetItem(seg.translation))
+                self.update_row_visuals(i)
+        finally:
+            self.table.blockSignals(False)
+            self.table.setUpdatesEnabled(True)
+        self.progress_bar.setMaximum(len(self.segments))
+        self.progress_bar.setValue(0)
+        self.update_stats()
+
     def handle_fetch_segments(self) -> None:
-        provider_id, provider = self._get_active_provider()
-        if not provider_id or not provider:
+        resolved = self._get_provider_and_token()
+        if resolved is None:
             return
-        token = self.token_storage.get_token(provider_id)
-        if not token:
-            self.thought_log.append(I18N.t("log_sync_auth_required"))
-            self.update_sync_action_state()
-            return
+        provider_id, provider, token = resolved
         settings = self.settings_tab.get_settings()
         project_id = settings.get("project_name") or None
+        page = int(settings.get("sync_page", 1))
         client = ProviderHttpClient(provider)
         try:
-            segments = client.fetch_segments(token, project_id=project_id, page=1)
+            segments = client.fetch_segments(token, project_id=project_id, page=page)
         except (HTTPError, URLError, ValueError) as exc:
             self.thought_log.append(
                 I18N.t("log_sync_fetch_failed").format(error=str(exc))
             )
             return
+        self._file_loaded = True
+        self.file_label.setText(I18N.t("ui_remote_segments_loaded"))
+        self._load_segments_into_table(self._build_segments_from_provider(segments))
         self.thought_log.append(
             I18N.t("log_sync_fetch_success").format(count=len(segments))
         )
 
     def handle_submit_suggestion(self) -> None:
-        provider_id, provider = self._get_active_provider()
-        if not provider_id or not provider:
+        resolved = self._get_provider_and_token()
+        if resolved is None:
             return
-        token = self.token_storage.get_token(provider_id)
-        if not token:
-            self.thought_log.append(I18N.t("log_sync_auth_required"))
-            self.update_sync_action_state()
-            return
+        _, provider, token = resolved
         if self.current_row < 0 or self.current_row >= len(self.segments):
             self.thought_log.append(I18N.t("log_sync_no_selection"))
             return
