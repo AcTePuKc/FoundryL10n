@@ -26,6 +26,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCo
 # Modular Imports
 from core.database import init_db
 from core.engine import TranslationEngine
+from core.i18n import I18N
 from core.parser import FoundryParser, TranslationSegment
 from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
@@ -40,14 +41,14 @@ QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
 def load_theme(theme_name: str) -> None:
     theme_path = base_path / "resources" / "themes" / f"{theme_name}.qss"
     if not theme_path.exists():
-        print(f"[yellow]Warning:[/yellow] Theme file not found: {theme_path}")
+        print(I18N.t("cli_theme_missing_warning").format(theme_path=theme_path))
         return
 
     qss_text = theme_path.read_text(encoding="utf-8")
 
     app = QApplication.instance()
     if app is None:
-        raise RuntimeError("QApplication instance not initialized.")
+        raise RuntimeError(I18N.t("cli_qapp_missing_error"))
 
     # Tell the type checker this is a QApplication, not just QCoreApplication
     qt_app = cast(QApplication, app)
@@ -60,14 +61,14 @@ def get_available_themes() -> list[str]:
     return sorted({theme.stem for theme in theme_dir.glob("*.qss")})
 
 # Initialize Typer
-app = typer.Typer(help="FoundryL10n: Professional Local-First Game Translator")
+app = typer.Typer(help=I18N.t("cli_app_help"))
 
 @app.callback()
 def main():
     """Ensure the database is initialized before any command runs."""
     init_db()
 
-@app.command(name="gui")
+@app.command(name="gui", help=I18N.t("cli_gui_help"))
 def launch_gui():
     """Launch the graphical interface with the configured theme."""
     from PySide6.QtWidgets import QApplication
@@ -85,11 +86,11 @@ def launch_gui():
     window.show()
     sys.exit(qt_app.exec())
 
-@app.command(name="file")
+@app.command(name="file", help=I18N.t("cli_file_help"))
 def translate_file(
-    path: str = typer.Argument(..., help="The TSV file to translate"),
+    path: str = typer.Argument(..., help=I18N.t("cli_arg_file")),
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
-    model: str = typer.Option("qwen2.5:7b", "--model", "-m", help="Ollama model to use"),
+    model: str = typer.Option("qwen2.5:7b", "--model", "-m", help=I18N.t("cli_opt_model_help")),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s")
 ):
@@ -105,12 +106,12 @@ def translate_file(
     
     input_path = Path(path)
     if not input_path.exists():
-        print(f"[red]Error: File '{path}' not found.[/red]")
+        print(I18N.t("cli_file_missing_error").format(path=path))
         raise typer.Exit(code=1)
         
     segments = parser.parse_tsv(input_path)
     
-    print(f"[bold cyan]Found {len(segments)} segments. Using model: {model}[/bold cyan]")
+    print(I18N.t("cli_found_segments").format(count=len(segments), model=model))
     
     with Progress(
         SpinnerColumn(),
@@ -119,18 +120,21 @@ def translate_file(
         MofNCompleteColumn(),
         transient=False,
     ) as progress:
-        task = progress.add_task(f"Translating to {lang}...", total=len(segments))
+        task = progress.add_task(
+            I18N.t("cli_translating_to").format(lang=lang),
+            total=len(segments),
+        )
         for seg in segments:
             engine.run_translation([seg], lang, glossary=glossary_content, style=style_content, temp=0.1)
             progress.advance(task)
 
     output_path = Path("out") / lang / input_path.name
     parser.save_tsv(segments, output_path)
-    print(f"\n[bold green]✔ Done![/bold green] Results saved to: [yellow]{output_path}[/yellow]")
+    print(I18N.t("cli_done_results").format(output_path=output_path))
 
-@app.command(name="text")
+@app.command(name="text", help=I18N.t("cli_text_help"))
 def translate_text(
-    content: str = typer.Argument(..., help="Text string to translate"),
+    content: str = typer.Argument(..., help=I18N.t("cli_arg_text")),
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
     model: str = typer.Option("qwen2.5:7b", "--model", "-m"),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
@@ -147,8 +151,14 @@ def translate_text(
     seg = TranslationSegment("CLI_TEST", content)
     engine.run_translation([seg], lang, glossary=glossary_content, style=style_content)
     
-    print(f"\n[bold green]Original:[/bold green] {content}")
-    print(f"[bold blue]Result:[/bold blue] {seg.translation}")
+    print(I18N.t("cli_original_label").format(content=content))
+    print(I18N.t("cli_result_label").format(result=seg.translation))
+
+
+main.__doc__ = I18N.t("cli_main_doc")
+launch_gui.__doc__ = I18N.t("cli_gui_doc")
+translate_file.__doc__ = I18N.t("cli_file_doc")
+translate_text.__doc__ = I18N.t("cli_text_doc")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
@@ -159,7 +169,7 @@ if __name__ == "__main__":
     except Exception as e:
         import traceback
         print("\n" + "="*50)
-        print("CRITICAL ERROR:")
+        print(I18N.t("cli_critical_error"))
         traceback.print_exc()
         print("="*50)
-        input("\nPress Enter to exit...")
+        input(I18N.t("cli_press_enter_exit"))
