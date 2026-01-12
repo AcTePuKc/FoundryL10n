@@ -133,9 +133,10 @@ class ProviderHttpClient(BaseProvider):
         auth_type = str(self.config.auth.get("type", "bearer")).lower()
         if auth_type in {"bearer", "oauth2"}:
             return {"Authorization": f"Bearer {token}"}
-        if auth_type == "basic":
+        elif auth_type == "basic":
             return {"Authorization": f"Basic {token}"}
-        return {"Authorization": token}
+        else:
+            raise ValueError(f"Unsupported auth type: '{auth_type}'")
 
     def _segment_items(self, response: Any) -> list[dict[str, Any]]:
         if isinstance(response, list):
