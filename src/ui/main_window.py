@@ -30,7 +30,7 @@ from core.database import (save_translation, get_cached_record,
 
 
 class FoundryGUI(QMainWindow):
-    def __init__(self, plugin_registry=None):
+    def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__()
         self.setWindowTitle(f"FoundryL10n - {I18N.t('ui_workstation')}")
         self.plugin_registry = plugin_registry
