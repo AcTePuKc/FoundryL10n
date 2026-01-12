@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+from typing import Optional
 from core.database import TranslationRecord, Session, engine, global_replace_in_db
 from core.i18n import I18N
 from sqlmodel import SQLModel, delete, col
@@ -19,6 +20,7 @@ class SettingsTab(QWidget):
     font_changed = Signal(float)
     profile_loaded = Signal()
     language_changed = Signal(str)
+    provider_changed = Signal(str)
     ORGANIZATION_NAME = "FoundryL10n"
     APP_NAME = "TranslatorApp"
 
@@ -108,6 +110,9 @@ class SettingsTab(QWidget):
         self.provider_label = QLabel(I18N.t("ui_provider"))
         self.provider_dropdown = QComboBox()
         self.provider_dropdown.setMinimumWidth(200)
+        self.provider_dropdown.currentIndexChanged.connect(
+            self.on_provider_changed
+        )
 
         btn_refresh = QPushButton()
         btn_refresh.setIcon(QIcon.fromTheme("view-refresh"))
@@ -592,7 +597,9 @@ class SettingsTab(QWidget):
             if "provider_id" in data:
                 idx = self.provider_dropdown.findData(data["provider_id"])
                 if idx >= 0:
+                    self.provider_dropdown.blockSignals(True)
                     self.provider_dropdown.setCurrentIndex(idx)
+                    self.provider_dropdown.blockSignals(False)
 
             profile_base = os.path.basename(path).replace(".json", "")
             self.profile_name.setText(profile_base)
@@ -645,7 +652,9 @@ class SettingsTab(QWidget):
             self.model_dropdown.addItems(models)
 
     def populate_providers(self):
+        focused = QApplication.focusWidget()
         selected_id = self.provider_dropdown.currentData()
+        self.provider_dropdown.blockSignals(True)
         self.provider_dropdown.clear()
 
         entries = self.plugin_registry.entries if self.plugin_registry else ()
@@ -653,6 +662,13 @@ class SettingsTab(QWidget):
         if not entries:
             self.provider_dropdown.addItem(I18N.t("ui_provider_none"), "")
             self.provider_dropdown.setEnabled(False)
+            self.provider_dropdown.blockSignals(False)
+            if (
+                focused is not None
+                and focused is not self.provider_dropdown
+                and focused.isVisible()
+            ):
+                focused.setFocus(Qt.FocusReason.OtherFocusReason)
             return
 
         self.provider_dropdown.setEnabled(True)
@@ -676,6 +692,13 @@ class SettingsTab(QWidget):
             idx = self.provider_dropdown.findData(selected_id)
             if idx >= 0:
                 self.provider_dropdown.setCurrentIndex(idx)
+        self.provider_dropdown.blockSignals(False)
+        if (
+            focused is not None
+            and focused is not self.provider_dropdown
+            and focused.isVisible()
+        ):
+            focused.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def populate_themes(self):
         self.theme_combo.clear()
@@ -767,7 +790,9 @@ class SettingsTab(QWidget):
         saved_provider = str(settings.value("provider_id", ""))
         provider_index = self.provider_dropdown.findData(saved_provider)
         if provider_index >= 0:
+            self.provider_dropdown.blockSignals(True)
             self.provider_dropdown.setCurrentIndex(provider_index)
+            self.provider_dropdown.blockSignals(False)
 
         self.gloss_path.setText(
             str(settings.value("glossary_path", "glossary.tsv")))
@@ -816,6 +841,11 @@ class SettingsTab(QWidget):
             "strict_mode": self.strict_mode.isChecked(),
             "prompt_template": self.prompt_editor.toPlainText()
         }
+
+    def on_provider_changed(self):
+        provider_id = self.provider_dropdown.currentData()
+        self.save_settings()
+        self.provider_changed.emit(provider_id or "")
 
     def clear_mismatches(self):
         """Fixed: Using col() to satisfy Pylance type checking."""

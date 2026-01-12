@@ -3,6 +3,7 @@ import sys
 import csv
 import json
 from pathlib import Path
+from typing import Optional
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QFileDialog, QTableWidget,
                                QTableWidgetItem, QHeaderView, QProgressBar,
@@ -42,6 +43,7 @@ class FoundryGUI(QMainWindow):
         self._context_menu_row = None
         self._context_menu_count = 0
         self._history_menu_item = None
+        self._active_provider_id = ""
         self.llm_service = LLMService()
 
         # Icon
@@ -72,6 +74,8 @@ class FoundryGUI(QMainWindow):
             self.on_profile_loaded_profile)
         if hasattr(self.settings_tab, "language_changed"):
             self.settings_tab.language_changed.connect(self.retranslate_ui)
+        if hasattr(self.settings_tab, "provider_changed"):
+            self.settings_tab.provider_changed.connect(self.on_provider_changed)
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
         self.tabs.addTab(self.settings_tab, I18N.t("tab_settings"))
@@ -375,6 +379,14 @@ class FoundryGUI(QMainWindow):
         self.audit_database_consistency()
         self.update_stats()
         self.thought_log.append(I18N.t("log_profile_loaded"))
+
+    def on_provider_changed(self, provider_id: str):
+        is_valid = (
+            self.plugin_registry
+            and provider_id
+            and provider_id in self.plugin_registry.providers
+        )
+        self._active_provider_id = provider_id if is_valid else ""
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
