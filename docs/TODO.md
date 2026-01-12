@@ -73,7 +73,7 @@ Tasks about validation and developer scripts.
 * [x] **Docs:** Add project context state model doc covering provider selection and sync transitions.
 
 * [x] **Docs:** Add security documentation for keyring storage, key naming, and keyring fallback behavior.
-* [ ] **Docs:** Add DB mapping documentation + migration note for `provider_id`/`remote_id` (local-only projects use NULLs).
+* [x] **Docs:** Add DB mapping documentation + migration note for `provider_id`/`remote_id` (local-only projects use NULLs).
 * [x] **Docs:** Document UI integration plan for Fetch/Submit placement, manual sync behavior, and segment status indicators.
 * [x] **Docs:** Add stepwise implementation plan to `docs/ROADMAP.md`.
 
