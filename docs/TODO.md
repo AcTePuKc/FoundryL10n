@@ -73,3 +73,4 @@ Tasks about validation and developer scripts.
 * [ ] **Docs:** Add project context state model doc covering provider selection and sync transitions.
 
 * [ ] **Docs:** Add security documentation for keyring storage, key naming, and keyring fallback behavior.
+* [ ] **Docs:** Add DB mapping documentation + migration note for `provider_id`/`remote_id` (local-only projects use NULLs).

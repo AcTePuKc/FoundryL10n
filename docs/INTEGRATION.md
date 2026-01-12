@@ -172,10 +172,16 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 | Field | Type | Description |
 | --- | --- | --- |
 | `provider_id` | string | Unique ID of the website (e.g., `adventurers_bg`) |
-| `segment_id` | string | The server-assigned ID for the string |
+| `segment_id` | string | Local segment identifier |
+| `remote_id` | string | The server-assigned ID for the string |
 | `source` | string | The original text to be translated |
 | `target` | string | The current "Accepted" translation on the server |
 | `local_draft` | string | The user's current work-in-progress |
+
+**Mapping plan (segments table)**
+* Add new nullable columns: `provider_id` and `remote_id`.
+* For local-only projects, leave both columns `NULL` by default—local projects remain fully functional without provider metadata.
+* Migration note: create the columns with `NULL` defaults and avoid backfilling to prevent breaking existing local data.
 
 ---
 
