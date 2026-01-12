@@ -13,8 +13,12 @@ POLITE_JUNK = (
 STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
 
 def validate_placeholders(original: str, translated: str) -> bool:
-    # Matches [#_0_], [#_1_], etc.
-    pattern = r"\[#_\d+_\]"
+    # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
+PLACEHOLDER_PATTERN = r"@@\s*PLACEHOLDER_\d+\s*@@"
+
+def validate_placeholders(original: str, translated: str) -> bool:
+    # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
+    pattern = PLACEHOLDER_PATTERN
     orig_tags = re.findall(pattern, original)
     trans_tags = re.findall(pattern, translated)
     return len(orig_tags) == len(trans_tags)
@@ -91,8 +95,8 @@ class LLMService:
                          for l in translation.split("\n") if l.strip()]
                 best_line = lines[-1]  # Default to the last line
                 for line in lines:
-                    # If this line contains a Tag [#_ or Bulgarian letters, it's our winner
-                    if re.search(r'\[#_\d+_\]|[А-Яа-я]', line):
+                    # If this line contains a placeholder or Bulgarian letters, it's our winner
+                    if re.search(r'@@\s*PLACEHOLDER_\d+\s*@@|[А-Яа-я]', line):
                         best_line = line
                         break
                 translation = best_line
