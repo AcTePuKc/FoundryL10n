@@ -18,23 +18,30 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Plugin Loader:** Support loading `.json` or `.js` provider configs from a local `/plugins` folder.
 * [ ] **GitHub Sync:** Implement auto-updating of the `/plugins` folder from the central repository.
 * [ ] **Secure Vault:** Implement encrypted local storage for user API tokens and credentials.
+* [x] **Implementation Plan:** Review and align stepwise commits with priorities, tests, and guardrails.
 
 ### Implementation Plan (stepwise commits)
 
 1. **Step 1: Plugin loader skeleton**
    * **Affected modules:** `src/plugins/` (schema + fixtures), new loader in `src/services/` (e.g., `plugin_loader.py`), optional wiring in `src/main.py` for startup discovery.
+   * **Guardrails:** Read-only discovery from `/plugins` (`.json`/`.js` only), no execution, no network access, ignore temp/hidden files, warn on duplicate IDs.
+   * **Tests:** Unit coverage for discovery paths, deterministic ordering, and duplicate ID warnings.
    * **Quick verification:** Launch the app and confirm it logs or surfaces discovered plugin files from `/plugins` without validating.
 2. **Step 2: Schema validation**
    * **Affected modules:** `src/plugins/schema.json`, validation utilities in `src/services/` (e.g., `plugin_validator.py`), error surfacing in `src/ui/main_window.py`.
+   * **Tests:** Validation cases for missing required fields, unsupported schema version, and malformed JSON.
    * **Quick verification:** Drop an invalid JSON in `/plugins` and confirm it appears disabled with a warning while valid plugins remain selectable.
 3. **Step 3: BaseProvider interface**
    * **Affected modules:** new provider contract in `src/core/` (e.g., `providers/base.py`), integration wiring in `src/services/`.
+   * **Tests:** Contract tests for stub provider implementations with no network side effects.
    * **Quick verification:** Instantiate a stub provider and confirm UI actions call the contract methods without network side effects.
 4. **Step 4: UI hooks**
    * **Affected modules:** `src/ui/main_window.py`, `src/ui/editor_panel.py`, `src/ui/settings_tab.py` (provider selector, login, fetch/submit controls).
+   * **UX guardrails:** Provider switching must preserve editor focus, segment navigation, and keyboard shortcuts.
    * **Quick verification:** Switch providers and confirm buttons enable/disable based on validation + auth state, without breaking segment navigation.
 5. **Step 5: Keyring integration**
    * **Affected modules:** new credential helper in `src/services/` (e.g., `keyring_service.py`), auth flow updates in `src/ui/main_window.py`.
+   * **Tests:** Mock keyring availability/unavailability to confirm persistence + fallback paths.
    * **Quick verification:** Store and retrieve a token across sessions when keyring is available; confirm in-memory fallback when not.
 
 ## 0.4 – First Integration: AdventurersBG (Phase 1)
