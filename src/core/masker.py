@@ -55,4 +55,7 @@ if __name__ == "__main__":
     print(f"Original: {sample}")
     print(f"Masked:   {masked}")
     print(f"Tags:     {tags}")
-    print(f"Restored: {m.unmask(masked, tags)}")
+    restored = m.unmask(masked, tags)
+    print(f"Restored: {restored}")
+    assert restored == sample
+    print("Smoke test passed!")
