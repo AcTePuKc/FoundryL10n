@@ -47,7 +47,7 @@ class Masker:
         return " ".join(clean_tags)
 
 
-# Quick Test
+# Dev-only smoke test (not user-visible in production).
 if __name__ == "__main__":
     m = Masker()
     sample = "Hello {player_name}, you have %d gold in your <color=yellow>pouch</color>!"
@@ -55,4 +55,7 @@ if __name__ == "__main__":
     print(f"Original: {sample}")
     print(f"Masked:   {masked}")
     print(f"Tags:     {tags}")
-    print(f"Restored: {m.unmask(masked, tags)}")
+    restored = m.unmask(masked, tags)
+    print(f"Restored: {restored}")
+    assert restored == sample
+    print("Smoke test passed!")
