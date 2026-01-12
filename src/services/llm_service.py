@@ -16,17 +16,14 @@ LABEL_ONLY_PATTERNS = (
     re.compile(r"^Ето .*превод[:：]?$", re.IGNORECASE),
     re.compile(r"^CORRECTED TRANSLATION[:：]?$", re.IGNORECASE),
 )
-
-def validate_placeholders(original: str, translated: str) -> bool:
-    # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
 PLACEHOLDER_PATTERN = r"@@\s*PLACEHOLDER_\d+\s*@@"
 TAG_OR_PLACEHOLDER_PATTERN = re.compile(rf"{PLACEHOLDER_PATTERN}|<[^>]+>")
 
+
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
-    pattern = PLACEHOLDER_PATTERN
-    orig_tags = re.findall(pattern, original)
-    trans_tags = re.findall(pattern, translated)
+    orig_tags = re.findall(PLACEHOLDER_PATTERN, original)
+    trans_tags = re.findall(PLACEHOLDER_PATTERN, translated)
     return len(orig_tags) == len(trans_tags)
 
 
