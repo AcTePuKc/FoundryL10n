@@ -19,6 +19,8 @@ class SettingsTab(QWidget):
     font_changed = Signal(float)
     profile_loaded = Signal()
     language_changed = Signal(str)
+    ORGANIZATION_NAME = "FoundryL10n"
+    APP_NAME = "TranslatorApp"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -314,7 +316,7 @@ class SettingsTab(QWidget):
 
         layout.addLayout(bottom)
 
-        s = QSettings("FoundryL10n", "Workstation")
+        s = QSettings(self.ORGANIZATION_NAME, "Workstation")
         ui_lang = str(s.value("ui_language", "EN")).upper()
         I18N.set_language(ui_lang)
         self.ui_lang_combo.blockSignals(True)
@@ -334,7 +336,7 @@ class SettingsTab(QWidget):
 
         I18N.set_language(lang)
 
-        s = QSettings("FoundryL10n", "Workstation")
+        s = QSettings(self.ORGANIZATION_NAME, "Workstation")
         s.setValue("ui_language", lang)
 
         self.retranslate_ui()
@@ -498,7 +500,7 @@ class SettingsTab(QWidget):
                 json.dump(data, f, indent=4)
 
             # Remember this profile as "last used"
-            settings = QSettings("FoundryL10n", "TranslatorApp")
+            settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
             settings.setValue("last_profile_path", str(save_path.resolve()))
 
             QMessageBox.information(
@@ -533,7 +535,7 @@ class SettingsTab(QWidget):
     def reset_prompt_to_default(self):
         default_prompt = self.get_default_prompt()
         self.prompt_editor.setPlainText(default_prompt)
-        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
         settings.remove("custom_prompt")
         self.prompt_editor.setFocus(Qt.FocusReason.OtherFocusReason)
 
@@ -650,7 +652,7 @@ class SettingsTab(QWidget):
         if not theme_name:
             theme_name = "dark"
         self.apply_theme(theme_name)
-        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
         settings.setValue("ui_theme", theme_name)
 
     def apply_theme(self, theme_name: str, restore_focus: bool = True):
@@ -666,7 +668,7 @@ class SettingsTab(QWidget):
 
     def save_settings(self):
         """Saves only the form-related settings."""
-        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
         settings.setValue("project_name", self.project_name.text())
         settings.setValue("target_lang", self.target_lang_input.text())
         settings.setValue("model", self.model_dropdown.currentText())
@@ -676,14 +678,19 @@ class SettingsTab(QWidget):
         settings.setValue("temp", self.temp_spin.value())
         settings.setValue("strict_mode", self.strict_mode.isChecked())
         # Save the current text in the prompt editor
-        settings.setValue("custom_prompt", self.prompt_editor.toPlainText())
+        current_prompt = self.prompt_editor.toPlainText()
+        default_prompt = self.get_default_prompt()
+        if current_prompt == default_prompt:
+            settings.remove("custom_prompt")
+        else:
+            settings.setValue("custom_prompt", current_prompt)
         # Save the font size
         settings.setValue("ui_font_size", self.font_size_spin.value())
         # Save the theme selection
         settings.setValue("ui_theme", self.theme_combo.currentData())
 
     def load_settings(self):
-        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
 
         # 1. Last used profile
         last_p = str(settings.value("last_profile_path", ""))
