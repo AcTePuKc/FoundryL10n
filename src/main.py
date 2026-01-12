@@ -48,7 +48,6 @@ def main():
 @app.command(name="gui", help=I18N.t("cli_gui_help"))
 def launch_gui():
     """Launch the graphical interface with the configured theme."""
-    from PySide6.QtWidgets import QApplication
     from ui.main_window import FoundryGUI
     
     qt_app = QApplication(sys.argv)
