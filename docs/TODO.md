@@ -78,3 +78,4 @@ Tasks about validation and developer scripts.
 * [x] **Docs:** Add stepwise implementation plan to `docs/ROADMAP.md`.
 
 * [x] **Docs:** Align plugin directory references with `src/plugins` and confirm schema path in `docs/INTEGRATION.md`.
+* [x] **Docs:** Finalize stepwise implementation plan guardrails in `docs/ROADMAP.md`.

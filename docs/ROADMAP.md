@@ -29,15 +29,18 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
    * **Quick verification:** Launch the app and confirm it logs or surfaces discovered plugin files from `/plugins` without validating.
 2. **Step 2: Schema validation**
    * **Affected modules:** `src/plugins/schema.json`, validation utilities in `src/services/` (e.g., `plugin_validator.py`), error surfacing in `src/ui/main_window.py`.
+   * **Acceptance criteria (guardrails):** Validation runs offline-first (no network calls), never triggers sync implicitly, and any submission-related fields are marked as suggestions-only (no publish semantics).
    * **Tests:** Validation cases for missing required fields, unsupported schema version, and malformed JSON.
    * **Quick verification:** Drop an invalid JSON in `/plugins` and confirm it appears disabled with a warning while valid plugins remain selectable.
 3. **Step 3: BaseProvider interface**
    * **Affected modules:** new provider contract in `src/core/` (e.g., `providers/base.py`), integration wiring in `src/services/`.
+   * **Acceptance criteria (guardrails):** Interface enforces explicit sync entry points only, forbids background sync, and exposes submit methods as suggestion-only (no direct publish).
    * **Tests:** Contract tests for stub provider implementations with no network side effects.
    * **Quick verification:** Instantiate a stub provider and confirm UI actions call the contract methods without network side effects.
 4. **Step 4: UI hooks**
    * **Affected modules:** `src/ui/main_window.py`, `src/ui/editor_panel.py`, `src/ui/settings_tab.py` (provider selector, login, fetch/submit controls).
    * **UX guardrails:** Provider switching must preserve editor focus, segment navigation, and keyboard shortcuts.
+   * **Acceptance criteria (guardrails):** Offline-first UX keeps editing fully functional without connectivity, sync is user-triggered via explicit controls only, and submit actions are labeled/treated as suggestions (not authoritative publishes).
    * **Quick verification:** Switch providers and confirm buttons enable/disable based on validation + auth state, without breaking segment navigation.
 5. **Step 5: Keyring integration**
    * **Affected modules:** new credential helper in `src/services/` (e.g., `keyring_service.py`), auth flow updates in `src/ui/main_window.py`.
