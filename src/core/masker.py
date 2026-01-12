@@ -1,29 +1,22 @@
 import re
 from typing import List, Tuple
 
-from core.tag_utils import extract_tags
+from core.tag_utils import extract_tags, original_tag_regex
 
 class Masker:
     def __init__(self):
-        self.patterns = [
-            r"<[^>]+>",        # Matches <TSMARKER_0>
-            r"\[[^\]]+\]",     # Matches [ACTION_WEB]
-            r"\{[^\}]+\}",     # Matches {player_name}
-            r"%.*?[dsf]"       # Matches %s, %d
-        ]
+        self.original_tag_regex = original_tag_regex()
 
     def mask(self, text: str):
         tokens = []
-        combined_pattern = f"({'|'.join(self.patterns)})"
-        
         def replace_func(match):
             token = match.group(0)
             idx = len(tokens)
             tokens.append(token)
             # Use @@ format - doesn't match any of our patterns and is visible to AI
             return f"@@PLACEHOLDER_{idx}@@" 
-        
-        masked_text = re.sub(combined_pattern, replace_func, text)
+
+        masked_text = re.sub(self.original_tag_regex, replace_func, text)
         return masked_text.strip(), tokens
 
     def unmask(self, masked_text: str, tokens: list):
