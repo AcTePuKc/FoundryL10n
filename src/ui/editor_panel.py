@@ -1,11 +1,10 @@
-import re
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
                                QPushButton, QHBoxLayout, QCheckBox, QListWidget)
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent
-from core.masker import Masker
 from core.i18n import I18N
+from core.tag_utils import extract_tags, tag_regex
 
 
 class TagHighlighter(QSyntaxHighlighter):
@@ -14,7 +13,7 @@ class TagHighlighter(QSyntaxHighlighter):
         self.tag_format = QTextCharFormat()
         self.tag_format.setForeground(QColor("#FF9D00"))  # Orange
         self.tag_format.setFontWeight(QFont.Weight.Bold)
-        self.pattern = re.compile(r"(@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}|%.*?[dsf])")
+        self.pattern = tag_regex()
 
     def highlightBlock(self, text):
         for match in self.pattern.finditer(text):
@@ -125,8 +124,7 @@ class EditorPanel(QWidget):
         self.set_tag_chips([])
 
     def _extract_tags(self, text: str) -> list[str]:
-        matches = self._tag_extractor_pattern.findall(text)
-        return [m[0] if isinstance(m, tuple) else m for m in matches if m]
+        return extract_tags(text)
 
     def set_tag_chips(self, tags: list[str]) -> None:
         for btn in self._tag_buttons:
