@@ -53,7 +53,7 @@ Tasks related to translation orchestration and local model behavior.
 
 Tasks about the local database schema and storage.
 
-* [ ] **Schema Update:** Add `provider_id` and `remote_id` to the segments table.
+* [x] **Schema Update:** Add `provider_id` and `remote_id` to the segments table.
 * [ ] **Translation Memory:** Index successfully "Verified" translations for local reuse.
 * [ ] **History Tracking:** Log changes per segment to allow local rollbacks.
 

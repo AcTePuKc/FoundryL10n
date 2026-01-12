@@ -501,9 +501,20 @@ class FoundryGUI(QMainWindow):
             return None, None
         return self._active_provider_id, provider
 
+    def get_project_context(self) -> dict[str, str | None]:
+        provider_id, _ = self._get_active_provider()
+        token = self._get_provider_token()
+        is_remote = bool(provider_id and token)
+        return {
+            "mode": "remote-synced" if is_remote else "local-only",
+            "provider_id": provider_id or None,
+        }
+
     def _resolve_segment_id(self, seg: TranslationSegment) -> str | None:
         if hasattr(seg, "segment_id") and getattr(seg, "segment_id"):
             return str(getattr(seg, "segment_id"))
+        if getattr(seg, "remote_id", None):
+            return str(getattr(seg, "remote_id"))
         row = getattr(seg, "original_row", {}) or {}
         for key in ("segment_id", "remote_id", "id"):
             value = row.get(key)
@@ -514,10 +525,12 @@ class FoundryGUI(QMainWindow):
     def _build_segments_from_provider(
         self,
         items: list[dict[str, object]],
+        provider_id: str,
     ) -> list[TranslationSegment]:
         segments: list[TranslationSegment] = []
         for item in items:
             segment_id = item.get("segment_id") or item.get("id")
+            remote_id = item.get("remote_id") or segment_id
             source_text = item.get("source") or ""
             translation = item.get("target") or ""
             ai_draft = item.get("local_draft") or ""
@@ -527,7 +540,13 @@ class FoundryGUI(QMainWindow):
                 source_text=str(source_text),
                 translation=str(translation),
                 ai_draft=str(ai_draft),
-                original_row={"segment_id": segment_id},
+                original_row={
+                    "segment_id": segment_id,
+                    "provider_id": provider_id,
+                    "remote_id": remote_id,
+                },
+                provider_id=provider_id,
+                remote_id=str(remote_id) if remote_id is not None else None,
             )
             segments.append(seg)
         return segments
@@ -569,7 +588,9 @@ class FoundryGUI(QMainWindow):
             return
         self._file_loaded = True
         self.file_label.setText(I18N.t("ui_remote_segments_loaded"))
-        self._load_segments_into_table(self._build_segments_from_provider(segments))
+        self._load_segments_into_table(
+            self._build_segments_from_provider(segments, provider_id)
+        )
         self.thought_log.append(
             I18N.t("log_sync_fetch_success").format(count=len(segments))
         )
