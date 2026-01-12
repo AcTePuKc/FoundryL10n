@@ -19,6 +19,24 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [ ] **GitHub Sync:** Implement auto-updating of the `/plugins` folder from the central repository.
 * [ ] **Secure Vault:** Implement encrypted local storage for user API tokens and credentials.
 
+### Implementation Plan (stepwise commits)
+
+1. **Step 1: Plugin loader skeleton**
+   * **Affected modules:** `src/plugins/` (schema + fixtures), new loader in `src/services/` (e.g., `plugin_loader.py`), optional wiring in `src/main.py` for startup discovery.
+   * **Quick verification:** Launch the app and confirm it logs or surfaces discovered plugin files from `/plugins` without validating.
+2. **Step 2: Schema validation**
+   * **Affected modules:** `src/plugins/schema.json`, validation utilities in `src/services/` (e.g., `plugin_validator.py`), error surfacing in `src/ui/main_window.py`.
+   * **Quick verification:** Drop an invalid JSON in `/plugins` and confirm it appears disabled with a warning while valid plugins remain selectable.
+3. **Step 3: BaseProvider interface**
+   * **Affected modules:** new provider contract in `src/core/` (e.g., `providers/base.py`), integration wiring in `src/services/`.
+   * **Quick verification:** Instantiate a stub provider and confirm UI actions call the contract methods without network side effects.
+4. **Step 4: UI hooks**
+   * **Affected modules:** `src/ui/main_window.py`, `src/ui/editor_panel.py`, `src/ui/settings_tab.py` (provider selector, login, fetch/submit controls).
+   * **Quick verification:** Switch providers and confirm buttons enable/disable based on validation + auth state, without breaking segment navigation.
+5. **Step 5: Keyring integration**
+   * **Affected modules:** new credential helper in `src/services/` (e.g., `keyring_service.py`), auth flow updates in `src/ui/main_window.py`.
+   * **Quick verification:** Store and retrieve a token across sessions when keyring is available; confirm in-memory fallback when not.
+
 ## 0.4 – First Integration: AdventurersBG (Phase 1)
 
 **Focus:** Proving the system works with a live community platform.
