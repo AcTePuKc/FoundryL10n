@@ -245,6 +245,10 @@ class SettingsTab(QWidget):
 
         header.addWidget(self.template_combo)
 
+        self.reset_prompt_button = QPushButton(I18N.t("btn_reset_prompt"))
+        self.reset_prompt_button.clicked.connect(self.reset_prompt_to_default)
+        header.addWidget(self.reset_prompt_button)
+
         header.addStretch()
         header.setContentsMargins(0, 0, 0, 0)
 
@@ -375,6 +379,7 @@ class SettingsTab(QWidget):
         self.btn_wipe.setText(I18N.t("btn_wipe_all"))
         self.btn_save.setText(I18N.t("btn_save"))
         self.btn_load.setText(I18N.t("btn_load"))
+        self.reset_prompt_button.setText(I18N.t("btn_reset_prompt"))
 
         # Browse buttons
         for btn in self.browse_buttons:
@@ -524,6 +529,13 @@ class SettingsTab(QWidget):
 
     def get_default_prompt(self):
         return I18N.t("prompt_default")
+
+    def reset_prompt_to_default(self):
+        default_prompt = self.get_default_prompt()
+        self.prompt_editor.setPlainText(default_prompt)
+        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings.remove("custom_prompt")
+        self.prompt_editor.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def apply_profile_from_file(self, path: str, show_message: bool = True):
         """Reads JSON and force-updates all UI fields."""
