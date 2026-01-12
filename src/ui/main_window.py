@@ -1617,7 +1617,7 @@ class FoundryGUI(QMainWindow):
         - Default name: {project_name}_{lang}_verified_glossary.tsv
         - Appends to existing file instead of overwriting.
         - Skips duplicates (same term + translation).
-        - Strips technical tags (<...>, [...], {...}, [#_0_]) and normalizes whitespace.
+        - Strips technical tags (<...>, [...], {...}, @@PLACEHOLDER_0@@) and normalizes whitespace.
         """
         # 1) Collect verified segments
         verified_segments = [
@@ -1647,7 +1647,7 @@ class FoundryGUI(QMainWindow):
             return
 
         # 4) Tag stripper: internal markers + original tags/placeholders
-        tag_pattern = re.compile(r"\[#_\d+_\]|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}")
+        tag_pattern = re.compile(r"@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}")
 
         # 5) Load existing term/translation pairs to avoid duplicates
         existing_pairs: set[tuple[str, str]] = set()

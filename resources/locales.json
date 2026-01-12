@@ -83,8 +83,8 @@
     "llm_model_unavailable": "Ollama not available",
     "llm_error": "Error: {error}",
     "llm_error_note": "Placeholders: {error}. Keep the token unchanged.",
-    "prompt_default": "### STORY CONTEXT (Reference only):\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the Source Text.\n\n### RULES:\n1. GLOSSARY: {glossary}\n2. TAGS: Keep [#_0_] anchors in place.\n\n### SOURCE:\n{source}\n\n### TRANSLATION:\n",
-    "prompt_template_technical": "### ROLE: Technical Fixer\nI have a translation that broke the technical tags.\n1. FIX the tags [#_x_] based on the Source.\n2. IMPROVE the Bulgarian grammar in the Existing Translation.\n\n### SOURCE (English):\n{source}\n\n### EXISTING TRANSLATION (BG):\n{translation}\n\n### CORRECTED TRANSLATION:\n",
+    "prompt_default": "### STORY CONTEXT (Reference only):\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the Source Text.\n\n### RULES:\n1. GLOSSARY: {glossary}\n2. TAGS: Keep @@PLACEHOLDER_0@@ anchors in place.\n\n### SOURCE:\n{source}\n\n### TRANSLATION:\n",
+    "prompt_template_technical": "### ROLE: Technical Fixer\nI have a translation that broke the technical tags.\n1. FIX the tags @@PLACEHOLDER_x@@ based on the Source.\n2. IMPROVE the Bulgarian grammar in the Existing Translation.\n\n### SOURCE (English):\n{source}\n\n### EXISTING TRANSLATION (BG):\n{translation}\n\n### CORRECTED TRANSLATION:\n",
     "prompt_template_creative": "### ROLE: Fantasy Writer\nRe-write this {target_lang} translation to be more epic and poetic.\nGlossary: {glossary}\nSource: {source}\nTarget:",
     "dlg_purge_memory_title": "Purge Memory",
     "dlg_purge_memory_text": "This will delete all AI-generated translations (🟡/🔴) from Memory for project \"{project}\" [{lang}].\n\nOnly Human-Verified (🟢) entries will remain. Proceed?",
@@ -242,8 +242,8 @@
     "prompt_library_standard": "Standard Localizer",
     "prompt_library_tag_surgeon_pass2": "Tag Surgeon (Pass 2)",
     "prompt_library_narrative_polish": "Narrative Polish",
-    "prompt_template_standard": "### STORY CONTEXT:\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the string accurately. Use natural dialogue.\n### RULES:\n- GLOSSARY: {glossary}\n- STYLE: {style}\n- TAGS: Keep all [#_x_] anchors in their relative positions.\n- OUTPUT: ONLY the Bulgarian translation. NO chat. NO 'Разбира се'.\n\nSOURCE: {source}\nTARGET:",
-    "prompt_template_tag_surgeon_pass2": "### ROLE: Technical Editor\n### TASK: Re-insert anchors into the DRAFT based on the SOURCE.\n### RULES:\n1. DO NOT change the words in the DRAFT.\n2. Only place the anchors [#_0_], [#_1_], etc., where they belong.\n3. NO chat. NO explanations.\n\nSOURCE MAP: {source}\nDRAFT TEXT: {translation}\nFIXED RESULT:",
+    "prompt_template_standard": "### STORY CONTEXT:\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the string accurately. Use natural dialogue.\n### RULES:\n- GLOSSARY: {glossary}\n- STYLE: {style}\n- TAGS: Keep all @@PLACEHOLDER_x@@ anchors in their relative positions.\n- OUTPUT: ONLY the Bulgarian translation. NO chat. NO 'Разбира се'.\n\nSOURCE: {source}\nTARGET:",
+    "prompt_template_tag_surgeon_pass2": "### ROLE: Technical Editor\n### TASK: Re-insert anchors into the DRAFT based on the SOURCE.\n### RULES:\n1. DO NOT change the words in the DRAFT.\n2. Only place the anchors @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc., where they belong.\n3. NO chat. NO explanations.\n\nSOURCE MAP: {source}\nDRAFT TEXT: {translation}\nFIXED RESULT:",
     "prompt_template_narrative_polish": "### ROLE: Creative Writer\nRe-write this {target_lang} translation to be more epic and high-fantasy.\nRules: {style}\nSource: {source}\nTarget:"
   },
   "BG": {
@@ -330,8 +330,8 @@
     "llm_model_unavailable": "Ollama не е налична",
     "llm_error": "Грешка: {error}",
     "llm_error_note": "Плейсхолдери: {error}. Запазете токена без промяна.",
-    "prompt_default": "### КОНТЕКСТ НА ИСТОРИЯТА (само за справка):\n{context}\n\n### РОЛЯ: Експертен {target_lang} локализатор на игри\n### ЗАДАЧА: Преведи изходния текст.\n\n### ПРАВИЛА:\n1. ГЛОСАР: {glossary}\n2. ТАГОВЕ: Запази маркерите [#_0_].\n\n### ОРИГИНАЛ:\n{source}\n\n### ПРЕВОД:\n",
-    "prompt_template_technical": "### РОЛЯ: Технически коректор\nИмам превод, който счупи техническите тагове.\n1. ПОПРАВИ таговете [#_x_] според изходния текст.\n2. ПОДОБРИ българската граматика в съществуващия превод.\n\n### ОРИГИНАЛ (English):\n{source}\n\n### СЪЩЕСТВУВАЩ ПРЕВОД (BG):\n{translation}\n\n### КОРИГИРАН ПРЕВОД:\n",
+    "prompt_default": "### КОНТЕКСТ НА ИСТОРИЯТА (само за справка):\n{context}\n\n### РОЛЯ: Експертен {target_lang} локализатор на игри\n### ЗАДАЧА: Преведи изходния текст.\n\n### ПРАВИЛА:\n1. ГЛОСАР: {glossary}\n2. ТАГОВЕ: Запази маркерите @@PLACEHOLDER_0@@.\n\n### ОРИГИНАЛ:\n{source}\n\n### ПРЕВОД:\n",
+    "prompt_template_technical": "### РОЛЯ: Технически коректор\nИмам превод, който счупи техническите тагове.\n1. ПОПРАВИ таговете @@PLACEHOLDER_x@@ според изходния текст.\n2. ПОДОБРИ българската граматика в съществуващия превод.\n\n### ОРИГИНАЛ (English):\n{source}\n\n### СЪЩЕСТВУВАЩ ПРЕВОД (BG):\n{translation}\n\n### КОРИГИРАН ПРЕВОД:\n",
     "prompt_template_creative": "### РОЛЯ: Фентъзи писател\nПренапиши този превод на {target_lang}, за да бъде по-епичен и поетичен.\nГлосар: {glossary}\nОригинал: {source}\nЦелеви:",
     "dlg_purge_memory_title": "Изчистване на паметта",
     "dlg_purge_memory_text": "Това ще изтрие всички AI-генерирани преводи (🟡/🔴) от паметта за проекта „{project}“ [{lang}].\n\nСамо проверените от човек редове (🟢) ще останат. Да продължа ли?",
@@ -489,8 +489,8 @@
     "prompt_library_standard": "Стандартен локализатор",
     "prompt_library_tag_surgeon_pass2": "Таг хирург (2-ри пас)",
     "prompt_library_narrative_polish": "Наративно изглаждане",
-    "prompt_template_standard": "### КОНТЕКСТ НА ИСТОРИЯТА:\n{context}\n\n### РОЛЯ: Експертен {target_lang} локализатор на игри\n### ЗАДАЧА: Преведи низа точно. Използвай естествен диалог.\n### ПРАВИЛА:\n- ГЛОСАР: {glossary}\n- СТИЛ: {style}\n- ТАГОВЕ: Запази всички котви [#_x_] в относителните им позиции.\n- ИЗХОД: САМО превод на български. БЕЗ чат. БЕЗ „Разбира се“.\n\nОРИГИНАЛ: {source}\nПРЕВОД:",
-    "prompt_template_tag_surgeon_pass2": "### РОЛЯ: Технически редактор\n### ЗАДАЧА: Върни котвите в ЧЕРНОВАТА според ОРИГИНАЛА.\n### ПРАВИЛА:\n1. НЕ променяй думите в ЧЕРНОВАТА.\n2. Постави само котвите [#_0_], [#_1_], и т.н. там, където им е мястото.\n3. БЕЗ чат. БЕЗ обяснения.\n\nКАРТА НА ОРИГИНАЛА: {source}\nТЕКСТ НА ЧЕРНОВАТА: {translation}\nПОПРАВЕН РЕЗУЛТАТ:",
+    "prompt_template_standard": "### КОНТЕКСТ НА ИСТОРИЯТА:\n{context}\n\n### РОЛЯ: Експертен {target_lang} локализатор на игри\n### ЗАДАЧА: Преведи низа точно. Използвай естествен диалог.\n### ПРАВИЛА:\n- ГЛОСАР: {glossary}\n- СТИЛ: {style}\n- ТАГОВЕ: Запази всички котви @@PLACEHOLDER_x@@ в относителните им позиции.\n- ИЗХОД: САМО превод на български. БЕЗ чат. БЕЗ „Разбира се“.\n\nОРИГИНАЛ: {source}\nПРЕВОД:",
+    "prompt_template_tag_surgeon_pass2": "### РОЛЯ: Технически редактор\n### ЗАДАЧА: Върни котвите в ЧЕРНОВАТА според ОРИГИНАЛА.\n### ПРАВИЛА:\n1. НЕ променяй думите в ЧЕРНОВАТА.\n2. Постави само котвите @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, и т.н. там, където им е мястото.\n3. БЕЗ чат. БЕЗ обяснения.\n\nКАРТА НА ОРИГИНАЛА: {source}\nТЕКСТ НА ЧЕРНОВАТА: {translation}\nПОПРАВЕН РЕЗУЛТАТ:",
     "prompt_template_narrative_polish": "### РОЛЯ: Креативен писател\nПренапиши този превод на {target_lang}, за да бъде по-епичен и високо-фентъзи.\nПравила: {style}\nОригинал: {source}\nЦелеви:"
   }
 }

@@ -180,7 +180,9 @@ class TranslationEngine:
         """Heuristic to find lines that likely need human eyes."""
         reasons = []
         # 1. Tag Density
-        tag_count = len(re.findall(r"\[#_\d+_\]", source))
+        masked_source, tokens = self.masker.mask(source)
+        placeholder_count = len(re.findall(r"@@\s*PLACEHOLDER_\d+\s*@@", masked_source))
+        tag_count = len(tokens) + placeholder_count
         if tag_count > 3:
             reasons.append(I18N.t("audit_high_tag_density"))
 
@@ -217,7 +219,7 @@ class TranslationEngine:
         masked_text, tokens = self.masker.mask(seg.source_text)
         num_source_tags = len(tokens)
 
-        text_without_tags = re.sub(r"\[#_\d+_\]", "", masked_text).strip()
+        text_without_tags = re.sub(r"@@\s*PLACEHOLDER_\d+\s*@@", "", masked_text).strip()
         if not text_without_tags:
             seg.translation = self.masker.unmask(masked_text, tokens)
             return True
@@ -248,7 +250,7 @@ class TranslationEngine:
             seg.ai_draft = final_text
 
         if num_source_tags == 0:
-            final_text = re.sub(r"\[#_\d+_\]", "", final_text).strip()
+            final_text = re.sub(r"@@\s*PLACEHOLDER_\d+\s*@@", "", final_text).strip()
             success = True
 
         if not success and num_source_tags > 0 and strict:
