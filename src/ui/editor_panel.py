@@ -140,23 +140,25 @@ class EditorPanel(QWidget):
         if not has_tags:
             return
 
+        _TAG_BTN_STYLE = (
+            "QPushButton {"
+            "background-color: #2c3e50;"
+            "color: white;"
+            "border-radius: 10px;"
+            "padding: 2px 8px;"
+            "}"
+            "QPushButton:hover {"
+            "background-color: #3a5169;"
+            "}"
+        )
+
         for tag in tags:
             btn = QPushButton(tag)
             btn.setToolTip(I18N.t("ui_tag_helper_tooltip"))
             btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             btn.setAutoDefault(False)
             btn.setDefault(False)
-            btn.setStyleSheet(
-                "QPushButton {"
-                "background-color: #2c3e50;"
-                "color: white;"
-                "border-radius: 10px;"
-                "padding: 2px 8px;"
-                "}"
-                "QPushButton:hover {"
-                "background-color: #3a5169;"
-                "}"
-            )
+            btn.setStyleSheet(_TAG_BTN_STYLE)
             btn.clicked.connect(lambda checked=False, t=tag: self.insert_tag(t))
             self.tag_helper_layout.addWidget(btn)
             self._tag_buttons.append(btn)
