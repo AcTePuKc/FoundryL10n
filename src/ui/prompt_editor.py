@@ -44,9 +44,8 @@ class PromptEditor(QWidget):
         for name_key, template_key in PROMPT_LIBRARY:
             self.library_combo.addItem(I18N.t(name_key), template_key)
         self.library_combo.blockSignals(False)
-        if current_key:
-            index = self.library_combo.findData(current_key)
-            if index != -1:
-                self.library_combo.setCurrentIndex(index)
-        if self.library_combo.count() and self.library_combo.currentIndex() == -1:
+        index = self.library_combo.findData(current_key)
+        if index != -1:
+            self.library_combo.setCurrentIndex(index)
+        elif self.library_combo.count() > 0:
             self.library_combo.setCurrentIndex(0)
