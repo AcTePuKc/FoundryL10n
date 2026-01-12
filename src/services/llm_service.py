@@ -5,11 +5,11 @@ from core.i18n import I18N
 
 DEFAULT_MODEL_UNAVAILABLE = "llm_model_unavailable"
 CONTEXT_PREFIX = "### CONTEXT: {context}\n"
-POLITE_JUNK = [
+POLITE_JUNK = (
     "Certainly", "Sure", "Here is",
     "I have fixed", "Let's correct",
     "Разбира се", "Ето превода", "Ето и превода"
-]
+)
 STOP_TOKENS = ["###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n"]
 
 def validate_placeholders(original: str, translated: str) -> bool:
