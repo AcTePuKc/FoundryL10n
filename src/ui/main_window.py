@@ -1647,7 +1647,7 @@ class FoundryGUI(QMainWindow):
             return
 
         # 4) Tag stripper: internal markers + original tags/placeholders
-        tag_pattern = re.compile(r"@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}")
+        tag_pattern = re.compile(r"@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}|%.*?[dsf]")
 
         # 5) Load existing term/translation pairs to avoid duplicates
         existing_pairs: set[tuple[str, str]] = set()
