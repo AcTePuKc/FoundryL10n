@@ -18,8 +18,8 @@ def _load_active_project_name(config_path: Path = Path("foundry.toml")) -> Optio
         data = tomllib.loads(config_path.read_text(encoding="utf-8"))
     except tomllib.TOMLDecodeError:
         return None
-    project = data.get("project", {}) if isinstance(data, dict) else {}
-    name = project.get("name") if isinstance(project, dict) else None
+    project_config = data.get("project")
+    name = project_config.get("name") if isinstance(project_config, dict) else None
     return name if isinstance(name, str) and name.strip() else None
 
 
