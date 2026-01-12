@@ -182,7 +182,7 @@ class FoundryGUI(QMainWindow):
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
         # Fixed State column (icon only)
-        self.table.setColumnWidth(0, 40)   # State indicator only
+        self.table.setColumnWidth(0, 60)   # State + sync indicators
 
         # Sensible starting widths
         self.table.setColumnWidth(1, 150)  # Key
@@ -534,6 +534,7 @@ class FoundryGUI(QMainWindow):
             source_text = item.get("source") or ""
             translation = item.get("target") or ""
             ai_draft = item.get("local_draft") or ""
+            last_sync = TranslationSegment.resolve_sync_timestamp(item)
             key = str(segment_id) if segment_id else source_text[:40] or "remote"
             seg = TranslationSegment(
                 key=key,
@@ -544,9 +545,11 @@ class FoundryGUI(QMainWindow):
                     "segment_id": segment_id,
                     "provider_id": provider_id,
                     "remote_id": remote_id,
+                    "last_sync": last_sync,
                 },
                 provider_id=provider_id,
                 remote_id=str(remote_id) if remote_id is not None else None,
+                last_sync=last_sync,
             )
             segments.append(seg)
         return segments
@@ -1392,9 +1395,12 @@ class FoundryGUI(QMainWindow):
         else:
             icon, color = "⚪", QColor("#222222")
 
+        sync_icon, sync_tooltip = self._sync_indicator_for_segment(seg)
+
         # --- APPLY VISUALS ---
         if state_item:
-            state_item.setText(icon)
+            state_item.setText(f"{icon}{sync_icon}")
+            state_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
         if trans_item:
             trans_item.setText(translation)
 
@@ -1426,6 +1432,7 @@ class FoundryGUI(QMainWindow):
             status_msg += I18N.t("status_untranslated")
 
         if state_item:
+            status_msg += "\n" + sync_tooltip
             state_item.setToolTip(status_msg)
 
         # QoL: show full text on hover
@@ -1438,6 +1445,32 @@ class FoundryGUI(QMainWindow):
 
         if row_idx == self.current_row:
             self._refresh_fuzzy_for_segment(seg)
+
+    def _sync_indicator_for_segment(self, seg: TranslationSegment) -> tuple[str, str]:
+        if self._has_remote_metadata(seg):
+            last_sync = self._resolve_segment_sync_timestamp(seg)
+            timestamp_text = (
+                last_sync if last_sync else I18N.t("status_sync_unknown")
+            )
+            return "☁️", I18N.t("status_sync_remote").format(
+                timestamp=timestamp_text
+            )
+        return "🏠", I18N.t("status_sync_local")
+
+    def _has_remote_metadata(self, seg: TranslationSegment) -> bool:
+        row = getattr(seg, "original_row", {})
+        return bool(
+            getattr(seg, "provider_id", None)
+            or getattr(seg, "remote_id", None)
+            or row.get("provider_id")
+            or row.get("remote_id")
+        )
+
+    def _resolve_segment_sync_timestamp(self, seg: TranslationSegment) -> str | None:
+        if getattr(seg, "last_sync", None):
+            return str(seg.last_sync)
+        row = getattr(seg, "original_row", {})
+        return TranslationSegment.resolve_sync_timestamp(row)
 
     def run_pseudo_batch(self):
         engine = TranslationEngine(self.llm_service)

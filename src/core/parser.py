@@ -13,6 +13,7 @@ class TranslationSegment:
         ai_draft: str = "",
         provider_id: Optional[str] = None,
         remote_id: Optional[str] = None,
+        last_sync: Optional[str] = None,
     ):
         self.key = key
         self.source_text = source_text
@@ -23,9 +24,19 @@ class TranslationSegment:
         self.ai_draft = ai_draft
         self.provider_id = provider_id
         self.remote_id = remote_id
+        self.last_sync = last_sync
         self.has_conflict = False
         self.is_verified = False
         self.never_translate = False
+
+    @staticmethod
+    def resolve_sync_timestamp(row: Dict) -> str | None:
+        return (
+            row.get("last_sync")
+            or row.get("synced_at")
+            or row.get("updated_at")
+            or None
+        )
 
 class FoundryParser:
     def __init__(self):
@@ -58,6 +69,7 @@ class FoundryParser:
                 existing_draft = row.get('ai_draft', "")
                 provider_id = row.get("provider_id") or None
                 remote_id = row.get("remote_id") or None
+                last_sync = TranslationSegment.resolve_sync_timestamp(row)
                 
                 segments.append(
                     TranslationSegment(
@@ -69,6 +81,7 @@ class FoundryParser:
                         original_row=row,
                         provider_id=provider_id,
                         remote_id=remote_id,
+                        last_sync=last_sync,
                     )
                 )
         return segments
