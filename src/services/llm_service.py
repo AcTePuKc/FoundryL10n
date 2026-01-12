@@ -8,9 +8,14 @@ CONTEXT_PREFIX = "### CONTEXT: {context}\n"
 POLITE_JUNK = (
     "Certainly", "Sure", "Here is",
     "I have fixed", "Let's correct",
-    "Разбира се", "Ето превода", "Ето и превода"
+    "Разбира се", "Ето превода", "Ето и превода",
+    "Ето коригирания превод", "Коригиран превод"
 )
 STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
+LABEL_ONLY_PATTERNS = (
+    re.compile(r"^Ето .*превод[:：]?$", re.IGNORECASE),
+    re.compile(r"^CORRECTED TRANSLATION[:：]?$", re.IGNORECASE),
+)
 
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
@@ -93,12 +98,21 @@ class LLMService:
             if "\n" in translation:
                 lines = [l.strip()
                          for l in translation.split("\n") if l.strip()]
-                best_line = lines[-1]  # Default to the last line
-                for line in lines:
-                    # If this line contains a placeholder or Bulgarian letters, it's our winner
-                    if re.search(r'@@\s*PLACEHOLDER_\d+\s*@@|[А-Яа-я]', line):
+                non_label_lines = [
+                    line for line in lines
+                    if not any(pattern.match(line) for pattern in LABEL_ONLY_PATTERNS)
+                ]
+                candidates = non_label_lines or lines
+                best_score = None
+                best_line = candidates[-1]
+                for idx, line in enumerate(candidates):
+                    has_placeholder = bool(re.search(
+                        r'@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>', line))
+                    token_count = len(line.split())
+                    score = (has_placeholder, token_count, idx)
+                    if best_score is None or score > best_score:
+                        best_score = score
                         best_line = line
-                        break
                 translation = best_line
 
             # 4. STRIP POLITE JUNK (safe)
