@@ -21,7 +21,7 @@ Tasks related to the modular plugin system and connecting to external platforms.
 * [ ] **GitHub Sync:** Create a service to fetch/update the latest provider configs from the central GitHub repo.
 * [x] **Generic API Client:** Build a flexible HTTP handler that uses headers/endpoints defined in the active plugin.
 * [ ] **AdventurersBG Provider:** Create the first official plugin file (`adventurers_bg.json`) following the new schema.
-* [ ] **Auth Storage:** Implement secure local storage for API tokens (keyring/secret storage).
+* [x] **Auth Storage:** Implement secure local storage for API tokens (keyring/secret storage).
 * [ ] **Sync Logic:** Implement "Fetch Segments" and "Push Suggestions" actions within the UI.
 
 ---
@@ -31,7 +31,7 @@ Tasks related to the modular plugin system and connecting to external platforms.
 Tasks related to the desktop UI, layouts, and editor behavior.
 
 * [x] **Provider Selector:** Add a dropdown to select which website/provider to connect to.
-* [ ] **Login Modal:** Create a dynamic login form that adapts to the provider's requirements (User/Pass vs API Key).
+* [x] **Login Modal:** Create a dynamic login form that adapts to the provider's requirements (User/Pass vs API Key).
 * [ ] **Sync Status Icons:** Add visual indicators to segments (e.g., "Synced", "Draft", "Conflict").
 * [ ] **Manual TSV Tools:** Add "Import TSV" and "Export TSV" buttons for file-based workflows.
 * [ ] **Focus Mode:** Implement a distraction-free editing view.
