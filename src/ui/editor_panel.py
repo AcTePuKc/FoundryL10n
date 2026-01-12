@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent
+from core.masker import Masker
 from core.i18n import I18N
 
 
@@ -45,6 +46,16 @@ class EditorPanel(QWidget):
             "font-style: italic;"
         )
         layout.addWidget(self.ai_draft_display)
+
+        self.tag_helper_label = QLabel(I18N.t("ui_tag_helper_label"))
+        self.tag_helper_label.setToolTip(I18N.t("ui_tag_helper_tooltip"))
+        layout.addWidget(self.tag_helper_label)
+        self.tag_helper_container = QWidget()
+        self.tag_helper_layout = QHBoxLayout(self.tag_helper_container)
+        self.tag_helper_layout.setContentsMargins(0, 0, 0, 0)
+        self.tag_helper_layout.setSpacing(4)
+        layout.addWidget(self.tag_helper_container)
+        self._tag_buttons = []
 
         self.active_translation_label = QLabel(
             I18N.t("ui_editor_active_translation_label")
@@ -111,6 +122,58 @@ class EditorPanel(QWidget):
 
         # 3. Shortcuts
         self.trans_edit.installEventFilter(self)
+        self.set_tag_chips([])
+
+    def _extract_tags(self, text: str) -> list[str]:
+        masker = Masker()
+        combined_pattern = f"({'|'.join(masker.patterns)})"
+        matches = re.findall(combined_pattern, text)
+        return [m[0] if isinstance(m, tuple) else m for m in matches if m]
+
+    def set_tag_chips(self, tags: list[str]) -> None:
+        for btn in self._tag_buttons:
+            self.tag_helper_layout.removeWidget(btn)
+            btn.deleteLater()
+        self._tag_buttons = []
+
+        has_tags = bool(tags)
+        self.tag_helper_label.setVisible(has_tags)
+        self.tag_helper_container.setVisible(has_tags)
+        if not has_tags:
+            return
+
+        for tag in tags:
+            btn = QPushButton(tag)
+            btn.setToolTip(I18N.t("ui_tag_helper_tooltip"))
+            btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            btn.setAutoDefault(False)
+            btn.setDefault(False)
+            btn.setStyleSheet(
+                "QPushButton {"
+                "background-color: #2c3e50;"
+                "color: white;"
+                "border-radius: 10px;"
+                "padding: 2px 8px;"
+                "}"
+                "QPushButton:hover {"
+                "background-color: #3a5169;"
+                "}"
+            )
+            btn.clicked.connect(lambda checked=False, t=tag: self.insert_tag(t))
+            self.tag_helper_layout.addWidget(btn)
+            self._tag_buttons.append(btn)
+
+        self.tag_helper_layout.addStretch(1)
+
+    def refresh_tag_chips(self, source_text: str) -> None:
+        tags = self._extract_tags(source_text or "")
+        self.set_tag_chips(tags)
+
+    def insert_tag(self, tag: str) -> None:
+        cursor = self.trans_edit.textCursor()
+        cursor.insertText(tag)
+        self.trans_edit.setTextCursor(cursor)
+        self.trans_edit.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def toggle_invisibles(self):
 
@@ -145,6 +208,7 @@ class EditorPanel(QWidget):
         translatable_widgets = {
             self.source_label: "ui_editor_source_label",
             self.ai_draft_label: "ui_editor_ai_draft_label",
+            self.tag_helper_label: "ui_tag_helper_label",
             self.active_translation_label: "ui_editor_active_translation_label",
             self.cb_verified: "ui_mark_verified",
             self.btn_save: "btn_save_ctrl_enter",
@@ -158,3 +222,4 @@ class EditorPanel(QWidget):
         }
         for widget, key in translatable_widgets.items():
             widget.setText(I18N.t(key))
+        self.tag_helper_label.setToolTip(I18N.t("ui_tag_helper_tooltip"))
