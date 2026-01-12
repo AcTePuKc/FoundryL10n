@@ -9,6 +9,9 @@ QLabel {
     background-color: transparent;
     color: #ebdbb2;
 }
+QLabel#loginError {
+    color: #d32f2f;
+}
 
 /* Tabs */
 QTabWidget::pane {

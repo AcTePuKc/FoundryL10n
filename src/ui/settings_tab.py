@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+from typing import Optional
 from core.database import TranslationRecord, Session, engine, global_replace_in_db
 from core.i18n import I18N
 from sqlmodel import SQLModel, delete, col
@@ -19,12 +20,15 @@ class SettingsTab(QWidget):
     font_changed = Signal(float)
     profile_loaded = Signal()
     language_changed = Signal(str)
+    provider_changed = Signal(str)
+    login_requested = Signal(str)
     ORGANIZATION_NAME = "FoundryL10n"
     APP_NAME = "TranslatorApp"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__(parent)
         self.llm_service = LLMService()
+        self.plugin_registry = plugin_registry
 
         # =====================================================
         # Main layout + scroll
@@ -104,9 +108,25 @@ class SettingsTab(QWidget):
         self.model_dropdown = QComboBox()
         self.model_dropdown.setMinimumWidth(200)
 
+        self.provider_label = QLabel(I18N.t("ui_provider"))
+        self.provider_dropdown = QComboBox()
+        self.provider_dropdown.setMinimumWidth(200)
+        self.provider_dropdown.currentIndexChanged.connect(
+            self.on_provider_changed
+        )
+        self.btn_login = QPushButton(I18N.t("btn_login"))
+        self.btn_login.setEnabled(False)
+        self.btn_login.clicked.connect(self.request_login)
+
         btn_refresh = QPushButton()
         btn_refresh.setIcon(QIcon.fromTheme("view-refresh"))
         btn_refresh.clicked.connect(self.refresh_models)
+
+        provider_row = QHBoxLayout()
+        provider_row.setSpacing(8)
+        provider_row.addWidget(self.provider_dropdown)
+        provider_row.addWidget(self.btn_login)
+        provider_row.addStretch()
 
         model_row = QHBoxLayout()
         model_row.setSpacing(8)
@@ -124,6 +144,7 @@ class SettingsTab(QWidget):
         self.strict_mode = QCheckBox(I18N.t("ui_strict"))
         self.strict_mode.setChecked(True)
 
+        translation_layout.addRow(self.provider_label, provider_row)
         translation_layout.addRow(self.model_label, model_row)
         translation_layout.addRow(self.temp_label, self.temp_spin)
         translation_layout.addRow(self.strict_mode)
@@ -327,6 +348,7 @@ class SettingsTab(QWidget):
         # =====================================================
         # Init
         # =====================================================
+        self.populate_providers()
         self.refresh_models()
         self.load_settings()
 
@@ -359,6 +381,7 @@ class SettingsTab(QWidget):
         self.lang_label.setText(I18N.t("ui_lang"))
         self.project_label.setText(I18N.t("ui_project"))
         self.profile_label.setText(I18N.t("ui_profile"))
+        self.provider_label.setText(I18N.t("ui_provider"))
         self.model_label.setText(I18N.t("ui_model"))
         self.temp_label.setText(I18N.t("ui_temp"))
         self.font_label.setText(I18N.t("ui_font"))
@@ -393,6 +416,7 @@ class SettingsTab(QWidget):
                 lbl.setToolTip(I18N.t(tip_key))
 
         self.update_theme_labels()
+        self.populate_providers()
 
     def update_ui_language(self):
         lang = self.target_lang_input.text().upper()
@@ -575,6 +599,13 @@ class SettingsTab(QWidget):
                 if idx >= 0:
                     self.model_dropdown.setCurrentIndex(idx)
 
+            if "provider_id" in data:
+                idx = self.provider_dropdown.findData(data["provider_id"])
+                if idx >= 0:
+                    self.provider_dropdown.blockSignals(True)
+                    self.provider_dropdown.setCurrentIndex(idx)
+                    self.provider_dropdown.blockSignals(False)
+
             profile_base = os.path.basename(path).replace(".json", "")
             self.profile_name.setText(profile_base)
             self.save_settings()
@@ -625,6 +656,57 @@ class SettingsTab(QWidget):
         if models:
             self.model_dropdown.addItems(models)
 
+    def populate_providers(self):
+        focused = QApplication.focusWidget()
+        selected_id = self.provider_dropdown.currentData()
+        self.provider_dropdown.blockSignals(True)
+        self.provider_dropdown.clear()
+
+        entries = self.plugin_registry.entries if self.plugin_registry else ()
+
+        if not entries:
+            self.provider_dropdown.addItem(I18N.t("ui_provider_none"), "")
+            self.provider_dropdown.setEnabled(False)
+            self.provider_dropdown.blockSignals(False)
+            self.btn_login.setEnabled(False)
+            if (
+                focused is not None
+                and focused is not self.provider_dropdown
+                and focused.isVisible()
+            ):
+                focused.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        self.provider_dropdown.setEnabled(True)
+        for entry in entries:
+            if entry.is_valid:
+                label = f"{entry.name} ({entry.metadata_id})"
+                self.provider_dropdown.addItem(label, entry.metadata_id)
+                continue
+
+            label = I18N.t("ui_provider_invalid").format(name=entry.name)
+            index = self.provider_dropdown.count()
+            self.provider_dropdown.addItem(label, entry.metadata_id or "")
+            model = self.provider_dropdown.model()
+            item = model.item(index) if model is not None else None
+            if item is not None:
+                item.setEnabled(False)
+                if entry.errors:
+                    item.setToolTip("\n".join(entry.errors))
+
+        if selected_id:
+            idx = self.provider_dropdown.findData(selected_id)
+            if idx >= 0:
+                self.provider_dropdown.setCurrentIndex(idx)
+        self.provider_dropdown.blockSignals(False)
+        self.update_login_button()
+        if (
+            focused is not None
+            and focused is not self.provider_dropdown
+            and focused.isVisible()
+        ):
+            focused.setFocus(Qt.FocusReason.OtherFocusReason)
+
     def populate_themes(self):
         self.theme_combo.clear()
         self.available_themes = get_available_themes()
@@ -674,6 +756,7 @@ class SettingsTab(QWidget):
         settings.setValue("project_name", self.project_name.text())
         settings.setValue("target_lang", self.target_lang_input.text())
         settings.setValue("model", self.model_dropdown.currentText())
+        settings.setValue("provider_id", self.provider_dropdown.currentData())
         settings.setValue("glossary_path", self.gloss_path.text())
         settings.setValue("style_path", self.style_path.text())
         settings.setValue("forbidden_path", self.forbidden_path.text())
@@ -710,6 +793,13 @@ class SettingsTab(QWidget):
         idx = self.model_dropdown.findText(saved_model)
         if idx >= 0:
             self.model_dropdown.setCurrentIndex(idx)
+
+        saved_provider = str(settings.value("provider_id", ""))
+        provider_index = self.provider_dropdown.findData(saved_provider)
+        if provider_index >= 0:
+            self.provider_dropdown.blockSignals(True)
+            self.provider_dropdown.setCurrentIndex(provider_index)
+            self.provider_dropdown.blockSignals(False)
 
         self.gloss_path.setText(
             str(settings.value("glossary_path", "glossary.tsv")))
@@ -748,6 +838,7 @@ class SettingsTab(QWidget):
     def get_settings(self):
         return {
             "project_name": self.project_name.text(),
+            "provider_id": self.provider_dropdown.currentData(),
             "model": self.model_dropdown.currentText(),
             "temp": self.temp_spin.value(),
             "lang": self.target_lang_input.text(),
@@ -757,6 +848,26 @@ class SettingsTab(QWidget):
             "strict_mode": self.strict_mode.isChecked(),
             "prompt_template": self.prompt_editor.toPlainText()
         }
+
+    def on_provider_changed(self):
+        provider_id = self.provider_dropdown.currentData()
+        self.save_settings()
+        self.update_login_button(provider_id)
+        self.provider_changed.emit(provider_id or "")
+
+    def update_login_button(self, provider_id: str | None = None) -> None:
+        current_id = provider_id or self.provider_dropdown.currentData()
+        is_valid = (
+            current_id
+            and self.plugin_registry
+            and current_id in self.plugin_registry.providers
+        )
+        self.btn_login.setEnabled(bool(is_valid))
+
+    def request_login(self) -> None:
+        provider_id = self.provider_dropdown.currentData()
+        if provider_id:
+            self.login_requested.emit(provider_id)
 
     def clear_mismatches(self):
         """Fixed: Using col() to satisfy Pylance type checking."""

@@ -3,6 +3,8 @@ import sys
 import csv
 import json
 from pathlib import Path
+from typing import Optional
+from urllib.error import HTTPError, URLError
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QFileDialog, QTableWidget,
                                QTableWidgetItem, QHeaderView, QProgressBar,
@@ -10,7 +12,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
                                QScrollArea, QApplication)
 from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QTimer
 from sqlmodel import select, col
 from services.resource_service import ResourceLoader
 from core.parser import FoundryParser
@@ -20,7 +22,10 @@ from ui.worker import TranslationWorker
 from ui.settings_tab import SettingsTab
 from ui.editor_panel import EditorPanel
 from ui.integrity_tab import IntegrityTab
+from ui.login_dialog import LoginDialog
 from services.llm_service import LLMService
+from services.provider_http_client import ProviderHttpClient
+from services.token_storage import TokenStorage
 from core.i18n import I18N
 from core.tag_utils import extract_tags, strip_tags
 from core.database import (save_translation, get_cached_record,
@@ -30,9 +35,10 @@ from core.database import (save_translation, get_cached_record,
 
 
 class FoundryGUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__()
         self.setWindowTitle(f"FoundryL10n - {I18N.t('ui_workstation')}")
+        self.plugin_registry = plugin_registry
         self.segments = []
         self.current_row = -1
         self.input_path = Path()
@@ -41,7 +47,10 @@ class FoundryGUI(QMainWindow):
         self._context_menu_row = None
         self._context_menu_count = 0
         self._history_menu_item = None
+        self._active_provider_id = ""
         self.llm_service = LLMService()
+        self.token_storage = TokenStorage()
+        self._login_dialog: LoginDialog | None = None
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -65,12 +74,16 @@ class FoundryGUI(QMainWindow):
 
         self.init_translate_tab()
 
-        self.settings_tab = SettingsTab()
+        self.settings_tab = SettingsTab(plugin_registry=self.plugin_registry)
         self.settings_tab.font_changed.connect(self.apply_font_size)
         self.settings_tab.profile_loaded.connect(
             self.on_profile_loaded_profile)
         if hasattr(self.settings_tab, "language_changed"):
             self.settings_tab.language_changed.connect(self.retranslate_ui)
+        if hasattr(self.settings_tab, "provider_changed"):
+            self.settings_tab.provider_changed.connect(self.on_provider_changed)
+        if hasattr(self.settings_tab, "login_requested"):
+            self.settings_tab.login_requested.connect(self.open_login_dialog)
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
         self.tabs.addTab(self.settings_tab, I18N.t("tab_settings"))
@@ -374,6 +387,65 @@ class FoundryGUI(QMainWindow):
         self.audit_database_consistency()
         self.update_stats()
         self.thought_log.append(I18N.t("log_profile_loaded"))
+
+    def on_provider_changed(self, provider_id: str):
+        is_valid = (
+            self.plugin_registry
+            and provider_id
+            and provider_id in self.plugin_registry.providers
+        )
+        self._active_provider_id = provider_id if is_valid else ""
+        if not is_valid:
+            if self._login_dialog is not None:
+                self._login_dialog.close()
+            self._login_dialog = None
+
+    def open_login_dialog(self, provider_id: str) -> None:
+        if not self.plugin_registry or not provider_id:
+            return
+        provider = self.plugin_registry.providers.get(provider_id)
+        if not provider:
+            return
+        auth_type = str(provider.get("auth", {}).get("type", "bearer")).lower()
+        provider_name = provider.get("metadata", {}).get("name", provider_id)
+        focused = QApplication.focusWidget()
+        dialog = LoginDialog(provider_name, auth_type, parent=self)
+        dialog.submitted.connect(
+            lambda credentials: self._handle_login_submit(
+                provider_id, provider, credentials, dialog
+            )
+        )
+        dialog.show()
+        self._login_dialog = dialog
+        if focused is not None:
+            QTimer.singleShot(
+                0, lambda: focused.setFocus(Qt.FocusReason.OtherFocusReason)
+            )
+
+    def _handle_login_submit(
+        self,
+        provider_id: str,
+        provider: dict[str, object],
+        credentials: dict[str, str],
+        dialog: LoginDialog,
+    ) -> None:
+        client = ProviderHttpClient(provider)
+        try:
+            result = client.auth_login(credentials)
+        except (HTTPError, URLError, ValueError) as exc:
+            dialog.set_error(
+                I18N.t("msg_login_failed").format(error=str(exc))
+            )
+            return
+        token = str(result.get("token", ""))
+        if not token:
+            dialog.set_error(I18N.t("msg_login_failed").format(error="Empty token"))
+            return
+        self.token_storage.set_token(provider_id, token)
+        self.thought_log.append(
+            I18N.t("log_login_success").format(provider=provider_id)
+        )
+        dialog.accept()
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
