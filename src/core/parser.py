@@ -69,7 +69,12 @@ class FoundryParser:
                 existing_draft = row.get('ai_draft', "")
                 provider_id = row.get("provider_id") or None
                 remote_id = row.get("remote_id") or None
-                last_sync = TranslationSegment.resolve_sync_timestamp(row)
+                last_sync = (
+                    row.get("last_sync")
+                    or row.get("synced_at")
+                    or row.get("updated_at")
+                    or None
+                )
                 
                 segments.append(
                     TranslationSegment(

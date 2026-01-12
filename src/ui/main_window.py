@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from urllib.error import HTTPError, URLError
@@ -534,7 +535,7 @@ class FoundryGUI(QMainWindow):
             source_text = item.get("source") or ""
             translation = item.get("target") or ""
             ai_draft = item.get("local_draft") or ""
-            last_sync = TranslationSegment.resolve_sync_timestamp(item)
+            last_sync = self._resolve_remote_sync_timestamp(item)
             key = str(segment_id) if segment_id else source_text[:40] or "remote"
             seg = TranslationSegment(
                 key=key,
@@ -1446,19 +1447,24 @@ class FoundryGUI(QMainWindow):
         if row_idx == self.current_row:
             self._refresh_fuzzy_for_segment(seg)
 
+    def _resolve_remote_sync_timestamp(self, item: dict[str, object]) -> str:
+        for key in ("last_sync", "synced_at", "updated_at"):
+            value = item.get(key)
+            if value:
+                return str(value)
+        return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
     def _sync_indicator_for_segment(self, seg: TranslationSegment) -> tuple[str, str]:
         if self._has_remote_metadata(seg):
             last_sync = self._resolve_segment_sync_timestamp(seg)
-            timestamp_text = (
-                last_sync if last_sync else I18N.t("status_sync_unknown")
-            )
-            return "☁️", I18N.t("status_sync_remote").format(
-                timestamp=timestamp_text
-            )
+            if not last_sync:
+                last_sync = datetime.now(timezone.utc).isoformat(timespec="seconds")
+                seg.last_sync = last_sync
+            return "☁️", I18N.t("status_sync_remote").format(timestamp=last_sync)
         return "🏠", I18N.t("status_sync_local")
 
     def _has_remote_metadata(self, seg: TranslationSegment) -> bool:
-        row = getattr(seg, "original_row", {})
+        row = getattr(seg, "original_row", {}) or {}
         return bool(
             getattr(seg, "provider_id", None)
             or getattr(seg, "remote_id", None)
@@ -1469,8 +1475,12 @@ class FoundryGUI(QMainWindow):
     def _resolve_segment_sync_timestamp(self, seg: TranslationSegment) -> str | None:
         if getattr(seg, "last_sync", None):
             return str(seg.last_sync)
-        row = getattr(seg, "original_row", {})
-        return TranslationSegment.resolve_sync_timestamp(row)
+        row = getattr(seg, "original_row", {}) or {}
+        for key in ("last_sync", "synced_at", "updated_at"):
+            value = row.get(key)
+            if value:
+                return str(value)
+        return None
 
     def run_pseudo_batch(self):
         engine = TranslationEngine(self.llm_service)
