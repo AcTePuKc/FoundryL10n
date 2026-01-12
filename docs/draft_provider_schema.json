@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FoundryL10n Provider Plugin",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "id": { "type": "string" },
+        "base_url": { "type": "string", "format": "uri" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "id", "base_url"]
+    },
+    "auth": {
+      "type": "object",
+      "properties": {
+        "type": { "enum": ["bearer", "basic", "oauth2"] },
+        "login_endpoint": { "type": "string" },
+        "token_path": { "type": "string", "description": "JSON path to the token in the response" }
+      },
+      "required": ["type", "login_endpoint"]
+    },
+    "endpoints": {
+      "type": "object",
+      "properties": {
+        "fetch_projects": { "type": "string" },
+        "fetch_segments": { "type": "string", "description": "Expects placeholders like {project_id} and {page}" },
+        "submit_suggestion": { "type": "string", "description": "Expects placeholder like {segment_id}" }
+      },
+      "required": ["fetch_segments", "submit_suggestion"]
+    },
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "source_text": { "type": "string", "default": "source" },
+        "target_text": { "type": "string", "default": "current_translation" },
+        "segment_id": { "type": "string", "default": "segment_id" }
+      }
+    }
+  },
+  "required": ["metadata", "auth", "endpoints"]
+}

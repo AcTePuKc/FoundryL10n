@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "name": "AdventurersBG",
+    "id": "adventurers_bg",
+    "base_url": "https://api.adventurersbg.org",
+    "description": "Official community integration for AdventurersBG translation projects."
+  },
+  "auth": {
+    "type": "bearer",
+    "login_endpoint": "/api/login",
+    "token_path": "token"
+  },
+  "endpoints": {
+    "fetch_projects": "/api/games",
+    "fetch_segments": "/api/games/{project_id}/segments?page={page}",
+    "submit_suggestion": "/api/games/{project_id}/segments/{segment_id}/suggestions"
+  },
+  "mapping": {
+    "source_text": "source",
+    "target_text": "current_translation",
+    "segment_id": "segment_id"
+  }
+}
