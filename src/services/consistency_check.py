@@ -126,7 +126,7 @@ def report_conflicts(
     conflict_map: dict[str, dict[str, list[str]]] = {}
 
     with Session(engine) as session:
-        results = session.exec(statement).all()
+        results = session.exec(statement)
 
     for record_id, source_text, target_value, segment_key in results:
         if not source_text:
