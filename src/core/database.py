@@ -19,6 +19,14 @@ class TranslationRecord(SQLModel, table=True):
     history_json: str = Field(default="[]")
 
 
+class TranslationAuditRecord(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_name: str = Field(index=True)
+    source_text: str = Field(index=True)
+    target_lang: str
+    variants_json: str = Field(default="[]")
+
+
 sqlite_file_name = "foundry_memory.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 engine = create_engine(sqlite_url)
@@ -26,6 +34,46 @@ engine = create_engine(sqlite_url)
 
 def init_db():
     SQLModel.metadata.create_all(engine)
+
+
+def _parse_history_list(history_json: str) -> list[str]:
+    try:
+        history = json.loads(history_json or "[]")
+    except json.JSONDecodeError:
+        return []
+    if isinstance(history, list):
+        return [h for h in history if isinstance(h, str)]
+    return []
+
+
+def _store_audit_variants(
+    session: Session,
+    project_name: str,
+    target_lang: str,
+    source_text: str,
+    variants: set[str],
+) -> None:
+    if not variants:
+        return
+    stmt = select(TranslationAuditRecord).where(
+        TranslationAuditRecord.project_name == project_name,
+        TranslationAuditRecord.target_lang == target_lang,
+        TranslationAuditRecord.source_text == source_text,
+    )
+    existing = session.exec(stmt).first()
+    if existing:
+        prior = set(_parse_history_list(existing.variants_json))
+        merged = sorted(prior | variants)
+        existing.variants_json = json.dumps(merged)
+        session.add(existing)
+    else:
+        record = TranslationAuditRecord(
+            project_name=project_name,
+            target_lang=target_lang,
+            source_text=source_text,
+            variants_json=json.dumps(sorted(variants)),
+        )
+        session.add(record)
 
 
 def global_replace_in_db(
@@ -159,12 +207,25 @@ def auto_normalize_all_conflicts(project_name: str, target_lang: str):
                     TranslationRecord.source_text == src
                 )
                 to_update = session.exec(stmt).all()
+                audit_variants: set[str] = set()
+                for rec in to_update:
+                    audit_variants.add(rec.translation)
+                    audit_variants.update(_parse_history_list(rec.history_json))
+                audit_variants.discard(best_translation)
+                _store_audit_variants(
+                    session,
+                    project_name=project_name,
+                    target_lang=target_lang,
+                    source_text=src,
+                    variants=audit_variants,
+                )
                 for rec in to_update:
                     if rec.translation != best_translation:
                         rec.translation = best_translation
-                        rec.is_verified = True # Mark as fixed
-                        session.add(rec)
                         updated_count += 1
+                    rec.is_verified = True  # Mark as fixed
+                    rec.history_json = json.dumps([best_translation])
+                    session.add(rec)
         
         session.commit()
         return updated_count
@@ -179,9 +240,22 @@ def normalize_project_term(project_name: str, target_lang: str, source_text: str
             TranslationRecord.source_text == source_text
         )
         records = session.exec(statement).all()
+        audit_variants: set[str] = set()
+        for r in records:
+            audit_variants.add(r.translation)
+            audit_variants.update(_parse_history_list(r.history_json))
+        audit_variants.discard(correct_translation)
+        _store_audit_variants(
+            session,
+            project_name=project_name,
+            target_lang=target_lang,
+            source_text=source_text,
+            variants=audit_variants,
+        )
         for r in records:
             r.translation = correct_translation
             r.is_verified = True  # Usually we verify them if we normalize them
+            r.history_json = json.dumps([correct_translation])
             session.add(r)
         session.commit()
 
@@ -230,14 +304,10 @@ def find_translation_conflicts(project_name: str, target_lang: str) -> list[str]
             source_map[norm_source].add(r.translation.strip())
 
         # 2. Add History (Finding 1 fix: Look where the variants are hiding!)
-        if r.history_json:
-            try:
-                h_list = json.loads(r.history_json)
-                for h_trans in h_list:
-                    if h_trans.strip():
-                        source_map[norm_source].add(h_trans.strip())
-            except Exception:
-                pass
+        if not r.is_verified and r.history_json:
+            for h_trans in _parse_history_list(r.history_json):
+                if h_trans.strip():
+                    source_map[norm_source].add(h_trans.strip())
 
     # 3. Clean Return: Only return sources that have more than 1 unique translation variant
     return [src for src, trans_set in source_map.items() if len(trans_set) > 1]

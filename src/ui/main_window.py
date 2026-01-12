@@ -457,6 +457,7 @@ class FoundryGUI(QMainWindow):
             )
             self.run_integrity_scan()  # Refresh the list
             self.refresh_table_from_db()  # Refresh the workstation icons
+            self.audit_database_consistency()
 
     def remove_current_from_memory(self):
         """Wipes the current selection from the database entirely."""
