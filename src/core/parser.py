@@ -29,6 +29,15 @@ class TranslationSegment:
         self.is_verified = False
         self.never_translate = False
 
+    @staticmethod
+    def resolve_sync_timestamp(row: Dict) -> str | None:
+        return (
+            row.get("last_sync")
+            or row.get("synced_at")
+            or row.get("updated_at")
+        )
+
+
 class FoundryParser:
     def __init__(self):
         # Initializing headers as a list to avoid 'None' errors
@@ -64,7 +73,6 @@ class FoundryParser:
                     row.get("last_sync")
                     or row.get("synced_at")
                     or row.get("updated_at")
-                    or None
                 )
                 
                 segments.append(
