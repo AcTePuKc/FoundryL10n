@@ -50,3 +50,4 @@ tests/*.tsv
 tests/*.csv
 tests/*.txt
 !tests/__init__.py
+tests/*.md
