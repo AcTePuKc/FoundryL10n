@@ -66,13 +66,13 @@ Tasks about validation and developer scripts.
 * [ ] **Consistency Check:** Script to find the same source text translated differently across a project.
 * [ ] **Plugin Validator:** Create a CLI tool to validate that a new `.json` plugin matches the required schema.
 * [ ] **Mock Server:** Set up a simple local server to test API integration without hitting live websites.
-* [ ] **Docs:** Add the integration architecture diagram + legend covering sync behavior.
-* [ ] **Docs:** Record the canonical plugin schema location and document UI validation/disablement behavior for invalid plugins.
-* [ ] **Docs:** Document BaseProvider method contracts and mapping rules in `docs/INTEGRATION.md`.
+* [x] **Docs:** Add the integration architecture diagram + legend covering sync behavior.
+* [x] **Docs:** Record the canonical plugin schema location and document UI validation/disablement behavior for invalid plugins.
+* [x] **Docs:** Document BaseProvider method contracts and mapping rules in `docs/INTEGRATION.md`.
 
 * [ ] **Docs:** Add project context state model doc covering provider selection and sync transitions.
 
 * [ ] **Docs:** Add security documentation for keyring storage, key naming, and keyring fallback behavior.
 * [ ] **Docs:** Add DB mapping documentation + migration note for `provider_id`/`remote_id` (local-only projects use NULLs).
-* [ ] **Docs:** Document UI integration plan for Fetch/Submit placement, manual sync behavior, and segment status indicators.
+* [x] **Docs:** Document UI integration plan for Fetch/Submit placement, manual sync behavior, and segment status indicators.
 * [ ] **Docs:** Add stepwise implementation plan to `docs/ROADMAP.md`.
