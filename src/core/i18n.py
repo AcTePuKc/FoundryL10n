@@ -34,7 +34,10 @@ class I18nManager:
                 with open(path, "r", encoding="utf-8") as f:
                     self.translations = json.load(f)
             except Exception as e:
-                print(self.t("i18n_load_error").format(error=e))
+                error_template = self.fallback_translations.get(
+                    self.language, self.fallback_translations.get("EN", {})
+                ).get("i18n_load_error", "I18N Load Error: {error}")
+                print(error_template.format(error=e))
 
     def set_language(self, lang_code: str):
         """Update the active UI language."""

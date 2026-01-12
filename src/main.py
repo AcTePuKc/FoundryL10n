@@ -65,10 +65,12 @@ app = typer.Typer(help=I18N.t("cli_app_help"))
 
 @app.callback()
 def main():
+    """Ensure the database is initialized before any command runs."""
     init_db()
 
 @app.command(name="gui", help=I18N.t("cli_gui_help"))
 def launch_gui():
+    """Launch the graphical interface with the configured theme."""
     from PySide6.QtWidgets import QApplication
     from ui.main_window import FoundryGUI
     
@@ -92,6 +94,7 @@ def translate_file(
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s")
 ):
+    """Translate a TSV file via CLI."""
     loader = ResourceLoader()
     parser = FoundryParser()
     
@@ -137,6 +140,7 @@ def translate_text(
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s")
 ):
+    """Quickly translate a single string via CLI."""
     loader = ResourceLoader()
     llm_service = LLMService(model_name=model)
     engine = TranslationEngine(llm_service)
@@ -149,6 +153,12 @@ def translate_text(
     
     print(I18N.t("cli_original_label").format(content=content))
     print(I18N.t("cli_result_label").format(result=seg.translation))
+
+
+main.__doc__ = I18N.t("cli_main_doc")
+launch_gui.__doc__ = I18N.t("cli_gui_doc")
+translate_file.__doc__ = I18N.t("cli_file_doc")
+translate_text.__doc__ = I18N.t("cli_text_doc")
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
