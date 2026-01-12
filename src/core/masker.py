@@ -47,7 +47,7 @@ class Masker:
         return " ".join(clean_tags)
 
 
-# Quick Test
+# Dev-only smoke test (not user-visible in production).
 if __name__ == "__main__":
     m = Masker()
     sample = "Hello {player_name}, you have %d gold in your <color=yellow>pouch</color>!"
