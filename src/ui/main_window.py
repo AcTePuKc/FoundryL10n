@@ -125,6 +125,11 @@ class FoundryGUI(QMainWindow):
         self.btn_zen.clicked.connect(self.toggle_zen_mode)
         top_bar.addWidget(self.btn_zen)
 
+        self.btn_reverse_zen = QPushButton(I18N.t("btn_reverse_zen_mode"))
+        self.btn_reverse_zen.setCheckable(True)
+        self.btn_reverse_zen.clicked.connect(self.toggle_reverse_zen_mode)
+        top_bar.addWidget(self.btn_reverse_zen)
+
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.file_label, 1)  # Give it stretch
         self.search_label = QLabel(I18N.t("ui_search_label"))
@@ -416,6 +421,11 @@ class FoundryGUI(QMainWindow):
         """Hides UI elements and switches table to 'Full Screen' Stretch mode."""
         is_zen = self.btn_zen.isChecked()
 
+        if is_zen and self.btn_reverse_zen.isChecked():
+            self.btn_reverse_zen.blockSignals(True)
+            self.btn_reverse_zen.setChecked(False)
+            self.btn_reverse_zen.blockSignals(False)
+
         # 1. Hide/Show standard elements
         self.thought_log.setVisible(not is_zen)
         self.progress_bar.setVisible(not is_zen)
@@ -423,6 +433,8 @@ class FoundryGUI(QMainWindow):
         self.file_label.setVisible(not is_zen)
         self.editor_container.setVisible(not is_zen)
         self.btn_toggle_editor.setChecked(not is_zen)
+        self.btn_toggle_editor.setEnabled(True)
+        self.table.setVisible(True)
 
         # 2. Dynamic Column Stretching
         header = self.table.horizontalHeader()
@@ -437,6 +449,23 @@ class FoundryGUI(QMainWindow):
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
 
             # Restore your preferred widths from the saved state
+            self.load_ui_state()
+
+    def toggle_reverse_zen_mode(self):
+        """Editor-focused mode: minimize the table and maximize the editor."""
+        is_reverse = self.btn_reverse_zen.isChecked()
+
+        if is_reverse and self.btn_zen.isChecked():
+            self.btn_zen.blockSignals(True)
+            self.btn_zen.setChecked(False)
+            self.btn_zen.blockSignals(False)
+
+        self.table.setVisible(not is_reverse)
+        self.editor_container.setVisible(True)
+        self.btn_toggle_editor.setChecked(True)
+        self.btn_toggle_editor.setEnabled(not is_reverse)
+
+        if not is_reverse:
             self.load_ui_state()
 
     def run_auto_normalize(self):
@@ -683,6 +712,8 @@ class FoundryGUI(QMainWindow):
         # 1. Update text fields
         self.editor.source_edit.setText(seg.source_text)
         self.editor.ai_draft_display.setText(seg.ai_draft)
+        if hasattr(self.editor, "refresh_tag_chips"):
+            self.editor.refresh_tag_chips(seg.source_text)
         raw_translation = (seg.translation or "").strip()
         
         if not raw_translation:
@@ -1852,6 +1883,7 @@ class FoundryGUI(QMainWindow):
         self.cb_only_errors.setText(I18N.t("ui_show_only_errors"))
         self.btn_toggle_editor.setText(I18N.t("btn_toggle_editor"))
         self.btn_zen.setText(I18N.t("btn_zen_mode"))
+        self.btn_reverse_zen.setText(I18N.t("btn_reverse_zen_mode"))
         self.cb_follow.setText(I18N.t("ui_follow"))
 
         self.table.setHorizontalHeaderLabels(

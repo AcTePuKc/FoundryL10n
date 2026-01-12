@@ -22,6 +22,9 @@ Findings:
 - **Editor panel actions** (translate/rollback/save/prev/next/history double-click) are wired. These preserve keyboard-forward editing flow and quick history restore.【F:src/ui/main_window.py†L79-L188】
 - **Context menu actions** are all attached to the table right-click (multi-row and single-row actions + global find/replace/export). This preserves low-friction QA workflows for bulk verify/skip/clear operations.【F:src/ui/main_window.py†L892-L939】
 
+## Proposed UX gap: Reverse Zen Mode (editor focus)
+Current Zen Mode is table-centric: it hides the editor panel and expands the source/translation columns. A complementary “reverse zen” would hide or minimize the table and expand the editor panel for deep editing, QA tag fixes, and keyboard-forward translation review. This would support CAT workflows that emphasize target polishing over batch scanning, while keeping the existing Zen Mode intact.
+
 **Potential gap (keep or wire intentionally):**
 - `EditorPanel.cb_verified` exists but has **no signal hookup** to update segment state when a user toggles it. As-is, the checkbox is only updated programmatically after saves; manual user toggling won’t persist. This is worth deciding: either wire it to a slot or disable it to avoid misleading UI. I left it unchanged because it might be intentional (verification is only set via save).【F:src/ui/editor_panel.py†L56-L69】【F:src/ui/main_window.py†L79-L188】
 
