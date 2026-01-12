@@ -9,7 +9,7 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 
 ## 2. The Plugin System
 
-To support a website, a plugin must be added to the `/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
+To support a website, a plugin must be added to the `src/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
 
 **Canonical schema location**
 * **Source of truth:** `src/plugins/schema.json`.
@@ -70,7 +70,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 ## 5. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
 
 1. **Discovery**
-   * On startup (or refresh), the app scans the `/plugins` directory for provider JSON files.
+   * On startup (or refresh), the app scans the `src/plugins` directory for provider JSON files.
    * Each plugin file is paired with the canonical schema at `src/plugins/schema.json`.
 
 2. **Schema Validation**
