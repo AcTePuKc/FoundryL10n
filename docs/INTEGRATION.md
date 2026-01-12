@@ -270,3 +270,21 @@ Project Context Active
 * Local drafts are always editable, even when unauthenticated or offline.
 * Switching contexts never auto-syncs or discards local work; it only changes which remote context the UI is targeting.
 * Sync buttons clearly reflect their manual nature (no background polling).
+
+---
+
+## 11. Security & Credential Storage
+
+FoundryL10n stores provider credentials using the operating system's secure keyring/secret storage when available (e.g., Keychain, Credential Manager, Secret Service).
+
+**Key naming convention**
+* Keys are scoped by provider and account: `provider_id + account`.
+* `provider_id` matches the plugin identifier (e.g., `adventurers_bg`).
+* `account` is the user-facing login identifier (e.g., username or email).
+
+**Fallback behavior**
+* If a system keyring is unavailable, the app falls back to an in-memory session cache for the current runtime only.
+* Users must re-authenticate when the app restarts in fallback mode.
+
+**Plain-text storage**
+* Tokens are **never** stored in plain text project files or exported data.
