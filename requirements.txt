@@ -1,3 +1,4 @@
+jsonschema
 typer
 rich
 ollama

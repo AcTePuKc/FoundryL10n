@@ -64,7 +64,7 @@ Tasks about the local database schema and storage.
 Tasks about validation and developer scripts.
 
 * [x] **Consistency Check:** Script to find the same source text translated differently across a project.
-* [ ] **Plugin Validator:** Create a CLI tool to validate that a new `.json` plugin matches the required schema.
+* [x] **Plugin Validator:** Create a CLI tool to validate that a new `.json` plugin matches the required schema.
 * [ ] **Mock Server:** Set up a simple local server to test API integration without hitting live websites.
 * [x] **Docs:** Add the integration architecture diagram + legend covering sync behavior.
 * [x] **Docs:** Record the canonical plugin schema location and document UI validation/disablement behavior for invalid plugins.
