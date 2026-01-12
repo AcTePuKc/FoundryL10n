@@ -513,8 +513,8 @@ class FoundryGUI(QMainWindow):
     def _resolve_segment_id(self, seg: TranslationSegment) -> str | None:
         if hasattr(seg, "segment_id") and getattr(seg, "segment_id"):
             return str(getattr(seg, "segment_id"))
-        if getattr(seg, "remote_id", None):
-            return str(getattr(seg, "remote_id"))
+        if remote_id := getattr(seg, "remote_id", None):
+            return str(remote_id)
         row = getattr(seg, "original_row", {}) or {}
         for key in ("segment_id", "remote_id", "id"):
             value = row.get(key)
