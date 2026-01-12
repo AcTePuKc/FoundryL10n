@@ -83,7 +83,7 @@
     "llm_model_unavailable": "Ollama not available",
     "llm_error": "Error: {error}",
     "llm_error_note": "Placeholders: {error}. Keep the token unchanged.",
-    "prompt_default": "### STORY CONTEXT (Reference only):\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the Source Text.\n\n### RULES:\n1. GLOSSARY: {glossary}\n2. TAGS: Keep @@PLACEHOLDER_0@@ anchors in place.\n\n### SOURCE:\n{source}\n\n### TRANSLATION:\n",
+    "prompt_default": "### STORY CONTEXT (Reference only):\n{context}\n\n### ROLE: Expert {target_lang} Game Localizer\n### TASK: Translate the Source Text.\n\n### RULES:\n1. GLOSSARY: {glossary}\n2. TAGS: Keep @@PLACEHOLDER_x@@ anchors in place.\n\n### SOURCE:\n{source}\n\n### TRANSLATION:\n",
     "prompt_template_technical": "### ROLE: Technical Fixer\nI have a translation that broke the technical tags.\n1. FIX the tags @@PLACEHOLDER_x@@ based on the Source.\n2. IMPROVE the Bulgarian grammar in the Existing Translation.\n\n### SOURCE (English):\n{source}\n\n### EXISTING TRANSLATION (BG):\n{translation}\n\n### CORRECTED TRANSLATION:\n",
     "prompt_template_creative": "### ROLE: Fantasy Writer\nRe-write this {target_lang} translation to be more epic and poetic.\nGlossary: {glossary}\nSource: {source}\nTarget:",
     "dlg_purge_memory_title": "Purge Memory",
