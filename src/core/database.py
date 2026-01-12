@@ -21,8 +21,8 @@ class TranslationRecord(SQLModel, table=True):
 
 class TranslationAuditRecord(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    project_name: str = Field(default="default", index=True)
-    source_text: str = Field(default="default", index=True)
+    project_name: str = Field(index=True)
+    source_text: str = Field(index=True)
     target_lang: str
     variants_json: str = Field(default="[]")
 
