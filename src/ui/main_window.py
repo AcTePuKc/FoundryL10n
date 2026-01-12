@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QTableWidgetItem, QHeaderView, QProgressBar,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
-                               QScrollArea, QApplication)
+                               QScrollArea, QApplication, QToolBar)
 from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings, QTimer
 from sqlmodel import select, col
@@ -71,6 +71,7 @@ class FoundryGUI(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.setMinimumSize(800, 600)
         self._init_actions()
+        self._init_sync_controls()
 
         self.init_translate_tab()
 
@@ -108,6 +109,7 @@ class FoundryGUI(QMainWindow):
         # Load states
         self.load_ui_state()
         self.settings_tab.load_settings()
+        self.on_provider_changed(self.settings_tab.get_settings().get("provider_id", ""))
         self.retranslate_ui()
 
     def init_translate_tab(self):
@@ -297,6 +299,24 @@ class FoundryGUI(QMainWindow):
         self.action_history_delete = QAction(self)
         self.action_history_delete.triggered.connect(self._handle_history_delete)
 
+        self.action_fetch_segments = QAction(self)
+        self.action_fetch_segments.triggered.connect(self.handle_fetch_segments)
+
+        self.action_submit_suggestion = QAction(self)
+        self.action_submit_suggestion.triggered.connect(self.handle_submit_suggestion)
+
+    def _init_sync_controls(self) -> None:
+        self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
+        self.sync_menu.addAction(self.action_fetch_segments)
+        self.sync_menu.addAction(self.action_submit_suggestion)
+
+        self.sync_toolbar = QToolBar(I18N.t("menu_sync"), self)
+        self.sync_toolbar.setObjectName("sync_toolbar")
+        self.sync_toolbar.addAction(self.action_fetch_segments)
+        self.sync_toolbar.addAction(self.action_submit_suggestion)
+        self.addToolBar(self.sync_toolbar)
+        self.update_sync_action_state()
+
     def _update_context_menu_texts(self, count: int) -> None:
         self.action_verify_rows.setText(
             I18N.t("menu_verify_rows").format(count=count)
@@ -399,6 +419,7 @@ class FoundryGUI(QMainWindow):
             if self._login_dialog is not None:
                 self._login_dialog.close()
             self._login_dialog = None
+        self.update_sync_action_state()
 
     def open_login_dialog(self, provider_id: str) -> None:
         if not self.plugin_registry or not provider_id:
@@ -446,6 +467,87 @@ class FoundryGUI(QMainWindow):
             I18N.t("log_login_success").format(provider=provider_id)
         )
         dialog.accept()
+        self.update_sync_action_state()
+
+    def update_sync_action_state(self) -> None:
+        provider_id, _ = self._get_active_provider()
+        token = self.token_storage.get_token(provider_id) if provider_id else None
+        is_enabled = bool(token)
+        self.action_fetch_segments.setEnabled(is_enabled)
+        self.action_submit_suggestion.setEnabled(is_enabled)
+
+    def _get_active_provider(self) -> tuple[str, dict] | tuple[None, None]:
+        if not self.plugin_registry or not self._active_provider_id:
+            return None, None
+        provider = self.plugin_registry.providers.get(self._active_provider_id)
+        if not provider:
+            return None, None
+        return self._active_provider_id, provider
+
+    def _resolve_segment_id(self, seg) -> str | None:
+        if hasattr(seg, "segment_id") and getattr(seg, "segment_id"):
+            return str(getattr(seg, "segment_id"))
+        row = getattr(seg, "original_row", {}) or {}
+        for key in ("segment_id", "remote_id", "id"):
+            value = row.get(key)
+            if value:
+                return str(value)
+        return None
+
+    def handle_fetch_segments(self) -> None:
+        provider_id, provider = self._get_active_provider()
+        if not provider_id or not provider:
+            return
+        token = self.token_storage.get_token(provider_id)
+        if not token:
+            self.thought_log.append(I18N.t("log_sync_auth_required"))
+            self.update_sync_action_state()
+            return
+        settings = self.settings_tab.get_settings()
+        project_id = settings.get("project_name") or None
+        client = ProviderHttpClient(provider)
+        try:
+            segments = client.fetch_segments(token, project_id=project_id, page=1)
+        except (HTTPError, URLError, ValueError) as exc:
+            self.thought_log.append(
+                I18N.t("log_sync_fetch_failed").format(error=str(exc))
+            )
+            return
+        self.thought_log.append(
+            I18N.t("log_sync_fetch_success").format(count=len(segments))
+        )
+
+    def handle_submit_suggestion(self) -> None:
+        provider_id, provider = self._get_active_provider()
+        if not provider_id or not provider:
+            return
+        token = self.token_storage.get_token(provider_id)
+        if not token:
+            self.thought_log.append(I18N.t("log_sync_auth_required"))
+            self.update_sync_action_state()
+            return
+        if self.current_row < 0 or self.current_row >= len(self.segments):
+            self.thought_log.append(I18N.t("log_sync_no_selection"))
+            return
+        seg = self.segments[self.current_row]
+        segment_id = self._resolve_segment_id(seg)
+        if not segment_id:
+            self.thought_log.append(I18N.t("log_sync_missing_segment_id"))
+            return
+        suggestion_text = seg.translation or ""
+        client = ProviderHttpClient(provider)
+        try:
+            client.submit_suggestion(
+                token,
+                segment_id=segment_id,
+                suggestion_text=suggestion_text,
+            )
+        except (HTTPError, URLError, ValueError) as exc:
+            self.thought_log.append(
+                I18N.t("log_sync_submit_failed").format(error=str(exc))
+            )
+            return
+        self.thought_log.append(I18N.t("log_sync_submit_success"))
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
@@ -2030,6 +2132,12 @@ class FoundryGUI(QMainWindow):
             self._update_translate_button_text()
 
         self._update_context_menu_texts(self._context_menu_count)
+        self.action_fetch_segments.setText(I18N.t("menu_sync_fetch"))
+        self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
+        if hasattr(self, "sync_menu"):
+            self.sync_menu.setTitle(I18N.t("menu_sync"))
+        if hasattr(self, "sync_toolbar"):
+            self.sync_toolbar.setWindowTitle(I18N.t("menu_sync"))
         self.update_stats()
 
         if hasattr(self.settings_tab, "retranslate_ui"):
