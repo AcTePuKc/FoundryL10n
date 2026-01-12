@@ -152,7 +152,7 @@ class FoundryGUI(QMainWindow):
                 I18N.t("header_state"),
                 I18N.t("header_key"),
                 I18N.t("header_source"),
-                I18N.t("header_translation"),
+                I18N.t("ui_translation"),
             ])
 
         # Column resize: Excel-like (drag)
@@ -229,7 +229,7 @@ class FoundryGUI(QMainWindow):
         bottom.addWidget(self.btn_run)
         layout.addLayout(bottom)
 
-        self.tabs.addTab(self.translate_tab, I18N.t("tab_workstation"))
+        self.tabs.addTab(self.translate_tab, I18N.t("ui_workstation"))
         self.table.itemChanged.connect(self.on_table_cell_edited)
 
     def _init_actions(self):
@@ -1406,7 +1406,7 @@ class FoundryGUI(QMainWindow):
     def open_file(self):
         path, _ = QFileDialog.getOpenFileName(
             self,
-            I18N.t("dlg_open_tsv_title"),
+            I18N.t("btn_open_tsv"),
             "",
             I18N.t("filter_tsv"),
         )
@@ -1831,7 +1831,7 @@ class FoundryGUI(QMainWindow):
         if hasattr(self, "translate_tab"):
             self.tabs.setTabText(
                 self.tabs.indexOf(self.translate_tab),
-                I18N.t("tab_workstation"),
+                I18N.t("ui_workstation"),
             )
         self.tabs.setTabText(
             self.tabs.indexOf(self.settings_tab),
@@ -1858,7 +1858,7 @@ class FoundryGUI(QMainWindow):
                 I18N.t("header_state"),
                 I18N.t("header_key"),
                 I18N.t("header_source"),
-                I18N.t("header_translation"),
+                I18N.t("ui_translation"),
             ]
         )
 

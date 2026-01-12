@@ -450,7 +450,7 @@ class SettingsTab(QWidget):
         """Triggers the Global Replace logic via input dialogs."""
         find_t, ok1 = QInputDialog.getText(
             self,
-            I18N.t("dlg_global_replace_title"),
+            I18N.t("btn_global_replace"),
             I18N.t("msg_global_find")
         )
         if not ok1 or not find_t:
@@ -458,7 +458,7 @@ class SettingsTab(QWidget):
 
         repl_t, ok2 = QInputDialog.getText(
             self,
-            I18N.t("dlg_global_replace_title"),
+            I18N.t("btn_global_replace"),
             I18N.t("msg_global_replace_with").format(text=find_t),
         )
         if not ok2:
@@ -788,7 +788,7 @@ class SettingsTab(QWidget):
     def clear_memory(self):
         reply = QMessageBox.question(
             self,
-            I18N.t("dlg_wipe_all_title"),
+            I18N.t("btn_wipe_all"),
             I18N.t("msg_wipe_all_confirm"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
