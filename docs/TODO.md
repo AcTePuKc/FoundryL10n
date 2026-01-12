@@ -16,10 +16,10 @@ This file is a working todo list for FoundryL10n.
 
 Tasks related to the modular plugin system and connecting to external platforms.
 
-* [ ] **Plugin Architecture:** Define the `Provider` base class and interface.
+* [x] **Plugin Architecture:** Define the `Provider` base class and interface.
 * [x] **Plugin Loader:** Implement logic to scan the `/plugins` directory for JSON/JS files.
 * [ ] **GitHub Sync:** Create a service to fetch/update the latest provider configs from the central GitHub repo.
-* [ ] **Generic API Client:** Build a flexible HTTP handler that uses headers/endpoints defined in the active plugin.
+* [x] **Generic API Client:** Build a flexible HTTP handler that uses headers/endpoints defined in the active plugin.
 * [ ] **AdventurersBG Provider:** Create the first official plugin file (`adventurers_bg.json`) following the new schema.
 * [ ] **Auth Storage:** Implement secure local storage for API tokens (keyring/secret storage).
 * [ ] **Sync Logic:** Implement "Fetch Segments" and "Push Suggestions" actions within the UI.
