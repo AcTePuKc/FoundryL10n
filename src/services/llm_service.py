@@ -3,6 +3,15 @@ import re
 
 from core.i18n import I18N
 
+DEFAULT_MODEL_UNAVAILABLE = "llm_model_unavailable"
+CONTEXT_PREFIX = "### CONTEXT: {context}\n"
+POLITE_JUNK = (
+    "Certainly", "Sure", "Here is",
+    "I have fixed", "Let's correct",
+    "Разбира се", "Ето превода", "Ето и превода"
+)
+STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
+
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches [#_0_], [#_1_], etc.
     pattern = r"\[#_\d+_\]"
@@ -22,7 +31,7 @@ class LLMService:
                                   response.get('models', []))
             return [getattr(m, 'model', m.get('name', 'unknown')) for m in models_list]
         except:
-            return ["ollama-not-found"]
+            return [I18N.t(DEFAULT_MODEL_UNAVAILABLE)]
 
     def translate_segment(
             self,
@@ -51,7 +60,7 @@ class LLMService:
                                      .replace("{context}", context_extra)
 
         if context_extra and "{context}" not in prompt_template:
-            full_prompt = f"### CONTEXT: {context_extra}\n" + full_prompt
+            full_prompt = CONTEXT_PREFIX.format(context=context_extra) + full_prompt
 
         try:
             response = ollama.generate(
@@ -59,7 +68,7 @@ class LLMService:
                 prompt=full_prompt,
                 options={
                     "temperature": float(temp),
-                    "stop": ["###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n"]
+                    "stop": STOP_TOKENS
                 }
             )
             raw = response['response'].strip()
@@ -89,14 +98,8 @@ class LLMService:
                 translation = best_line
 
             # 4. STRIP POLITE JUNK (safe)
-            polite_junk = [
-                "Certainly", "Sure", "Here is",
-                "I have fixed", "Let's correct",
-                "Разбира се", "Ето превода", "Ето и превода"
-            ]
-
             cleaned = translation
-            for junk in polite_junk:
+            for junk in POLITE_JUNK:
                 if cleaned.lower().startswith(junk.lower()):
                     candidate = cleaned[len(junk):].strip().lstrip(":! ")
                     if candidate:
@@ -115,4 +118,4 @@ class LLMService:
             return translation.strip(), thought
 
         except Exception as e:
-            return f"Error: {str(e)}", ""
+            return I18N.t("llm_error").format(error=str(e)), ""
