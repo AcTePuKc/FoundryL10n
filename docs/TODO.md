@@ -69,3 +69,5 @@ Tasks about validation and developer scripts.
 * [ ] **Docs:** Add the integration architecture diagram + legend covering sync behavior.
 * [ ] **Docs:** Record the canonical plugin schema location and document UI validation/disablement behavior for invalid plugins.
 * [ ] **Docs:** Document BaseProvider method contracts and mapping rules in `docs/INTEGRATION.md`.
+
+* [ ] **Docs:** Add project context state model doc covering provider selection and sync transitions.
