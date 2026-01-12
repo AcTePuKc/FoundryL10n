@@ -71,3 +71,5 @@ Tasks about validation and developer scripts.
 * [ ] **Docs:** Document BaseProvider method contracts and mapping rules in `docs/INTEGRATION.md`.
 
 * [ ] **Docs:** Add project context state model doc covering provider selection and sync transitions.
+
+* [ ] **Docs:** Add security documentation for keyring storage, key naming, and keyring fallback behavior.
