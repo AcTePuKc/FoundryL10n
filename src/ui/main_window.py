@@ -1,6 +1,5 @@
 import os
 import sys
-import re
 import csv
 import json
 from pathlib import Path
@@ -23,6 +22,7 @@ from ui.editor_panel import EditorPanel
 from ui.integrity_tab import IntegrityTab
 from services.llm_service import LLMService
 from core.i18n import I18N
+from core.tag_utils import strip_tags
 from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
                            find_translation_conflicts, get_project_integrity_report,
@@ -1678,9 +1678,6 @@ class FoundryGUI(QMainWindow):
         if not path:
             return
 
-        # 4) Tag stripper: internal markers + original tags/placeholders
-        tag_pattern = re.compile(r"@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}|%.*?[dsf]")
-
         # 5) Load existing term/translation pairs to avoid duplicates
         existing_pairs: set[tuple[str, str]] = set()
         file_exists = os.path.exists(path)
@@ -1725,8 +1722,8 @@ class FoundryGUI(QMainWindow):
                     raw_src = seg.source_text or ""
                     raw_trans = seg.translation or ""
 
-                    src = tag_pattern.sub("", raw_src)
-                    trans = tag_pattern.sub("", raw_trans)
+                    src = strip_tags(raw_src)
+                    trans = strip_tags(raw_trans)
 
                     # Whitespace crunch: collapse multiple spaces and trim
                     src = " ".join(src.split()).strip()
