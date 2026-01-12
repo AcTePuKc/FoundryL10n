@@ -21,6 +21,7 @@ class TokenStorage:
         self.service_name = service_name
         self.storage_path = storage_path or DEFAULT_STORAGE_PATH
         self._keyring = keyring_module if keyring_module is not None else self._load_keyring()
+        self._keyring_errors = self._load_keyring_errors()
 
     def get_token(self, provider_id: str) -> str | None:
         token = self._read_keyring(provider_id)
@@ -49,30 +50,46 @@ class TokenStorage:
             return None
         return importlib.import_module("keyring")
 
+    def _load_keyring_errors(self) -> Any | None:
+        if importlib.util.find_spec("keyring.errors") is None:
+            return None
+        return importlib.import_module("keyring.errors")
+
     def _read_keyring(self, provider_id: str) -> str | None:
         if self._keyring is None:
             return None
-        try:
-            return self._keyring.get_password(self.service_name, provider_id)
-        except Exception:
-            return None
+        error_types = self._keyring_error_types()
+        if error_types:
+            try:
+                return self._keyring.get_password(self.service_name, provider_id)
+            except error_types:
+                return None
+        return self._keyring.get_password(self.service_name, provider_id)
 
     def _write_keyring(self, provider_id: str, token: str) -> bool:
         if self._keyring is None:
             return False
-        try:
+        error_types = self._keyring_error_types()
+        if error_types:
+            try:
+                self._keyring.set_password(self.service_name, provider_id, token)
+            except error_types:
+                return False
+        else:
             self._keyring.set_password(self.service_name, provider_id, token)
-        except Exception:
-            return False
         return True
 
     def _delete_keyring(self, provider_id: str) -> bool:
         if self._keyring is None:
             return False
-        try:
+        error_types = self._keyring_error_types()
+        if error_types:
+            try:
+                self._keyring.delete_password(self.service_name, provider_id)
+            except error_types:
+                return False
+        else:
             self._keyring.delete_password(self.service_name, provider_id)
-        except Exception:
-            return False
         return True
 
     def _read_fallback(self) -> dict[str, str]:
@@ -93,3 +110,14 @@ class TokenStorage:
             json.dumps(data, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+
+    def _keyring_error_types(self) -> tuple[type[Exception], ...]:
+        if self._keyring_errors is None:
+            return ()
+        errors = self._keyring_errors
+        candidates = []
+        for name in ("KeyringError", "PasswordDeleteError", "PasswordSetError"):
+            error_type = getattr(errors, name, None)
+            if isinstance(error_type, type) and issubclass(error_type, Exception):
+                candidates.append(error_type)
+        return tuple(candidates)

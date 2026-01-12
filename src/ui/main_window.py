@@ -4,6 +4,7 @@ import csv
 import json
 from pathlib import Path
 from typing import Optional
+from urllib.error import HTTPError, URLError
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QFileDialog, QTableWidget,
                                QTableWidgetItem, QHeaderView, QProgressBar,
@@ -395,6 +396,8 @@ class FoundryGUI(QMainWindow):
         )
         self._active_provider_id = provider_id if is_valid else ""
         if not is_valid:
+            if self._login_dialog is not None:
+                self._login_dialog.close()
             self._login_dialog = None
 
     def open_login_dialog(self, provider_id: str) -> None:
@@ -429,7 +432,7 @@ class FoundryGUI(QMainWindow):
         client = ProviderHttpClient(provider)
         try:
             result = client.auth_login(credentials)
-        except Exception as exc:
+        except (HTTPError, URLError, ValueError) as exc:
             dialog.set_error(
                 I18N.t("msg_login_failed").format(error=str(exc))
             )

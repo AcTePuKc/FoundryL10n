@@ -41,7 +41,7 @@ class LoginDialog(QDialog):
         self._build_fields()
 
         self.error_label = QLabel()
-        self.error_label.setStyleSheet("color: #d32f2f;")
+        self.error_label.setObjectName("loginError")
         self.error_label.setVisible(False)
         self.error_label.setWordWrap(True)
         layout.addWidget(self.error_label)
