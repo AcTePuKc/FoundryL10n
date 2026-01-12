@@ -125,9 +125,7 @@ class EditorPanel(QWidget):
         self.set_tag_chips([])
 
     def _extract_tags(self, text: str) -> list[str]:
-        masker = Masker()
-        combined_pattern = f"({'|'.join(masker.patterns)})"
-        matches = re.findall(combined_pattern, text)
+        matches = self._tag_extractor_pattern.findall(text)
         return [m[0] if isinstance(m, tuple) else m for m in matches if m]
 
     def set_tag_chips(self, tags: list[str]) -> None:
