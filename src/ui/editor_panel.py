@@ -13,7 +13,7 @@ class TagHighlighter(QSyntaxHighlighter):
         self.tag_format = QTextCharFormat()
         self.tag_format.setForeground(QColor("#FF9D00"))  # Orange
         self.tag_format.setFontWeight(QFont.Weight.Bold)
-        self.pattern = re.compile(r"(@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\])")
+        self.pattern = re.compile(r"(@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>|\[[^\]]+\]|\{[^\}]+\}|%.*?[dsf])")
 
     def highlightBlock(self, text):
         for match in self.pattern.finditer(text):
