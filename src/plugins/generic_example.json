@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "id": "example-provider",
+    "name": "Example Translation Platform",
+    "version": "1.0.0",
+    "homepage": "https://example.com"
+  },
+  "auth": {
+    "type": "Bearer",       
+    "token_header": "Authorization",
+    "token_prefix": "Bearer "
+  },
+  "endpoints": {
+    "base_url": "https://example.com",
+    "fetch_segments": {
+      "method": "GET",
+      "path": "/api/games/{game_id}/segments",
+      "query": {
+        "page": "{page}"
+      }
+    },
+    "submit_suggestion": {
+      "method": "POST",
+      "path": "/api/games/{game_id}/segments/{segment_id}/suggestions"
+    }
+  },
+  "tsv": {
+    "columns": [
+      "key",
+      "source",
+      "translation",
+      "notes"
+    ],
+    "key_field": "segment_id"
+  }
+}
