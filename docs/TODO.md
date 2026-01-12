@@ -66,3 +66,4 @@ Tasks about validation and developer scripts.
 * [ ] **Consistency Check:** Script to find the same source text translated differently across a project.
 * [ ] **Plugin Validator:** Create a CLI tool to validate that a new `.json` plugin matches the required schema.
 * [ ] **Mock Server:** Set up a simple local server to test API integration without hitting live websites.
+* [ ] **Docs:** Add the integration architecture diagram + legend covering sync behavior.

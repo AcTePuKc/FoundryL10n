@@ -19,7 +19,30 @@ To support a website, a plugin must be added to the `/plugins` directory. Users 
 
 ---
 
-## 3. Core Implementation Boundaries
+## 3. Architecture Flow (Text Diagram)
+
+```
+UI Actions (Fetch / Submit Suggestions / Select Provider)
+  ↓
+Integration Manager (validates plugin JSON, coordinates sync + offline cache)
+  ↓
+Active Provider (from plugin config; auth + endpoints + field mapping)
+  ↓
+Remote API (segments + suggestions endpoints; source of truth)
+```
+
+**Behavioral notes**
+* **Suggestions-only submissions:** FoundryL10n only posts suggestions, never approves or overrides server decisions.
+* **Explicit user-triggered sync:** Fetching and submitting are manual UI actions, not background tasks.
+* **Offline-first:** Local edits, drafts, and TM persist offline; sync occurs only when explicitly requested.
+
+**Legend (layer responsibilities + validation)**
+* **UI Actions:** User-initiated commands that start fetch/submit flows.
+* **Integration Manager:** Validates plugin JSON on load and enforces sync policy (manual-only, suggestions-only).
+* **Active Provider:** The currently selected plugin that defines auth, endpoints, and field mapping.
+* **Remote API:** External service that stores authoritative translations and accepts suggestions.
+
+## 4. Core Implementation Boundaries
 
 ### FoundryL10n (The Client)
 
@@ -39,7 +62,7 @@ To support a website, a plugin must be added to the `/plugins` directory. Users 
 
 ---
 
-## 4. Data Model (Universal Mapping)
+## 5. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
@@ -53,7 +76,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 ---
 
-## 5. Standard API Assumptions
+## 6. Standard API Assumptions
 
 Plugins generally follow this flow:
 
@@ -89,7 +112,7 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 6. Local Workflow & Safety
+## 7. Local Workflow & Safety
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
