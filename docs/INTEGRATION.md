@@ -85,7 +85,87 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 ---
 
-## 6. Data Model (Universal Mapping)
+## 6. BaseProvider Contract (Abstract Methods + Mapping)
+
+The runtime provider interface is implemented by a **BaseProvider** contract. Plugin JSON defines the concrete endpoints and mapping paths, while the BaseProvider enforces the shape of inputs/outputs so the rest of the app can treat all providers uniformly.
+
+### A. `auth_login`
+
+**Purpose:** Authenticate a user and return an access token (or equivalent session material).
+
+**Inputs**
+* `credentials`: object from the login UI (e.g., `username`/`password`, API key).
+* `auth.type`: one of `bearer`, `basic`, `oauth2` from the plugin.
+* `auth.login_endpoint`: relative or absolute URL used for login.
+
+**Outputs**
+* `token`: string (or token payload if provider requires more than a raw string).
+* `metadata`: optional details needed by the provider (e.g., token type, expiry).
+
+**Notes**
+* Token extraction uses `auth.token_path` when provided.
+* Storage is handled by the client (not the provider), but the provider must return a token value.
+
+### B. `fetch_projects`
+
+**Purpose:** List available projects/workspaces on the remote service (when supported).
+
+**Inputs**
+* `token`
+* `endpoints.fetch_projects` (optional)
+
+**Outputs**
+* List of project records, each containing:
+  * `project_id` (string)
+  * `name` (string)
+  * `metadata` (optional)
+
+**Notes**
+* If a provider does not support projects, this method returns an empty list and the UI treats it as a single implicit project.
+
+### C. `fetch_segments`
+
+**Purpose:** Retrieve translatable segments for a project or scope.
+
+**Inputs**
+* `token`
+* `project_id` (optional, depending on provider)
+* `endpoints.fetch_segments` (required)
+* `pagination` (optional, e.g., `page`)
+
+**Outputs**
+* List of local segment records with **mapped fields**:
+  * `segment_id`
+  * `source`
+  * `target`
+  * `local_draft` (initialized empty unless provider returns a draft)
+
+**Mapping rules**
+* `mapping.source_text` → local `source`
+* `mapping.target_text` → local `target`
+* `mapping.segment_id` → local `segment_id`
+
+The mapping values are JSON paths (or dot paths) into the provider response. If a mapping key is omitted, the defaults from the schema apply.
+
+### D. `submit_suggestion`
+
+**Purpose:** Submit a translation **suggestion** for a segment.
+
+**Inputs**
+* `token`
+* `segment_id`
+* `suggestion_text` (from local `local_draft` or user edit)
+* `endpoints.submit_suggestion` (required)
+
+**Outputs**
+* Success indicator and optional server response payload.
+
+**Contract restriction (mandatory)**
+* **Suggestions-only:** The provider must submit suggestions only. It must **not** call any endpoint that approves, publishes, or overwrites the server’s accepted translation. The server remains the authority for acceptance.
+
+---
+
+## 7. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
@@ -99,7 +179,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 ---
 
-## 7. Standard API Assumptions
+## 8. Standard API Assumptions
 
 Plugins generally follow this flow:
 
@@ -135,7 +215,7 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 8. Local Workflow & Safety
+## 9. Local Workflow & Safety
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
