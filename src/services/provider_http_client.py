@@ -82,11 +82,14 @@ class ProviderHttpClient(BaseProvider):
         endpoint = self.config.endpoints.get("fetch_segments")
         if not endpoint:
             raise ValueError("Provider fetch_segments endpoint is missing.")
-        url = self.format_endpoint(
-            endpoint,
-            project_id=project_id or "",
-            page=page or 1,
-        )
+        format_params = {"page": page or 1}
+        if project_id:
+            format_params["project_id"] = project_id
+
+        try:
+            url = self.format_endpoint(endpoint, **format_params)
+        except KeyError as e:
+            raise ValueError(f"Endpoint requires parameter {e!r}, but it was not provided.") from e
         response = self._requester("GET", url, self._auth_headers(token), None)
         items = self._segment_items(response)
         mapping = {**DEFAULT_MAPPING, **self.config.mapping}
