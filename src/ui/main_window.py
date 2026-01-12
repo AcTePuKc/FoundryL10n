@@ -381,11 +381,12 @@ class FoundryGUI(QMainWindow):
         self.thought_log.append(I18N.t("log_profile_loaded"))
 
     def on_provider_changed(self, provider_id: str):
-        if self.plugin_registry and provider_id:
-            if provider_id not in self.plugin_registry.providers:
-                self._active_provider_id = ""
-                return
-        self._active_provider_id = provider_id
+        is_valid = (
+            self.plugin_registry
+            and provider_id
+            and provider_id in self.plugin_registry.providers
+        )
+        self._active_provider_id = provider_id if is_valid else ""
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
