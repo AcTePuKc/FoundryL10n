@@ -765,10 +765,7 @@ class FoundryGUI(QMainWindow):
         is_verified = getattr(seg, 'is_verified', False)
         is_skip = getattr(seg, 'never_translate', False)
 
-        if is_skip or (is_verified and not self._segment_needs_fuzzy(seg)):
-            self.editor.fuzzy_display.clear()
-            self.editor.btn_use_fuzzy.setVisible(False)
-        elif self._segment_needs_fuzzy(seg):
+        if self._segment_needs_fuzzy(seg) and not is_skip:
             self.search_fuzzy_matches(seg.source_text)
         else:
             self.editor.fuzzy_display.clear()
@@ -818,9 +815,7 @@ class FoundryGUI(QMainWindow):
 
     def _segment_needs_fuzzy(self, seg) -> bool:
         has_tag_error = "[TAG ERROR]" in (seg.translation or "")
-        has_risk = bool(getattr(seg, "has_risk", False))
-        if not has_risk:
-            has_risk = "⚠️" in (seg.thought or "")
+        has_risk = bool(getattr(seg, "has_risk", False)) or "⚠️" in (seg.thought or "")
         return has_tag_error or has_risk
 
     def _normalize_suggestion_text(self, suggestion: str, source_text: str) -> str:
@@ -829,7 +824,13 @@ class FoundryGUI(QMainWindow):
         if not source_tags:
             return cleaned
         suggestion_tags = extract_tags(cleaned)
-        missing_tags = [tag for tag in source_tags if tag not in suggestion_tags]
+        suggestion_tags_copy = list(suggestion_tags)
+        missing_tags = []
+        for tag in source_tags:
+            try:
+                suggestion_tags_copy.remove(tag)
+            except ValueError:
+                missing_tags.append(tag)
         if missing_tags:
             spacer = " " if cleaned and not cleaned.endswith(" ") else ""
             cleaned = f"{cleaned}{spacer}{' '.join(missing_tags)}".strip()
