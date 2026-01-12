@@ -21,6 +21,7 @@ class SettingsTab(QWidget):
     profile_loaded = Signal()
     language_changed = Signal(str)
     provider_changed = Signal(str)
+    login_requested = Signal(str)
     ORGANIZATION_NAME = "FoundryL10n"
     APP_NAME = "TranslatorApp"
 
@@ -113,6 +114,9 @@ class SettingsTab(QWidget):
         self.provider_dropdown.currentIndexChanged.connect(
             self.on_provider_changed
         )
+        self.btn_login = QPushButton(I18N.t("btn_login"))
+        self.btn_login.setEnabled(False)
+        self.btn_login.clicked.connect(self.request_login)
 
         btn_refresh = QPushButton()
         btn_refresh.setIcon(QIcon.fromTheme("view-refresh"))
@@ -121,6 +125,7 @@ class SettingsTab(QWidget):
         provider_row = QHBoxLayout()
         provider_row.setSpacing(8)
         provider_row.addWidget(self.provider_dropdown)
+        provider_row.addWidget(self.btn_login)
         provider_row.addStretch()
 
         model_row = QHBoxLayout()
@@ -663,6 +668,7 @@ class SettingsTab(QWidget):
             self.provider_dropdown.addItem(I18N.t("ui_provider_none"), "")
             self.provider_dropdown.setEnabled(False)
             self.provider_dropdown.blockSignals(False)
+            self.btn_login.setEnabled(False)
             if (
                 focused is not None
                 and focused is not self.provider_dropdown
@@ -693,6 +699,7 @@ class SettingsTab(QWidget):
             if idx >= 0:
                 self.provider_dropdown.setCurrentIndex(idx)
         self.provider_dropdown.blockSignals(False)
+        self.update_login_button()
         if (
             focused is not None
             and focused is not self.provider_dropdown
@@ -845,7 +852,22 @@ class SettingsTab(QWidget):
     def on_provider_changed(self):
         provider_id = self.provider_dropdown.currentData()
         self.save_settings()
+        self.update_login_button(provider_id)
         self.provider_changed.emit(provider_id or "")
+
+    def update_login_button(self, provider_id: str | None = None) -> None:
+        current_id = provider_id or self.provider_dropdown.currentData()
+        is_valid = (
+            current_id
+            and self.plugin_registry
+            and current_id in self.plugin_registry.providers
+        )
+        self.btn_login.setEnabled(bool(is_valid))
+
+    def request_login(self) -> None:
+        provider_id = self.provider_dropdown.currentData()
+        if provider_id:
+            self.login_requested.emit(provider_id)
 
     def clear_mismatches(self):
         """Fixed: Using col() to satisfy Pylance type checking."""

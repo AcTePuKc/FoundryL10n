@@ -8,6 +8,9 @@ QMainWindow, QDialog, QWidget {
 QLabel {
     background-color: transparent;
 }
+QLabel#loginError {
+    color: #d32f2f;
+}
 
 /* Tabs */
 QTabWidget::pane { 
