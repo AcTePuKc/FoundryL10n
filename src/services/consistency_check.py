@@ -4,8 +4,12 @@ from typing import Optional
 import typer
 from rich import print
 from sqlmodel import Session, select
-import tomllib
-
+try:
+    import tomllib
+except ImportError:
+    # For Python < 3.11, requires `pip install tomli`
+    import tomli as tomllib
+    
 from core.database import TranslationRecord, engine
 
 app = typer.Typer(help="Scan the translation memory for conflicting targets per source.")
