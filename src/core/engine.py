@@ -3,6 +3,7 @@ import difflib
 from core.masker import Masker
 from core.database import (get_cached_record, save_translation, engine,
                            TranslationRecord)
+from core.i18n import I18N
 from services.llm_service import LLMService, validate_placeholders
 from sqlmodel import Session, select, col
 
@@ -40,7 +41,7 @@ class TranslationEngine:
                 seg.is_verified = record.is_verified 
                 seg.never_translate = record.never_translate
                 seg.ai_draft = record.ai_draft
-                seg.thought = "Restored from Memory"
+                seg.thought = I18N.t("thought_restored_from_memory")
 
             # 2. IMPROVED CONTEXT: Previous + Next Line
             prev_text = segments[i-1].source_text if i > 0 else ""
@@ -103,7 +104,7 @@ class TranslationEngine:
             # Replace some letters with accented ones to test font support
             pseudo = source.replace("a", "á").replace("e", "é").replace("o", "ó").replace("i", "í")
             seg.translation = f"[!! {pseudo} !!]"
-            seg.thought = "Pseudo-Localization Pass"
+            seg.thought = I18N.t("thought_pseudo_localization_pass")
 
     def audit_segment(self, seg, glossary_dict=None) -> bool:
         """Runs terminology and risk checks for a single segment."""
@@ -116,7 +117,9 @@ class TranslationEngine:
         if glossary_dict:
             missed = self.audit_terminology(src, trn, glossary_dict)
             if missed:
-                alerts.append("Missing Terms: " + ", ".join(missed))
+                alerts.append(
+                    I18N.t("audit_missing_terms").format(terms=", ".join(missed))
+                )
 
         # 2) Risk – reuse calculate_risk (tags + length)
         risk_msg = self.calculate_risk(src, trn)
@@ -179,13 +182,13 @@ class TranslationEngine:
         # 1. Tag Density
         tag_count = len(re.findall(r"\[#_\d+_\]", source))
         if tag_count > 3:
-            reasons.append("High Tag Density")
+            reasons.append(I18N.t("audit_high_tag_density"))
 
         # 2. Length Ratio (Bulgarian is usually ~20% longer, but 100% longer is suspicious)
         if len(source) > 10:
             ratio = len(translation) / len(source)
             if ratio > 2.0 or ratio < 0.5:
-                reasons.append("Length Anomaly")
+                reasons.append(I18N.t("audit_length_anomaly"))
 
         return " | ".join(reasons) if reasons else ""
 
