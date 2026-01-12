@@ -54,8 +54,16 @@ class MockServerHandler(BaseHTTPRequestHandler):
         if self._reject_if_remote():
             return
 
-        if self.path == "/login":
+        try:
             payload = self._read_json()
+        except json.JSONDecodeError:
+            self._send_json(
+                {"error": "bad_request", "detail": "Malformed JSON body."},
+                status=HTTPStatus.BAD_REQUEST,
+            )
+            return
+
+        if self.path == "/login":
             username = payload.get("username", "mock_user")
             self._send_json(
                 {
@@ -66,7 +74,6 @@ class MockServerHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == "/suggestions":
-            payload = self._read_json()
             self._send_json(
                 {
                     "status": "ok",
@@ -83,7 +90,7 @@ class MockServerHandler(BaseHTTPRequestHandler):
         if self._reject_if_remote():
             return
 
-        if self.path.startswith("/segments"):
+        if self.path == "/segments":
             self._send_json({"segments": DEFAULT_SEGMENTS, "page": 1})
             return
 
@@ -96,7 +103,10 @@ class MockServerHandler(BaseHTTPRequestHandler):
 def start_mock_server(host="127.0.0.1", port=8000):
     server = ThreadingHTTPServer((host, port), MockServerHandler)
     print(f"Mock server running on http://{host}:{port}")
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()
 
 
 def main():
