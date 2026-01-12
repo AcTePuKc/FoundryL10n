@@ -648,8 +648,7 @@ class SettingsTab(QWidget):
             focused.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def get_valid_theme(self, theme_name: str) -> str:
-        themes = set(get_available_themes())
-        if theme_name in themes:
+        if theme_name in set(self.available_themes):
             return theme_name
         return "dark"
 
