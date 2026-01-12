@@ -30,7 +30,7 @@ Tasks related to the modular plugin system and connecting to external platforms.
 
 Tasks related to the desktop UI, layouts, and editor behavior.
 
-* [ ] **Provider Selector:** Add a dropdown to select which website/provider to connect to.
+* [x] **Provider Selector:** Add a dropdown to select which website/provider to connect to.
 * [ ] **Login Modal:** Create a dynamic login form that adapts to the provider's requirements (User/Pass vs API Key).
 * [ ] **Sync Status Icons:** Add visual indicators to segments (e.g., "Synced", "Draft", "Conflict").
 * [ ] **Manual TSV Tools:** Add "Import TSV" and "Export TSV" buttons for file-based workflows.
