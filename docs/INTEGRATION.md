@@ -46,7 +46,28 @@ Remote API (segments + suggestions endpoints; source of truth)
 * **Active Provider:** The currently selected plugin that defines auth, endpoints, and field mapping.
 * **Remote API:** External service that stores authoritative translations and accepts suggestions.
 
-## 4. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
+## 4. UI/UX – Manual Sync Controls + Segment Status
+
+**Where the actions live**
+* **Fetch** and **Submit Suggestions** live in the main toolbar next to the Provider selector, and are duplicated in the **Provider** menu for discoverability.
+* Actions are visually grouped with provider state (selector + login) so users understand they are remote operations, not local editing tools.
+
+**When the actions are enabled**
+* **Fetch** is enabled only when a valid provider is selected **and** the user is authenticated; it remains disabled for invalid plugins or logged-out states.
+* **Submit Suggestions** is enabled only when a provider is active, the user is authenticated, and the current segment has a local draft (or changed target) to submit.
+* Both actions are **explicit sync only**: no background fetch, no auto-submit, and no periodic polling.
+
+**Keyboard-first editing protection**
+* Sync actions do **not** steal focus from the segment editor or change the active segment.
+* Fetch/submit runs are non-modal and report status in the status bar to avoid blocking keyboard navigation.
+* Shortcuts (if present) are optional and never override core CAT navigation keys (e.g., segment next/prev, confirm, tag navigation).
+
+**Segment status indicators (remote vs local)**
+* Segments originating from a provider show a **remote-synced** indicator (e.g., cloud/check icon) and include the last sync timestamp in tooltip text.
+* Segments created locally or without provider metadata show a **local-only** indicator (e.g., local badge); they remain fully editable and are never auto-synced.
+* After a successful **Submit Suggestions**, the segment remains editable and retains its local draft state until the next explicit Fetch refreshes remote status.
+
+## 5. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
 
 1. **Discovery**
    * On startup (or refresh), the app scans the `/plugins` directory for provider JSON files.
@@ -65,7 +86,7 @@ Remote API (segments + suggestions endpoints; source of truth)
    * Selecting a valid plugin instantiates the provider configuration (auth + endpoints + field mapping).
    * Runtime fetch/submit actions always use the active, validated provider; invalid plugins are never executed.
 
-## 5. Core Implementation Boundaries
+## 6. Core Implementation Boundaries
 
 ### FoundryL10n (The Client)
 
@@ -85,7 +106,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 ---
 
-## 6. BaseProvider Contract (Abstract Methods + Mapping)
+## 7. BaseProvider Contract (Abstract Methods + Mapping)
 
 The runtime provider interface is implemented by a **BaseProvider** contract. Plugin JSON defines the concrete endpoints and mapping paths, while the BaseProvider enforces the shape of inputs/outputs so the rest of the app can treat all providers uniformly.
 
@@ -165,7 +186,7 @@ The mapping values are JSON paths (or dot paths) into the provider response. If 
 
 ---
 
-## 7. Data Model (Universal Mapping)
+## 8. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
@@ -185,7 +206,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 ---
 
-## 8. Standard API Assumptions
+## 9. Standard API Assumptions
 
 Plugins generally follow this flow:
 
@@ -221,14 +242,14 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 9. Local Workflow & Safety
+## 10. Local Workflow & Safety
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
 
 ---
 
-## 10. Project Context State Model (Design)
+## 11. Project Context State Model (Design)
 
 This section describes how the UI models provider selection and project context, emphasizing offline-first expectations and explicit sync triggers.
 
@@ -279,7 +300,7 @@ Project Context Active
 
 ---
 
-## 11. Security & Credential Storage
+## 12. Security & Credential Storage
 
 FoundryL10n stores provider credentials using the operating system's secure keyring/secret storage when available (e.g., Keychain, Credential Manager, Secret Service).
 
