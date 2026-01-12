@@ -22,7 +22,7 @@ from ui.editor_panel import EditorPanel
 from ui.integrity_tab import IntegrityTab
 from services.llm_service import LLMService
 from core.i18n import I18N
-from core.tag_utils import strip_tags
+from core.tag_utils import extract_tags, strip_tags
 from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
                            find_translation_conflicts, get_project_integrity_report,
@@ -83,6 +83,7 @@ class FoundryGUI(QMainWindow):
 
         self._current_fuzzy_text = ""
         self.editor.btn_use_fuzzy.clicked.connect(self.on_use_fuzzy_clicked)
+        self.editor.btn_use_history.clicked.connect(self.on_use_history_clicked)
 
         # Integrity Tab
         self.integrity_tab = IntegrityTab()
@@ -191,6 +192,8 @@ class FoundryGUI(QMainWindow):
         self.editor.request_next_needed.connect(self.nav_next_needed)
         self.editor.history_list.itemDoubleClicked.connect(
             self.restore_from_history_list)
+        self.editor.history_list.itemSelectionChanged.connect(
+            self.update_history_action_state)
 
         self.editor.history_list.setContextMenuPolicy(
             Qt.ContextMenuPolicy.CustomContextMenu)
@@ -401,6 +404,13 @@ class FoundryGUI(QMainWindow):
         """Apply current fuzzy suggestion when the button is clicked."""
         if self._current_fuzzy_text:
             self.apply_fuzzy_suggestion(self._current_fuzzy_text)
+
+    def on_use_history_clicked(self):
+        """Apply selected history entry to the editor."""
+        item = self.editor.history_list.currentItem()
+        if not item:
+            return
+        self.apply_history_suggestion(item.text())
 
     def nav_next_needed(self):
         """Jumps to the next row that is Red (Error) or White (Untranslated)."""
@@ -749,16 +759,17 @@ class FoundryGUI(QMainWindow):
                         self.editor.history_list.addItem(old_ver)
         except Exception:
             pass
+        self.update_history_action_state()
 
         # 4. Conditional Fuzzy Match Search
         is_verified = getattr(seg, 'is_verified', False)
         is_skip = getattr(seg, 'never_translate', False)
 
-        if is_verified or is_skip:
+        if self._segment_needs_fuzzy(seg) and not is_skip:
+            self.search_fuzzy_matches(seg.source_text)
+        else:
             self.editor.fuzzy_display.clear()
             self.editor.btn_use_fuzzy.setVisible(False)
-        else:
-            self.search_fuzzy_matches(seg.source_text)
 
     def search_fuzzy_matches(self, text):
         """Looks for similar lines and updates the editor panel."""
@@ -770,8 +781,6 @@ class FoundryGUI(QMainWindow):
             return
 
         seg = self.segments[self.current_row]
-        if getattr(seg, "is_verified", False):
-            return
 
         settings = self.settings_tab.get_settings()
         engine_helper = TranslationEngine(self.llm_service)
@@ -794,10 +803,58 @@ class FoundryGUI(QMainWindow):
 
     def apply_fuzzy_suggestion(self, text: str) -> None:
         """Copies the fuzzy match translation into the active editor."""
-        self.editor.trans_edit.setPlainText(text)
+        self._apply_editor_suggestion(text)
         self.editor.btn_use_fuzzy.setVisible(False)
         self.thought_log.append(
             I18N.t("log_fuzzy_applied"))
+
+    def apply_history_suggestion(self, text: str) -> None:
+        """Copies a history entry into the editor without changing verification."""
+        self._apply_editor_suggestion(text)
+        self.thought_log.append(I18N.t("log_history_restored"))
+
+    def _segment_needs_fuzzy(self, seg) -> bool:
+        has_tag_error = "[TAG ERROR]" in (seg.translation or "")
+        has_risk = bool(getattr(seg, "has_risk", False)) or "⚠️" in (seg.thought or "")
+        return has_tag_error or has_risk
+
+    def _normalize_suggestion_text(self, suggestion: str, source_text: str) -> str:
+        cleaned = (suggestion or "").replace("[TAG ERROR] ", "").strip()
+        source_tags = extract_tags(source_text or "")
+        if not source_tags:
+            return cleaned
+        suggestion_tags = extract_tags(cleaned)
+        suggestion_tags_copy = list(suggestion_tags)
+        missing_tags = []
+        for tag in source_tags:
+            try:
+                suggestion_tags_copy.remove(tag)
+            except ValueError:
+                missing_tags.append(tag)
+        if missing_tags:
+            spacer = " " if cleaned and not cleaned.endswith(" ") else ""
+            cleaned = f"{cleaned}{spacer}{' '.join(missing_tags)}".strip()
+        return cleaned
+
+    def _apply_editor_suggestion(self, text: str) -> None:
+        if self.current_row < 0:
+            return
+        seg = self.segments[self.current_row]
+        safe_text = self._normalize_suggestion_text(text, seg.source_text)
+        self.editor.trans_edit.setPlainText(safe_text)
+
+    def _refresh_fuzzy_for_segment(self, seg) -> None:
+        if self.current_row < 0:
+            return
+        if self._segment_needs_fuzzy(seg):
+            self.search_fuzzy_matches(seg.source_text)
+        else:
+            self.editor.fuzzy_display.clear()
+            self.editor.btn_use_fuzzy.setVisible(False)
+
+    def update_history_action_state(self) -> None:
+        has_selection = bool(self.editor.history_list.currentItem())
+        self.editor.btn_use_history.setEnabled(has_selection)
 
     def nav_error(self, direction):
         """Navigates to the next or previous Red row."""
@@ -1130,6 +1187,9 @@ class FoundryGUI(QMainWindow):
         src_item = self.table.item(row_idx, 2)
         if src_item:
             src_item.setToolTip(seg.source_text)
+
+        if row_idx == self.current_row:
+            self._refresh_fuzzy_for_segment(seg)
 
     def run_pseudo_batch(self):
         engine = TranslationEngine(self.llm_service)
@@ -1566,8 +1626,7 @@ class FoundryGUI(QMainWindow):
     def restore_from_history_list(self, item):
         """When you double-click a history item, it puts it in the editor."""
         version_text = item.text()
-        self.editor.trans_edit.setPlainText(version_text)
-        self.thought_log.append(I18N.t("log_history_restored"))
+        self.apply_history_suggestion(version_text)
 
     def rollback_to_ai(self):
         """Restores the translation to the original AI draft."""

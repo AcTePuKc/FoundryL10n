@@ -99,6 +99,9 @@ class EditorPanel(QWidget):
         self.history_list = QListWidget()
         self.history_list.setMaximumHeight(120)
         layout.addWidget(self.history_list)
+        self.btn_use_history = QPushButton(I18N.t("btn_use_history"))
+        self.btn_use_history.setEnabled(False)
+        layout.addWidget(self.btn_use_history)
 
         # 7. Fuzzy Match Suggestion
         self.fuzzy_label = QLabel(I18N.t("ui_fuzzy_label"))
@@ -215,6 +218,7 @@ class EditorPanel(QWidget):
             self.btn_next: "btn_next",
             self.btn_invisibles: "btn_show_invisibles",
             self.history_label: "ui_history_label",
+            self.btn_use_history: "btn_use_history",
             self.fuzzy_label: "ui_fuzzy_label",
             self.btn_use_fuzzy: "btn_use_suggestion",
         }
