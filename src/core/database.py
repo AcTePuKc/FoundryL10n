@@ -39,7 +39,7 @@ def init_db():
 def _parse_history_list(history_json: str) -> list[str]:
     try:
         history = json.loads(history_json or "[]")
-    except Exception:
+    except json.JSONDecodeError:
         return []
     if isinstance(history, list):
         return [h for h in history if isinstance(h, str)]
