@@ -196,7 +196,21 @@
     "btn_scan_conflicts": "🔄 Scan Database for Conflicts",
     "header_current_translation": "Current Translation",
     "header_status": "Status",
-    "btn_normalize": "Normalize..."
+    "btn_normalize": "Normalize...",
+    "ui_editor_source_label": "Source:",
+    "ui_editor_ai_draft_label": "Original AI Draft:",
+    "ui_editor_active_translation_label": "Active Translation:",
+    "ui_mark_verified": "Mark Verified (🟢)",
+    "btn_save_ctrl_enter": "Save (Ctrl+Enter)",
+    "btn_reset_ai_draft": "↺ Reset to AI Draft",
+    "btn_prev": "<< Prev",
+    "btn_next": "Next >>",
+    "btn_show_invisibles": "Show ¶",
+    "ui_history_label": "History:",
+    "ui_fuzzy_label": "<b>Smart Suggestion (Fuzzy Match):</b>",
+    "btn_use_suggestion": "Use Suggestion",
+    "ui_prompt_library": "Prompt Library:",
+    "ui_prompt_library_placeholder": "Use {source}, {target_lang}, {glossary}, {style}"
   },
   "BG": {
     "tab_settings": "Настройки",
@@ -395,6 +409,20 @@
     "btn_scan_conflicts": "🔄 Сканирай базата за конфликти",
     "header_current_translation": "Текущ превод",
     "header_status": "Статус",
-    "btn_normalize": "Нормализирай..."
+    "btn_normalize": "Нормализирай...",
+    "ui_editor_source_label": "Оригинал:",
+    "ui_editor_ai_draft_label": "Оригинална AI чернова:",
+    "ui_editor_active_translation_label": "Активен превод:",
+    "ui_mark_verified": "Маркирай като проверен (🟢)",
+    "btn_save_ctrl_enter": "Запази (Ctrl+Enter)",
+    "btn_reset_ai_draft": "↺ Върни към AI чернова",
+    "btn_prev": "<< Пред.",
+    "btn_next": "Следващ >>",
+    "btn_show_invisibles": "Покажи ¶",
+    "ui_history_label": "История:",
+    "ui_fuzzy_label": "<b>Умно предложение (Fuzzy Match):</b>",
+    "btn_use_suggestion": "Използвай предложението",
+    "ui_prompt_library": "Библиотека с инструкции:",
+    "ui_prompt_library_placeholder": "Използвай {source}, {target_lang}, {glossary}, {style}"
   }
 }

@@ -1864,6 +1864,8 @@ class FoundryGUI(QMainWindow):
 
         self._update_run_button_text()
         if hasattr(self, "editor"):
+            if hasattr(self.editor, "retranslate_ui"):
+                self.editor.retranslate_ui()
             self._update_translate_button_text()
 
         self._update_context_menu_texts(self._context_menu_count)

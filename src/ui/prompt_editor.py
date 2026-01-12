@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QComboBox, QTextEdit, QLabel
+from core.i18n import I18N
 
 PROMPTS = {
     "Standard Localizer": (
@@ -38,7 +39,8 @@ class PromptEditor(QWidget):
         super().__init__(parent)
         layout = QVBoxLayout(self)
 
-        layout.addWidget(QLabel("Prompt Library:"))
+        self.prompt_label = QLabel(I18N.t("ui_prompt_library"))
+        layout.addWidget(self.prompt_label)
         self.library_combo = QComboBox()
         self.library_combo.addItems(list(PROMPTS.keys()))
         self.library_combo.currentIndexChanged.connect(self.load_template)
@@ -46,10 +48,14 @@ class PromptEditor(QWidget):
 
         self.editor = QTextEdit()
         self.editor.setAcceptRichText(False)
-        self.editor.setPlaceholderText("Use {source}, {target_lang}, {glossary}, {style}")
+        self.editor.setPlaceholderText(I18N.t("ui_prompt_library_placeholder"))
         layout.addWidget(self.editor)
         
         self.load_template()
+
+    def retranslate_ui(self):
+        self.prompt_label.setText(I18N.t("ui_prompt_library"))
+        self.editor.setPlaceholderText(I18N.t("ui_prompt_library_placeholder"))
 
     def load_template(self):
         name = self.library_combo.currentText()

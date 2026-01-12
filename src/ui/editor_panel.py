@@ -4,6 +4,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent
+from core.i18n import I18N
 
 
 class TagHighlighter(QSyntaxHighlighter):
@@ -28,13 +29,15 @@ class EditorPanel(QWidget):
         layout = QVBoxLayout(self)
 
         # 1. Widgets
-        layout.addWidget(QLabel("Source:"))
+        self.source_label = QLabel(I18N.t("ui_editor_source_label"))
+        layout.addWidget(self.source_label)
         self.source_edit = QTextEdit()
         self.source_edit.setReadOnly(True)
         
         layout.addWidget(self.source_edit)
 
-        layout.addWidget(QLabel("Original AI Draft:"))
+        self.ai_draft_label = QLabel(I18N.t("ui_editor_ai_draft_label"))
+        layout.addWidget(self.ai_draft_label)
         self.ai_draft_display = QTextEdit()
         self.ai_draft_display.setReadOnly(True)
         self.ai_draft_display.setMaximumHeight(60)
@@ -43,20 +46,23 @@ class EditorPanel(QWidget):
         )
         layout.addWidget(self.ai_draft_display)
 
-        layout.addWidget(QLabel("Active Translation:"))
+        self.active_translation_label = QLabel(
+            I18N.t("ui_editor_active_translation_label")
+        )
+        layout.addWidget(self.active_translation_label)
         self.trans_edit = QTextEdit()
         layout.addWidget(self.trans_edit)
 
         # Controls
         ctrl_layout = QHBoxLayout()
-        self.cb_verified = QCheckBox("Mark Verified (🟢)")
+        self.cb_verified = QCheckBox(I18N.t("ui_mark_verified"))
 
-        self.btn_translate_now = QPushButton("🤖 Translate Line")
+        self.btn_translate_now = QPushButton(I18N.t("btn_translate_line"))
         self.btn_translate_now.setStyleSheet(
             "background-color: #34495e; color: white;"
         )
 
-        self.btn_save = QPushButton("Save (Ctrl+Enter)")
+        self.btn_save = QPushButton(I18N.t("btn_save_ctrl_enter"))
 
         ctrl_layout.addWidget(self.cb_verified)
         ctrl_layout.addWidget(self.btn_translate_now)
@@ -65,10 +71,10 @@ class EditorPanel(QWidget):
 
         # Navigation
         nav_layout = QHBoxLayout()
-        self.btn_rollback = QPushButton("↺ Reset to AI Draft")
-        self.btn_prev = QPushButton("<< Prev")
-        self.btn_next = QPushButton("Next >>")
-        self.btn_invisibles = QPushButton("Show ¶")
+        self.btn_rollback = QPushButton(I18N.t("btn_reset_ai_draft"))
+        self.btn_prev = QPushButton(I18N.t("btn_prev"))
+        self.btn_next = QPushButton(I18N.t("btn_next"))
+        self.btn_invisibles = QPushButton(I18N.t("btn_show_invisibles"))
         self.btn_invisibles.setCheckable(True)
         self.btn_invisibles.setFixedWidth(60)
         self.btn_invisibles.clicked.connect(self.toggle_invisibles)
@@ -78,13 +84,15 @@ class EditorPanel(QWidget):
         nav_layout.addWidget(self.btn_invisibles)
         layout.addLayout(nav_layout)
 
-        layout.addWidget(QLabel("History:"))
+        self.history_label = QLabel(I18N.t("ui_history_label"))
+        layout.addWidget(self.history_label)
         self.history_list = QListWidget()
         self.history_list.setMaximumHeight(120)
         layout.addWidget(self.history_list)
 
         # 7. Fuzzy Match Suggestion
-        layout.addWidget(QLabel("<b>Smart Suggestion (Fuzzy Match):</b>"))
+        self.fuzzy_label = QLabel(I18N.t("ui_fuzzy_label"))
+        layout.addWidget(self.fuzzy_label)
         self.fuzzy_display = QTextEdit()
         self.fuzzy_display.setReadOnly(True)
         self.fuzzy_display.setMaximumHeight(80)
@@ -93,7 +101,7 @@ class EditorPanel(QWidget):
         )
         layout.addWidget(self.fuzzy_display)
 
-        self.btn_use_fuzzy = QPushButton("Use Suggestion")
+        self.btn_use_fuzzy = QPushButton(I18N.t("btn_use_suggestion"))
         self.btn_use_fuzzy.setVisible(False)
         layout.addWidget(self.btn_use_fuzzy)
 
@@ -132,3 +140,19 @@ class EditorPanel(QWidget):
         self.trans_edit.setFont(font_obj)
         self.ai_draft_display.setFont(font_obj)
         self.history_list.setFont(font_obj)
+
+    def retranslate_ui(self):
+        self.source_label.setText(I18N.t("ui_editor_source_label"))
+        self.ai_draft_label.setText(I18N.t("ui_editor_ai_draft_label"))
+        self.active_translation_label.setText(
+            I18N.t("ui_editor_active_translation_label")
+        )
+        self.cb_verified.setText(I18N.t("ui_mark_verified"))
+        self.btn_save.setText(I18N.t("btn_save_ctrl_enter"))
+        self.btn_rollback.setText(I18N.t("btn_reset_ai_draft"))
+        self.btn_prev.setText(I18N.t("btn_prev"))
+        self.btn_next.setText(I18N.t("btn_next"))
+        self.btn_invisibles.setText(I18N.t("btn_show_invisibles"))
+        self.history_label.setText(I18N.t("ui_history_label"))
+        self.fuzzy_label.setText(I18N.t("ui_fuzzy_label"))
+        self.btn_use_fuzzy.setText(I18N.t("btn_use_suggestion"))
