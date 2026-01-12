@@ -22,7 +22,7 @@ class SettingsTab(QWidget):
     ORGANIZATION_NAME = "FoundryL10n"
     APP_NAME = "TranslatorApp"
 
-    def __init__(self, parent=None, plugin_registry=None):
+    def __init__(self, parent=None, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__(parent)
         self.llm_service = LLMService()
         self.plugin_registry = plugin_registry
