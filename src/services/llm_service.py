@@ -14,7 +14,11 @@ STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
 
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
-    pattern = r"@@\s*PLACEHOLDER_\d+\s*@@"
+PLACEHOLDER_PATTERN = r"@@\s*PLACEHOLDER_\d+\s*@@"
+
+def validate_placeholders(original: str, translated: str) -> bool:
+    # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
+    pattern = PLACEHOLDER_PATTERN
     orig_tags = re.findall(pattern, original)
     trans_tags = re.findall(pattern, translated)
     return len(orig_tags) == len(trans_tags)
