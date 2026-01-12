@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QTableWidgetItem, QHeaderView, QProgressBar,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
-                               QScrollArea, QApplication)
+                               QScrollArea, QApplication, QToolBar)
 from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings, QTimer
 from sqlmodel import select, col
@@ -32,6 +32,7 @@ from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
                            find_translation_conflicts, get_project_integrity_report,
                            normalize_project_term)
+from core.parser import TranslationSegment
 
 
 class FoundryGUI(QMainWindow):
@@ -71,6 +72,7 @@ class FoundryGUI(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.setMinimumSize(800, 600)
         self._init_actions()
+        self._init_sync_controls()
 
         self.init_translate_tab()
 
@@ -108,6 +110,7 @@ class FoundryGUI(QMainWindow):
         # Load states
         self.load_ui_state()
         self.settings_tab.load_settings()
+        self.on_provider_changed(self.settings_tab.get_settings().get("provider_id", ""))
         self.retranslate_ui()
 
     def init_translate_tab(self):
@@ -297,6 +300,24 @@ class FoundryGUI(QMainWindow):
         self.action_history_delete = QAction(self)
         self.action_history_delete.triggered.connect(self._handle_history_delete)
 
+        self.action_fetch_segments = QAction(self)
+        self.action_fetch_segments.triggered.connect(self.handle_fetch_segments)
+
+        self.action_submit_suggestion = QAction(self)
+        self.action_submit_suggestion.triggered.connect(self.handle_submit_suggestion)
+
+    def _init_sync_controls(self) -> None:
+        self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
+        self.sync_menu.addAction(self.action_fetch_segments)
+        self.sync_menu.addAction(self.action_submit_suggestion)
+
+        self.sync_toolbar = QToolBar(I18N.t("menu_sync"), self)
+        self.sync_toolbar.setObjectName("sync_toolbar")
+        self.sync_toolbar.addAction(self.action_fetch_segments)
+        self.sync_toolbar.addAction(self.action_submit_suggestion)
+        self.addToolBar(self.sync_toolbar)
+        self.update_sync_action_state()
+
     def _update_context_menu_texts(self, count: int) -> None:
         self.action_verify_rows.setText(
             I18N.t("menu_verify_rows").format(count=count)
@@ -399,6 +420,7 @@ class FoundryGUI(QMainWindow):
             if self._login_dialog is not None:
                 self._login_dialog.close()
             self._login_dialog = None
+        self.update_sync_action_state()
 
     def open_login_dialog(self, provider_id: str) -> None:
         if not self.plugin_registry or not provider_id:
@@ -446,6 +468,139 @@ class FoundryGUI(QMainWindow):
             I18N.t("log_login_success").format(provider=provider_id)
         )
         dialog.accept()
+        self.update_sync_action_state()
+
+    def update_sync_action_state(self) -> None:
+        token = self._get_provider_token()
+        is_enabled = bool(token)
+        self.action_fetch_segments.setEnabled(is_enabled)
+        self.action_submit_suggestion.setEnabled(is_enabled)
+
+    def _get_provider_token(self) -> str | None:
+        provider_id, _ = self._get_active_provider()
+        if not provider_id:
+            return None
+        return self.token_storage.get_token(provider_id)
+
+    def _get_provider_and_token(self) -> tuple[str, dict, str] | None:
+        provider_id, provider = self._get_active_provider()
+        if not provider_id or not provider:
+            return None
+        token = self.token_storage.get_token(provider_id)
+        if not token:
+            self.thought_log.append(I18N.t("log_sync_auth_required"))
+            self.update_sync_action_state()
+            return None
+        return provider_id, provider, token
+
+    def _get_active_provider(self) -> tuple[str, dict] | tuple[None, None]:
+        if not self.plugin_registry or not self._active_provider_id:
+            return None, None
+        provider = self.plugin_registry.providers.get(self._active_provider_id)
+        if not provider:
+            return None, None
+        return self._active_provider_id, provider
+
+    def _resolve_segment_id(self, seg: TranslationSegment) -> str | None:
+        if hasattr(seg, "segment_id") and getattr(seg, "segment_id"):
+            return str(getattr(seg, "segment_id"))
+        row = getattr(seg, "original_row", {}) or {}
+        for key in ("segment_id", "remote_id", "id"):
+            value = row.get(key)
+            if value:
+                return str(value)
+        return None
+
+    def _build_segments_from_provider(
+        self,
+        items: list[dict[str, object]],
+    ) -> list[TranslationSegment]:
+        segments: list[TranslationSegment] = []
+        for item in items:
+            segment_id = item.get("segment_id") or item.get("id")
+            source_text = item.get("source") or ""
+            translation = item.get("target") or ""
+            ai_draft = item.get("local_draft") or ""
+            key = str(segment_id) if segment_id else source_text[:40] or "remote"
+            seg = TranslationSegment(
+                key=key,
+                source_text=str(source_text),
+                translation=str(translation),
+                ai_draft=str(ai_draft),
+                original_row={"segment_id": segment_id},
+            )
+            segments.append(seg)
+        return segments
+
+    def _load_segments_into_table(self, segments: list[TranslationSegment]) -> None:
+        self.segments = segments
+        self.table.setUpdatesEnabled(False)
+        self.table.blockSignals(True)
+        try:
+            self.table.setRowCount(len(self.segments))
+            for i, seg in enumerate(self.segments):
+                self.table.setItem(i, 0, QTableWidgetItem("⚪"))
+                self.table.setItem(i, 1, QTableWidgetItem(seg.key))
+                self.table.setItem(i, 2, QTableWidgetItem(seg.source_text))
+                self.table.setItem(i, 3, QTableWidgetItem(seg.translation))
+                self.update_row_visuals(i)
+        finally:
+            self.table.blockSignals(False)
+            self.table.setUpdatesEnabled(True)
+        self.progress_bar.setMaximum(len(self.segments))
+        self.progress_bar.setValue(0)
+        self.update_stats()
+
+    def handle_fetch_segments(self) -> None:
+        resolved = self._get_provider_and_token()
+        if resolved is None:
+            return
+        provider_id, provider, token = resolved
+        settings = self.settings_tab.get_settings()
+        project_id = settings.get("project_name") or None
+        page = int(settings.get("sync_page", 1))
+        client = ProviderHttpClient(provider)
+        try:
+            segments = client.fetch_segments(token, project_id=project_id, page=page)
+        except (HTTPError, URLError, ValueError) as exc:
+            self.thought_log.append(
+                I18N.t("log_sync_fetch_failed").format(error=str(exc))
+            )
+            return
+        self._file_loaded = True
+        self.file_label.setText(I18N.t("ui_remote_segments_loaded"))
+        self._load_segments_into_table(self._build_segments_from_provider(segments))
+        self.thought_log.append(
+            I18N.t("log_sync_fetch_success").format(count=len(segments))
+        )
+
+    def handle_submit_suggestion(self) -> None:
+        resolved = self._get_provider_and_token()
+        if resolved is None:
+            return
+        _, provider, token = resolved
+        if self.current_row < 0 or self.current_row >= len(self.segments):
+            self.thought_log.append(I18N.t("log_sync_no_selection"))
+            return
+        seg = self.segments[self.current_row]
+        segment_id = self._resolve_segment_id(seg)
+        if not segment_id:
+            self.thought_log.append(I18N.t("log_sync_missing_segment_id"))
+            return
+        suggestion_text = seg.translation or ""
+        client = ProviderHttpClient(provider)
+        try:
+            client.submit_suggestion(
+                token,
+                segment_id=segment_id,
+                suggestion_text=suggestion_text,
+            )
+        except (HTTPError, URLError, ValueError) as exc:
+            self.thought_log.append(
+                I18N.t("log_sync_submit_failed").format(error=str(exc))
+            )
+            return
+        self.thought_log.append(I18N.t("log_sync_submit_success"))
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
@@ -2030,6 +2185,12 @@ class FoundryGUI(QMainWindow):
             self._update_translate_button_text()
 
         self._update_context_menu_texts(self._context_menu_count)
+        self.action_fetch_segments.setText(I18N.t("menu_sync_fetch"))
+        self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
+        if hasattr(self, "sync_menu"):
+            self.sync_menu.setTitle(I18N.t("menu_sync"))
+        if hasattr(self, "sync_toolbar"):
+            self.sync_toolbar.setWindowTitle(I18N.t("menu_sync"))
         self.update_stats()
 
         if hasattr(self.settings_tab, "retranslate_ui"):

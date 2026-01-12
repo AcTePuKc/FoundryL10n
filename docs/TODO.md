@@ -22,7 +22,7 @@ Tasks related to the modular plugin system and connecting to external platforms.
 * [x] **Generic API Client:** Build a flexible HTTP handler that uses headers/endpoints defined in the active plugin.
 * [ ] **AdventurersBG Provider:** Create the first official plugin file (`adventurers_bg.json`) following the new schema.
 * [x] **Auth Storage:** Implement secure local storage for API tokens (keyring/secret storage).
-* [ ] **Sync Logic:** Implement "Fetch Segments" and "Push Suggestions" actions within the UI.
+* [x] **Sync Logic:** Implement "Fetch Segments" and "Push Suggestions" actions within the UI.
 
 ---
 
