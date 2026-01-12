@@ -138,8 +138,8 @@ class LLMService:
             for junk in POLITE_JUNK:
                 if cleaned.lower().startswith(junk.lower()):
                     if (
-                        junk.lower() == "разбира се"
-                        and source_polite_target == "разбира се"
+                        source_polite_target is not None
+                        and junk.lower() == source_polite_target
                         and not output_has_label_prefix
                     ):
                         continue
