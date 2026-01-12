@@ -20,6 +20,7 @@ LABEL_ONLY_PATTERNS = (
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
 PLACEHOLDER_PATTERN = r"@@\s*PLACEHOLDER_\d+\s*@@"
+TAG_OR_PLACEHOLDER_PATTERN = re.compile(rf"{PLACEHOLDER_PATTERN}|<[^>]+>")
 
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches @@PLACEHOLDER_0@@, @@PLACEHOLDER_1@@, etc.
@@ -106,8 +107,7 @@ class LLMService:
                 best_score = None
                 best_line = candidates[-1]
                 for idx, line in enumerate(candidates):
-                    has_placeholder = bool(re.search(
-                        r'@@\s*PLACEHOLDER_\d+\s*@@|<[^>]+>', line))
+                    has_placeholder = bool(TAG_OR_PLACEHOLDER_PATTERN.search(line))
                     token_count = len(line.split())
                     score = (has_placeholder, token_count, idx)
                     if best_score is None or score > best_score:
