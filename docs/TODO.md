@@ -70,7 +70,7 @@ Tasks about validation and developer scripts.
 * [x] **Docs:** Record the canonical plugin schema location and document UI validation/disablement behavior for invalid plugins.
 * [x] **Docs:** Document BaseProvider method contracts and mapping rules in `docs/INTEGRATION.md`.
 
-* [ ] **Docs:** Add project context state model doc covering provider selection and sync transitions.
+* [x] **Docs:** Add project context state model doc covering provider selection and sync transitions.
 
 * [ ] **Docs:** Add security documentation for keyring storage, key naming, and keyring fallback behavior.
 * [ ] **Docs:** Add DB mapping documentation + migration note for `provider_id`/`remote_id` (local-only projects use NULLs).

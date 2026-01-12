@@ -67,7 +67,38 @@ Remote API (segments + suggestions endpoints; source of truth)
 * Segments created locally or without provider metadata show a **local-only** indicator (e.g., local badge); they remain fully editable and are never auto-synced.
 * After a successful **Submit Suggestions**, the segment remains editable and retains its local draft state until the next explicit Fetch refreshes remote status.
 
-## 5. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
+## 5. Project Context (Provider + Project State Model)
+
+**Provider selection (what it does)**
+* Selecting a provider binds the UI to the provider config (auth + endpoints + mapping) and unlocks remote-only actions.
+* The selection does **not** mutate local content; it only sets the **remote context** used by manual fetch/submit.
+* Provider selection is always explicit; there is no implicit "last-used" reconnect without user action.
+
+**Project context (local-only vs remote)**
+* **Local-only project:** No provider is selected; segments are fully local with no remote metadata (`provider_id`/`remote_id` unset).
+* **Remote project:** A provider is selected and authenticated; segments can be fetched and carry remote metadata.
+* The active project context is reflected in the UI (provider selector state + status bar), but **editing remains available** in both modes.
+
+**Switching between contexts**
+* Switching **from local-only → remote** enables fetch/submit actions but does **not** auto-fetch; the segment list remains unchanged until explicit Fetch.
+* Switching **from remote → local-only** disables fetch/submit actions and keeps current local edits intact; remote context is cleared from the session, not from stored segments.
+* Switching providers (remote → different remote) resets the active remote context and requires an explicit Fetch to avoid mixing segment sets.
+
+**Explicit sync requirements**
+* **No auto-sync**: Fetch and Submit Suggestions are **only** triggered by user action.
+* Sync status updates happen only after explicit Fetch/Submit completes; no background polling.
+
+**Expected UX behavior**
+* Provider switches must **not steal focus** from the segment editor or change the active segment.
+* No modal prompts during provider switches; use non-blocking status messaging.
+* Fetch/Submit actions never interrupt keyboard-driven navigation (segment next/prev, confirm, tag navigation).
+
+**Workflow risks to avoid**
+* **Segment context drift:** Mixing segments from different providers without a clear Fetch boundary can lead to editing the wrong content.
+* **Accidental remote assumptions:** Auto-sync or implicit provider switching can cause translators to assume data is shared remotely when it is local-only.
+* **Focus loss during navigation:** Any focus change can disrupt fast segment workflows and introduce editing errors.
+
+## 6. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
 
 1. **Discovery**
    * On startup (or refresh), the app scans the `src/plugins` directory for provider JSON files.
@@ -86,7 +117,7 @@ Remote API (segments + suggestions endpoints; source of truth)
    * Selecting a valid plugin instantiates the provider configuration (auth + endpoints + field mapping).
    * Runtime fetch/submit actions always use the active, validated provider; invalid plugins are never executed.
 
-## 6. Core Implementation Boundaries
+## 7. Core Implementation Boundaries
 
 ### FoundryL10n (The Client)
 
@@ -106,7 +137,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 ---
 
-## 7. BaseProvider Contract (Abstract Methods + Mapping)
+## 8. BaseProvider Contract (Abstract Methods + Mapping)
 
 The runtime provider interface is implemented by a **BaseProvider** contract. Plugin JSON defines the concrete endpoints and mapping paths, while the BaseProvider enforces the shape of inputs/outputs so the rest of the app can treat all providers uniformly.
 
@@ -186,7 +217,7 @@ The mapping values are JSON paths (or dot paths) into the provider response. If 
 
 ---
 
-## 8. Data Model (Universal Mapping)
+## 9. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
