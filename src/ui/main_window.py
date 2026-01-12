@@ -30,9 +30,10 @@ from core.database import (save_translation, get_cached_record,
 
 
 class FoundryGUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__()
         self.setWindowTitle(f"FoundryL10n - {I18N.t('ui_workstation')}")
+        self.plugin_registry = plugin_registry
         self.segments = []
         self.current_row = -1
         self.input_path = Path()
@@ -65,7 +66,7 @@ class FoundryGUI(QMainWindow):
 
         self.init_translate_tab()
 
-        self.settings_tab = SettingsTab()
+        self.settings_tab = SettingsTab(plugin_registry=self.plugin_registry)
         self.settings_tab.font_changed.connect(self.apply_font_size)
         self.settings_tab.profile_loaded.connect(
             self.on_profile_loaded_profile)

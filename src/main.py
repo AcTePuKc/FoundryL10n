@@ -28,6 +28,7 @@ from core.i18n import I18N
 from core.parser import FoundryParser, TranslationSegment
 from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
+from services.plugin_loader import PluginLoader
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
@@ -51,6 +52,8 @@ def launch_gui():
     from ui.main_window import FoundryGUI
     
     qt_app = QApplication(sys.argv)
+
+    plugin_registry = PluginLoader().load_registry()
     
     settings = QSettings("FoundryL10n", "TranslatorApp")
     theme_name = str(settings.value("ui_theme", "dark"))
@@ -58,7 +61,7 @@ def launch_gui():
         theme_name = "dark"
     load_theme(theme_name)
     
-    window = FoundryGUI()
+    window = FoundryGUI(plugin_registry=plugin_registry)
     window.show()
     sys.exit(qt_app.exec())
 
