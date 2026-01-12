@@ -1,6 +1,7 @@
 import ollama
 import re
 
+from core.i18n import I18N
 
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches [#_0_], [#_1_], etc.
@@ -38,7 +39,7 @@ class LLMService:
     ):
         # 1. Fallback & Formatting
         if not prompt_template or "{source}" not in prompt_template:
-            prompt_template = "Context: {context}\nSource: {source}\nTarget ({target_lang}):"
+            prompt_template = I18N.t("prompt_template_fallback")
 
         full_prompt = prompt_template.replace("{source}", text)\
                                      .replace("{target_lang}", target_lang)\
