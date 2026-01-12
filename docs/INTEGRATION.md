@@ -11,6 +11,10 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 
 To support a website, a plugin must be added to the `/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
 
+**Canonical schema location**
+* **Source of truth:** `src/plugins/schema.json`.
+* **Docs copy:** `docs/draft_provider_schema.json` (kept in sync for reference and review).
+
 ### Plugin Capabilities
 
 * **Identity:** Name, Website URL, and API Base URL.
@@ -42,7 +46,26 @@ Remote API (segments + suggestions endpoints; source of truth)
 * **Active Provider:** The currently selected plugin that defines auth, endpoints, and field mapping.
 * **Remote API:** External service that stores authoritative translations and accepts suggestions.
 
-## 4. Core Implementation Boundaries
+## 4. Plugin Lifecycle (Discovery → Validation → UI Enablement → Runtime Use)
+
+1. **Discovery**
+   * On startup (or refresh), the app scans the `/plugins` directory for provider JSON files.
+   * Each plugin file is paired with the canonical schema at `src/plugins/schema.json`.
+
+2. **Schema Validation**
+   * The Integration Manager validates every discovered plugin against the schema.
+   * Validation errors are recorded with the plugin name + file path and surfaced in the UI as a non-blocking alert.
+
+3. **Enable/Disable in UI**
+   * Valid plugins appear in the provider selector.
+   * Invalid plugins are **listed but disabled** (grayed out with a warning icon) and cannot be selected.
+   * The UI prevents activation until the plugin passes schema validation.
+
+4. **Runtime Use**
+   * Selecting a valid plugin instantiates the provider configuration (auth + endpoints + field mapping).
+   * Runtime fetch/submit actions always use the active, validated provider; invalid plugins are never executed.
+
+## 5. Core Implementation Boundaries
 
 ### FoundryL10n (The Client)
 
@@ -62,7 +85,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 ---
 
-## 5. Data Model (Universal Mapping)
+## 6. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
@@ -76,7 +99,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 ---
 
-## 6. Standard API Assumptions
+## 7. Standard API Assumptions
 
 Plugins generally follow this flow:
 
@@ -112,7 +135,7 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 7. Local Workflow & Safety
+## 8. Local Workflow & Safety
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
