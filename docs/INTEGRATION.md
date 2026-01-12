@@ -221,3 +221,52 @@ POST /api/segments/{id}/suggestions
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
 
 ---
+
+## 10. Project Context State Model (Design)
+
+This section describes how the UI models provider selection and project context, emphasizing offline-first expectations and explicit sync triggers.
+
+### A. Provider Selection (None vs `provider_id`)
+
+* **None (no provider_id):**
+  * **Meaning:** The project is local-only. No remote context is attached.
+  * **UI affordances:** Provider selector remains available; provider-specific controls are hidden/disabled (login, project picker, fetch/submit buttons, sync badges).
+  * **Offline-first expectation:** Local segments and drafts remain fully usable without network access.
+* **Provider selected (`provider_id` set):**
+  * **Meaning:** The project is bound to a provider plugin and can be connected to a remote service.
+  * **UI affordances:** Provider-specific controls appear (login/auth panel, project picker if supported, manual sync actions).
+  * **Offline-first expectation:** Selecting a provider does **not** trigger network calls; data remains local until the user explicitly syncs.
+
+### B. Context Switching (Provider/Project Changes)
+
+* **Switching provider:** Clears the active remote context and resets provider-scoped UI (auth state, project selection, sync status). Local edits remain intact and stay in the local DB until explicitly submitted under the new provider context.
+* **Switching project (within the same provider):** Updates the active project context; UI shows the new project name and resets segment list to a "not yet fetched" state until the user fetches.
+* **UI affordances that appear/disappear:**
+  * Project picker only appears if the provider supports projects.
+  * Login/auth controls only appear after provider selection.
+  * Fetch/Submit buttons are enabled only when a provider is selected and auth is valid.
+  * Sync status badges are shown only for provider-bound contexts.
+
+### C. State Transitions and Explicit Sync Triggers
+
+```
+No Provider
+  └─(Select Provider)─> Provider Selected (Unauthenticated)
+        └─(Login/Auth)─> Provider Selected (Authenticated)
+              └─(Select Project)─> Project Context Ready (No Data)
+                    ├─(Fetch Segments)─> Project Context Active (Local Cache Updated)
+                    └─(Import TSV)─> Local Cache Updated (Offline)
+Project Context Active
+  ├─(Submit Suggestions)─> Remote Suggestion Sync (Manual)
+  └─(Switch Provider/Project)─> Context Reset (Local data preserved)
+```
+
+**Explicit sync triggers (only):**
+* **Fetch Segments** (manual action) → pulls from remote into local cache.
+* **Submit Suggestions** (manual action) → sends local drafts as suggestions.
+* **Import/Export TSV** (manual action) → offline-first data exchange without remote calls.
+
+**Offline-first expectations:**
+* Local drafts are always editable, even when unauthenticated or offline.
+* Switching contexts never auto-syncs or discards local work; it only changes which remote context the UI is targeting.
+* Sync buttons clearly reflect their manual nature (no background polling).
