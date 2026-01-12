@@ -8,6 +8,9 @@ Focused on `src/ui`, `src/core`, and `src/services` for likely refactor hotspots
 - **`src/ui/settings_tab.py`** — Large multi-section form (general/translation/appearance/resources/prompt/tools). It’s a hotspot for future modularization, but current hookups look cohesive. Changes here can affect translator defaults, prompt behavior, and resource loading paths, so they should remain incremental.【F:src/ui/settings_tab.py†L18-L220】
 - **`src/core/engine.py`** — Mixes translation orchestration, audit logic, and fuzzy match. It’s a hotspot because it drives segment state and QA heuristics; any refactor must preserve verification flags, tag safety, and risk indicators used by the CAT UI.【F:src/core/engine.py†L1-L215】
 - **`src/services/llm_service.py`** — Prompt assembly + response cleanup + placeholder validation. It’s a hotspot because prompt templates and post-processing directly affect tag safety and translation quality. CAT workflow depends on preserving placeholders and avoiding “chatty” output.【F:src/services/llm_service.py†L1-L162】
+
+
+## Planned Refactoring
 - **Tag helper consolidation** — Tag insertion and placeholder handling should be consolidated to a single helper surface (menu + shortcuts + editor hooks) to avoid divergent behavior across panels. Treat this as an intentional refactor area rather than ad-hoc edits.
 
 ## Open UX proposals
