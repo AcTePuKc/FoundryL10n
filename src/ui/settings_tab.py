@@ -648,9 +648,7 @@ class SettingsTab(QWidget):
         selected_id = self.provider_dropdown.currentData()
         self.provider_dropdown.clear()
 
-        entries = []
-        if self.plugin_registry is not None:
-            entries = list(self.plugin_registry.entries)
+        entries = self.plugin_registry.entries if self.plugin_registry else ()
 
         if not entries:
             self.provider_dropdown.addItem(I18N.t("ui_provider_none"), "")
