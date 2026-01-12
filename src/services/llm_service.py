@@ -10,7 +10,7 @@ POLITE_JUNK = (
     "I have fixed", "Let's correct",
     "Разбира се", "Ето превода", "Ето и превода"
 )
-STOP_TOKENS = ["###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n"]
+STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
 
 def validate_placeholders(original: str, translated: str) -> bool:
     # Matches [#_0_], [#_1_], etc.
