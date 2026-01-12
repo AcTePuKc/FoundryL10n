@@ -180,9 +180,8 @@ class TranslationEngine:
         """Heuristic to find lines that likely need human eyes."""
         reasons = []
         # 1. Tag Density
-        masked_source, tokens = self.masker.mask(source)
-        placeholder_count = len(re.findall(r"@@\s*PLACEHOLDER_\d+\s*@@", masked_source))
-        tag_count = len(tokens) + placeholder_count
+        masked_source, _ = self.masker.mask(source)
+        tag_count = len(re.findall(r"@@\s*PLACEHOLDER_\d+\s*@@", masked_source))
         if tag_count > 3:
             reasons.append(I18N.t("audit_high_tag_density"))
 
