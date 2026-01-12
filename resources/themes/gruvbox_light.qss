@@ -1,0 +1,147 @@
+/* GRUVBOX LIGHT THEME */
+
+QMainWindow, QDialog, QWidget {
+    background-color: #fbf1c7;
+    color: #3c3836;
+}
+
+QLabel {
+    background-color: transparent;
+    color: #3c3836;
+}
+
+/* Tabs */
+QTabWidget::pane {
+    border: 1px solid #d5c4a1;
+}
+
+QTabBar::tab {
+    background: #d5c4a1;
+    padding: 8px 12px;
+    margin-right: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    color: #3c3836;
+}
+
+QTabBar::tab:selected {
+    background: #ebdbb2;
+    border-bottom: 2px solid #b57614;
+}
+
+/* GroupBox */
+QGroupBox {
+    border: 1px solid #d5c4a1;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 6px;
+    background-color: #ebdbb2;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 6px;
+    color: #b57614;
+}
+
+/* Inputs */
+QLineEdit,
+QTextEdit,
+QPlainTextEdit,
+QComboBox,
+QSpinBox,
+QDoubleSpinBox {
+    background-color: #f2e5bc;
+    border: 1px solid #d5c4a1;
+    color: #3c3836;
+    padding: 4px 6px;
+    border-radius: 3px;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus,
+QComboBox:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 1px solid #b57614;
+}
+
+/* Popup */
+QComboBox QAbstractItemView {
+    background-color: #f2e5bc;
+    border: 1px solid #d5c4a1;
+    selection-background-color: #b57614;
+    selection-color: #fbf1c7;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #d5c4a1;
+    border: 1px solid #bdae93;
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: #3c3836;
+}
+
+QPushButton:hover {
+    background-color: #ebdbb2;
+}
+
+QPushButton:pressed {
+    background-color: #d5c4a1;
+    border: 1px solid #b57614;
+}
+
+QPushButton:disabled {
+    background-color: #ebdbb2;
+    color: #928374;
+}
+
+/* Tables */
+QHeaderView::section {
+    background-color: #d5c4a1;
+    color: #3c3836;
+    padding: 4px;
+    border: 1px solid #f2e5bc;
+}
+
+QTableWidget {
+    gridline-color: #d5c4a1;
+    background-color: #fbf1c7;
+    alternate-background-color: #f2e5bc;
+    selection-background-color: #b57614;
+    selection-color: #fbf1c7;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    background: #fbf1c7;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #d5c4a1;
+    min-height: 20px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #ebdbb2;
+}
+
+QScrollBar:horizontal {
+    background: #fbf1c7;
+    height: 12px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #d5c4a1;
+    min-width: 20px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #ebdbb2;
+}

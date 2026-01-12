@@ -17,6 +17,7 @@ else:
     # Development mode
     base_path = Path(__file__).parent.parent
     sys.path.append(str(base_path / "src"))
+from typing import cast
 
 import typer
 from rich import print
@@ -30,22 +31,26 @@ from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QApplication
 
 QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
     Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
 )
 
 def load_theme(theme_name: str) -> None:
-    from PySide6.QtWidgets import QApplication
-
     theme_path = base_path / "resources" / "themes" / f"{theme_name}.qss"
     if not theme_path.exists():
         print(f"[yellow]Warning:[/yellow] Theme file not found: {theme_path}")
         return
+
     qss_text = theme_path.read_text(encoding="utf-8")
-    qt_app = QApplication.instance()
-    if qt_app is None:
+
+    app = QApplication.instance()
+    if app is None:
         raise RuntimeError("QApplication instance not initialized.")
+
+    # Tell the type checker this is a QApplication, not just QCoreApplication
+    qt_app = cast(QApplication, app)
     qt_app.setStyleSheet(qss_text)
 
 # Initialize Typer
@@ -64,7 +69,7 @@ def launch_gui():
     
     qt_app = QApplication(sys.argv)
     
-    load_theme("dark")
+    load_theme("gruvbox_dark")
     
     window = FoundryGUI()
     window.show()

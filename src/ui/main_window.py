@@ -206,8 +206,7 @@ class FoundryGUI(QMainWindow):
         self.thought_log = QTextEdit()
         self.thought_log.setReadOnly(True)
         self.thought_log.setMaximumHeight(80)
-        self.thought_log.setStyleSheet(
-            "background-color: #1e1e1e; color: #888;")
+        
         layout.addWidget(self.thought_log)
 
         bottom = QHBoxLayout()
@@ -586,9 +585,7 @@ class FoundryGUI(QMainWindow):
 
         # Enter the "thinking" mode.
         self.editor.btn_translate_now.setText(I18N.t("btn_stop_thinking"))
-        self.editor.btn_translate_now.setStyleSheet(
-            "background-color: #c0392b; color: white;"
-        )
+        
 
         project_name = settings.get("project_name", "default")
 
@@ -1377,9 +1374,7 @@ class FoundryGUI(QMainWindow):
                 font-family: 'Consolas', 'Courier New'; 
                 font-weight: bold; 
                 padding: 2px 10px;
-                background-color: #1e1e1e;
                 border-radius: 4px;
-                color: #ffffff;
             }
         """)
 

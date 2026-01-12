@@ -31,9 +31,7 @@ class EditorPanel(QWidget):
         layout.addWidget(QLabel("Source:"))
         self.source_edit = QTextEdit()
         self.source_edit.setReadOnly(True)
-        self.source_edit.setStyleSheet(
-            "background-color: #2b2b2b; color: #a9b7c6;"
-        )
+        
         layout.addWidget(self.source_edit)
 
         layout.addWidget(QLabel("Original AI Draft:"))
@@ -41,7 +39,7 @@ class EditorPanel(QWidget):
         self.ai_draft_display.setReadOnly(True)
         self.ai_draft_display.setMaximumHeight(60)
         self.ai_draft_display.setStyleSheet(
-            "background-color: #1e1e1e; color: #777; font-style: italic;"
+            "font-style: italic;"
         )
         layout.addWidget(self.ai_draft_display)
 
