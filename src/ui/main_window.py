@@ -1045,12 +1045,12 @@ class FoundryGUI(QMainWindow):
             icon, color = "🔵", QColor("#1a237e")
         elif is_skip:
             icon, color = "⚪", QColor("#3c3f41")
+        elif is_verified:
+            icon, color = "🟢", QColor("#113311")
         elif has_tag_error:
             icon, color = "🔴", QColor("#441111")
         elif has_risk:
             icon, color = "🔶", QColor("#443311")
-        elif is_verified:
-            icon, color = "🟢", QColor("#113311")
         elif translation:
             icon, color = "🟡", QColor("#333311")
         else:
@@ -1075,6 +1075,8 @@ class FoundryGUI(QMainWindow):
             status_msg += I18N.t("status_locked")
         elif is_conflict:
             status_msg += I18N.t("status_conflict")
+        elif is_verified:
+            status_msg += I18N.t("status_verified")
         elif has_tag_error:
             status_msg += I18N.t("status_tag_error")
         elif has_risk:
@@ -1082,8 +1084,6 @@ class FoundryGUI(QMainWindow):
             status_msg += I18N.t("status_audit_alert").format(
                 issue=thought.split('|')[0].strip()
             )
-        elif is_verified:
-            status_msg += I18N.t("status_verified")
         elif translation:
             status_msg += I18N.t("status_ai_draft")
         else:
