@@ -17,8 +17,8 @@ LABEL_PREFIXES = (
     "Ето коригирания превод", "Коригиран превод"
 )
 SOURCE_POLITE_MAP = {
-    "sure": "разбира се",
     "sure is": "разбира се",
+    "sure": "разбира се",
     "certainly": "разбира се",
 }
 STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
