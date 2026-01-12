@@ -73,7 +73,6 @@ class FoundryParser:
                     row.get("last_sync")
                     or row.get("synced_at")
                     or row.get("updated_at")
-                    or None
                 )
                 
                 segments.append(
