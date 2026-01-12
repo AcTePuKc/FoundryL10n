@@ -6,12 +6,13 @@ from core.i18n import I18N
 from sqlmodel import SQLModel, delete, col
 from services.llm_service import LLMService
 from PySide6.QtWidgets import (
-    QWidget, QComboBox, QDoubleSpinBox, QLineEdit, QPushButton, QInputDialog,
-    QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QTextEdit, QLabel,
-    QVBoxLayout, QGroupBox, QFormLayout, QScrollArea, QSizePolicy
+    QApplication, QWidget, QComboBox, QDoubleSpinBox, QLineEdit, QPushButton,
+    QInputDialog, QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QTextEdit,
+    QLabel, QVBoxLayout, QGroupBox, QFormLayout, QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import QSettings, Signal, Qt
 from PySide6.QtGui import QIcon, QFont
+from main import load_theme, get_available_themes
 
 
 class SettingsTab(QWidget):
@@ -146,6 +147,12 @@ class SettingsTab(QWidget):
         self.font_size_spin.setMaximumWidth(70)
         self.font_size_spin.valueChanged.connect(self.font_changed.emit)
 
+        self.theme_label = QLabel(I18N.t("ui_theme"))
+        self.theme_combo = QComboBox()
+        self.theme_combo.setMinimumWidth(160)
+        self.populate_themes()
+        self.theme_combo.currentIndexChanged.connect(self.on_theme_changed)
+
         self.ui_lang_label = QLabel(I18N.t("ui_interface_lang"))
         self.ui_lang_combo = QComboBox()
         self.ui_lang_combo.addItems(["EN", "BG"])
@@ -154,6 +161,7 @@ class SettingsTab(QWidget):
             self.change_interface_language)
 
         appearance_layout.addRow(self.font_label, self.font_size_spin)
+        appearance_layout.addRow(self.theme_label, self.theme_combo)
         appearance_layout.addRow(self.ui_lang_label, self.ui_lang_combo)
 
         layout.addWidget(self.appearance_group)
@@ -348,6 +356,7 @@ class SettingsTab(QWidget):
         self.model_label.setText(I18N.t("ui_model"))
         self.temp_label.setText(I18N.t("ui_temp"))
         self.font_label.setText(I18N.t("ui_font"))
+        self.theme_label.setText(I18N.t("ui_theme"))
         self.ui_lang_label.setText(I18N.t("ui_interface_lang"))
         self.prompt_editor.setPlaceholderText(
             I18N.t("ui_prompt_placeholder")
@@ -375,6 +384,8 @@ class SettingsTab(QWidget):
             lbl.setText(I18N.t(key))
             if tip_key:
                 lbl.setToolTip(I18N.t(tip_key))
+
+        self.update_theme_labels()
 
     def update_ui_language(self):
         lang = self.target_lang_input.text().upper()
@@ -600,6 +611,47 @@ class SettingsTab(QWidget):
         if models:
             self.model_dropdown.addItems(models)
 
+    def populate_themes(self):
+        self.theme_combo.clear()
+        themes = get_available_themes()
+        if "dark" not in themes:
+            themes.insert(0, "dark")
+        for theme in themes:
+            self.theme_combo.addItem(self.get_theme_label(theme), theme)
+
+    def get_theme_label(self, theme_name: str) -> str:
+        label_key = f"theme_{theme_name}"
+        label = I18N.t(label_key)
+        if label == label_key:
+            return theme_name.replace("_", " ").title()
+        return label
+
+    def update_theme_labels(self):
+        for index in range(self.theme_combo.count()):
+            theme_name = self.theme_combo.itemData(index)
+            self.theme_combo.setItemText(
+                index, self.get_theme_label(theme_name)
+            )
+
+    def on_theme_changed(self):
+        theme_name = self.theme_combo.currentData()
+        if not theme_name:
+            theme_name = "dark"
+        self.apply_theme(theme_name)
+        settings = QSettings("FoundryL10n", "TranslatorApp")
+        settings.setValue("ui_theme", theme_name)
+
+    def apply_theme(self, theme_name: str, restore_focus: bool = True):
+        focused = QApplication.focusWidget() if restore_focus else None
+        load_theme(theme_name)
+        if focused is not None:
+            focused.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def get_valid_theme(self, theme_name: str) -> str:
+        if theme_name in set(self.available_themes):
+            return theme_name
+        return "dark"
+
     def save_settings(self):
         """Saves only the form-related settings."""
         settings = QSettings("FoundryL10n", "TranslatorApp")
@@ -615,6 +667,8 @@ class SettingsTab(QWidget):
         settings.setValue("custom_prompt", self.prompt_editor.toPlainText())
         # Save the font size
         settings.setValue("ui_font_size", self.font_size_spin.value())
+        # Save the theme selection
+        settings.setValue("ui_theme", self.theme_combo.currentData())
 
     def load_settings(self):
         settings = QSettings("FoundryL10n", "TranslatorApp")
@@ -658,6 +712,17 @@ class SettingsTab(QWidget):
             self.font_changed.emit(f_size)
         except (ValueError, TypeError):
             self.font_size_spin.setValue(12)
+
+        theme_name = self.get_valid_theme(
+            str(settings.value("ui_theme", "dark"))
+        )
+        theme_index = self.theme_combo.findData(theme_name)
+        if theme_index == -1:
+            theme_index = self.theme_combo.findData("dark")
+        self.theme_combo.blockSignals(True)
+        self.theme_combo.setCurrentIndex(theme_index)
+        self.theme_combo.blockSignals(False)
+        self.apply_theme(theme_name, restore_focus=False)
 
     def get_settings(self):
         return {

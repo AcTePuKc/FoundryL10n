@@ -29,7 +29,7 @@ from core.engine import TranslationEngine
 from core.parser import FoundryParser, TranslationSegment
 from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 
@@ -53,6 +53,12 @@ def load_theme(theme_name: str) -> None:
     qt_app = cast(QApplication, app)
     qt_app.setStyleSheet(qss_text)
 
+def get_available_themes() -> list[str]:
+    theme_dir = base_path / "resources" / "themes"
+    if not theme_dir.exists():
+        return ["dark"]
+    return sorted({theme.stem for theme in theme_dir.glob("*.qss")})
+
 # Initialize Typer
 app = typer.Typer(help="FoundryL10n: Professional Local-First Game Translator")
 
@@ -63,13 +69,17 @@ def main():
 
 @app.command(name="gui")
 def launch_gui():
-    """Launch the graphical interface with a FORCED Dark Theme."""
+    """Launch the graphical interface with the configured theme."""
     from PySide6.QtWidgets import QApplication
     from ui.main_window import FoundryGUI
     
     qt_app = QApplication(sys.argv)
     
-    load_theme("gruvbox_dark")
+    settings = QSettings("FoundryL10n", "TranslatorApp")
+    theme_name = str(settings.value("ui_theme", "dark"))
+    if theme_name not in get_available_themes():
+        theme_name = "dark"
+    load_theme(theme_name)
     
     window = FoundryGUI()
     window.show()
