@@ -11,16 +11,6 @@ POLITE_JUNK = (
     "Разбира се", "Ето превода", "Ето и превода",
     "Ето коригирания превод", "Коригиран превод"
 )
-LABEL_PREFIXES = (
-    "Here is", "I have fixed", "Let's correct",
-    "Ето превода", "Ето и превода",
-    "Ето коригирания превод", "Коригиран превод"
-)
-SOURCE_POLITE_MAP = {
-    "sure is": "разбира се",
-    "sure": "разбира се",
-    "certainly": "разбира се",
-}
 STOP_TOKENS = ("###", "SOURCE:", "FIXED:", "TARGET:", "\n\n\n")
 LABEL_ONLY_PATTERNS = (
     re.compile(r"^Ето .*превод[:：]?$", re.IGNORECASE),
@@ -123,26 +113,9 @@ class LLMService:
                 translation = best_line
 
             # 4. STRIP POLITE JUNK (safe)
-            source_lower = text.strip().lower()
-            output_has_label_prefix = any(
-                translation.lower().startswith(prefix.lower())
-                for prefix in LABEL_PREFIXES
-            )
-            source_polite_target = None
-            for source_prefix, target_prefix in SOURCE_POLITE_MAP.items():
-                if source_lower.startswith(source_prefix):
-                    source_polite_target = target_prefix
-                    break
-
             cleaned = translation
             for junk in POLITE_JUNK:
                 if cleaned.lower().startswith(junk.lower()):
-                    if (
-                        source_polite_target is not None
-                        and junk.lower() == source_polite_target
-                        and not output_has_label_prefix
-                    ):
-                        continue
                     candidate = cleaned[len(junk):].strip().lstrip(":! ")
                     if candidate:
                         cleaned = candidate
