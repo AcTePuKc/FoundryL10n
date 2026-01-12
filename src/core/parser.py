@@ -35,8 +35,8 @@ class TranslationSegment:
             row.get("last_sync")
             or row.get("synced_at")
             or row.get("updated_at")
-            or None
         )
+
 
 class FoundryParser:
     def __init__(self):
