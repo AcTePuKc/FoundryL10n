@@ -142,17 +142,19 @@ class EditorPanel(QWidget):
         self.history_list.setFont(font_obj)
 
     def retranslate_ui(self):
-        self.source_label.setText(I18N.t("ui_editor_source_label"))
-        self.ai_draft_label.setText(I18N.t("ui_editor_ai_draft_label"))
-        self.active_translation_label.setText(
-            I18N.t("ui_editor_active_translation_label")
-        )
-        self.cb_verified.setText(I18N.t("ui_mark_verified"))
-        self.btn_save.setText(I18N.t("btn_save_ctrl_enter"))
-        self.btn_rollback.setText(I18N.t("btn_reset_ai_draft"))
-        self.btn_prev.setText(I18N.t("btn_prev"))
-        self.btn_next.setText(I18N.t("btn_next"))
-        self.btn_invisibles.setText(I18N.t("btn_show_invisibles"))
-        self.history_label.setText(I18N.t("ui_history_label"))
-        self.fuzzy_label.setText(I18N.t("ui_fuzzy_label"))
-        self.btn_use_fuzzy.setText(I18N.t("btn_use_suggestion"))
+        translatable_widgets = {
+            self.source_label: "ui_editor_source_label",
+            self.ai_draft_label: "ui_editor_ai_draft_label",
+            self.active_translation_label: "ui_editor_active_translation_label",
+            self.cb_verified: "ui_mark_verified",
+            self.btn_save: "btn_save_ctrl_enter",
+            self.btn_rollback: "btn_reset_ai_draft",
+            self.btn_prev: "btn_prev",
+            self.btn_next: "btn_next",
+            self.btn_invisibles: "btn_show_invisibles",
+            self.history_label: "ui_history_label",
+            self.fuzzy_label: "ui_fuzzy_label",
+            self.btn_use_fuzzy: "btn_use_suggestion",
+        }
+        for widget, key in translatable_widgets.items():
+            widget.setText(I18N.t(key))
