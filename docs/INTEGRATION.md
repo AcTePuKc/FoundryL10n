@@ -333,7 +333,7 @@ Project Context Active
 
 ## 12. Security & Credential Storage
 
-FoundryL10n stores provider credentials using the operating system's secure keyring/secret storage when available (e.g., Keychain, Credential Manager, Secret Service).
+FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Credential Manager, Secret Service) for provider credentials. This keeps tokens out of project files while preserving a streamlined login flow.
 
 **Key naming convention**
 * Keys are scoped by provider and account: `provider_id + account`.
@@ -341,8 +341,8 @@ FoundryL10n stores provider credentials using the operating system's secure keyr
 * `account` is the user-facing login identifier (e.g., username or email).
 
 **Fallback behavior**
-* If a system keyring is unavailable, the app falls back to an in-memory session cache for the current runtime only.
-* Users must re-authenticate when the app restarts in fallback mode.
+* If the system keyring is unavailable or blocked, the app falls back to an in-memory session cache for the current runtime only.
+* Users must re-authenticate after restart in fallback mode.
 
 **Plain-text storage**
 * Tokens are **never** stored in plain text project files or exported data.
