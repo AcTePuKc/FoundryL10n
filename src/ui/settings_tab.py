@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QSettings, Signal, Qt
 from PySide6.QtGui import QIcon, QFont
-from main import load_theme, get_available_themes
+from ui.theme_helpers import get_available_themes, load_theme
 
 
 class SettingsTab(QWidget):
@@ -627,9 +627,11 @@ class SettingsTab(QWidget):
 
     def populate_themes(self):
         self.theme_combo.clear()
-        themes = get_available_themes()
+        self.available_themes = get_available_themes()
+        themes = list(self.available_themes)
         if "dark" not in themes:
             themes.insert(0, "dark")
+        self.available_themes = themes
         for theme in themes:
             self.theme_combo.addItem(self.get_theme_label(theme), theme)
 
@@ -662,7 +664,7 @@ class SettingsTab(QWidget):
             focused.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def get_valid_theme(self, theme_name: str) -> str:
-        if theme_name in set(self.available_themes):
+        if theme_name in self.available_themes:
             return theme_name
         return "dark"
 

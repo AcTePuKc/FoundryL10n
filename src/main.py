@@ -17,8 +17,6 @@ else:
     # Development mode
     base_path = Path(__file__).parent.parent
     sys.path.append(str(base_path / "src"))
-from typing import cast
-
 import typer
 from rich import print
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCompleteColumn
@@ -33,32 +31,11 @@ from services.llm_service import LLMService
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
+from ui.theme_helpers import get_available_themes, load_theme
 
 QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
     Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
 )
-
-def load_theme(theme_name: str) -> None:
-    theme_path = base_path / "resources" / "themes" / f"{theme_name}.qss"
-    if not theme_path.exists():
-        print(I18N.t("cli_theme_missing_warning").format(theme_path=theme_path))
-        return
-
-    qss_text = theme_path.read_text(encoding="utf-8")
-
-    app = QApplication.instance()
-    if app is None:
-        raise RuntimeError(I18N.t("cli_qapp_missing_error"))
-
-    # Tell the type checker this is a QApplication, not just QCoreApplication
-    qt_app = cast(QApplication, app)
-    qt_app.setStyleSheet(qss_text)
-
-def get_available_themes() -> list[str]:
-    theme_dir = base_path / "resources" / "themes"
-    if not theme_dir.exists():
-        return ["dark"]
-    return sorted({theme.stem for theme in theme_dir.glob("*.qss")})
 
 # Initialize Typer
 app = typer.Typer(help=I18N.t("cli_app_help"))
