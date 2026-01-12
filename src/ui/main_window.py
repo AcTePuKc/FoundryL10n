@@ -1853,14 +1853,14 @@ class FoundryGUI(QMainWindow):
         self.btn_zen.setText(I18N.t("btn_zen_mode"))
         self.cb_follow.setText(I18N.t("ui_follow"))
 
-            self.table.setHorizontalHeaderLabels(
-                [
-                    I18N.t("header_state"),
-                    I18N.t("header_key"),
-                    I18N.t("header_source"),
-                    I18N.t("ui_translation"),
-                ]
-            )
+        self.table.setHorizontalHeaderLabels(
+            [
+                I18N.t("header_state"),
+                I18N.t("header_key"),
+                I18N.t("header_source"),
+                I18N.t("ui_translation"),
+            ]
+        )
 
         self._update_run_button_text()
         if hasattr(self, "editor"):
