@@ -11,6 +11,8 @@ class TranslationSegment:
         translation: str = "",
         original_row: Optional[Dict] = None,
         ai_draft: str = "",
+        provider_id: Optional[str] = None,
+        remote_id: Optional[str] = None,
     ):
         self.key = key
         self.source_text = source_text
@@ -19,6 +21,8 @@ class TranslationSegment:
         self.translation = translation
         self.thought = ""
         self.ai_draft = ai_draft
+        self.provider_id = provider_id
+        self.remote_id = remote_id
         self.has_conflict = False
         self.is_verified = False
         self.never_translate = False
@@ -52,6 +56,8 @@ class FoundryParser:
             for row in reader:
                 existing_trans = row.get(self.target_col, "")
                 existing_draft = row.get('ai_draft', "")
+                provider_id = row.get("provider_id") or None
+                remote_id = row.get("remote_id") or None
                 
                 segments.append(
                     TranslationSegment(
@@ -60,7 +66,9 @@ class FoundryParser:
                         context=row.get('note', row.get('context', '')),
                         translation=existing_trans,
                         ai_draft=existing_draft,
-                        original_row=row
+                        original_row=row,
+                        provider_id=provider_id,
+                        remote_id=remote_id,
                     )
                 )
         return segments
