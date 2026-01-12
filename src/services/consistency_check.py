@@ -94,9 +94,11 @@ def report_conflicts(
     status_value = status.strip().lower()
     if verified_only and unverified_only:
         raise typer.BadParameter("Choose only one of --verified-only or --unverified-only.")
+    if (verified_only or unverified_only) and status.strip().lower() != "all":
+        raise typer.BadParameter("Cannot use --status with --verified-only or --unverified-only.")
     if verified_only:
         status_value = "verified"
-    if unverified_only:
+    elif unverified_only:
         status_value = "unverified"
     if status_value not in {"all", "verified", "unverified"}:
         raise typer.BadParameter("status must be one of: all, verified, unverified.")
