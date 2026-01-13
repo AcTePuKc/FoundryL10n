@@ -195,7 +195,6 @@ class EditorPanel(QWidget):
             if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
                     self.btn_save.click()
-                    self.request_next_needed.emit()
                     return True
         return super().eventFilter(obj, event)
 
