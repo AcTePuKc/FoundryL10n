@@ -14,6 +14,7 @@ class TranslationSegment:
         provider_id: Optional[str] = None,
         remote_id: Optional[str] = None,
         last_sync: Optional[str] = None,
+        remote_changed: bool = False,
     ):
         self.key = key
         self.source_text = source_text
@@ -25,6 +26,7 @@ class TranslationSegment:
         self.provider_id = provider_id
         self.remote_id = remote_id
         self.last_sync = last_sync
+        self.remote_changed = remote_changed
         self.has_conflict = False
         self.is_verified = False
         self.never_translate = False
