@@ -159,6 +159,7 @@ Supporting assets:
   ```
 
 - PyInstaller specs are provided (`FoundryL10n.spec`) for packaging desktop builds.
+- Packaging note: distribution builds include only the app packages under `src/`; the mock server in `tools/` is dev-only and not shipped.
 
 ## Contributing
 
