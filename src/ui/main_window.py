@@ -320,6 +320,11 @@ class FoundryGUI(QMainWindow):
         self.action_submit_suggestion = QAction(self)
         self.action_submit_suggestion.triggered.connect(self.handle_submit_suggestion)
 
+        self.action_submit_verified = QAction(self)
+        self.action_submit_verified.triggered.connect(
+            self.handle_submit_verified_segments
+        )
+
         self.action_sync_plugins = QAction(self)
         self.action_sync_plugins.triggered.connect(self.handle_plugin_sync)
 
@@ -327,6 +332,7 @@ class FoundryGUI(QMainWindow):
         self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
         self.sync_menu.addAction(self.action_fetch_segments)
         self.sync_menu.addAction(self.action_submit_suggestion)
+        self.sync_menu.addAction(self.action_submit_verified)
         self.sync_menu.addSeparator()
         self.sync_menu.addAction(self.action_sync_plugins)
 
@@ -334,6 +340,7 @@ class FoundryGUI(QMainWindow):
         self.sync_toolbar.setObjectName("sync_toolbar")
         self.sync_toolbar.addAction(self.action_fetch_segments)
         self.sync_toolbar.addAction(self.action_submit_suggestion)
+        self.sync_toolbar.addAction(self.action_submit_verified)
         self.sync_toolbar.addSeparator()
         self.sync_toolbar.addAction(self.action_sync_plugins)
         self.addToolBar(self.sync_toolbar)
@@ -501,6 +508,7 @@ class FoundryGUI(QMainWindow):
         is_enabled = bool(token)
         self.action_fetch_segments.setEnabled(is_enabled)
         self.action_submit_suggestion.setEnabled(is_enabled)
+        self.action_submit_verified.setEnabled(is_enabled)
         self.action_sync_plugins.setEnabled(True)
 
     def _get_provider_token(self) -> str | None:
@@ -652,6 +660,44 @@ class FoundryGUI(QMainWindow):
             )
             return
         self.thought_log.append(I18N.t("log_sync_submit_success"))
+
+    def handle_submit_verified_segments(self) -> None:
+        resolved = self._get_provider_and_token()
+        if resolved is None:
+            return
+        _, provider, token = resolved
+        verified_segments = [
+            seg for seg in self.segments if getattr(seg, "is_verified", False)
+        ]
+        if not verified_segments:
+            self.thought_log.append(I18N.t("log_sync_submit_all_none"))
+            return
+        client = ProviderHttpClient(provider)
+        submitted = 0
+        skipped = 0
+        for seg in verified_segments:
+            segment_id = self._resolve_segment_id(seg)
+            if not segment_id:
+                skipped += 1
+                continue
+            suggestion_text = seg.translation or ""
+            try:
+                client.submit_suggestion(
+                    token,
+                    segment_id=segment_id,
+                    suggestion_text=suggestion_text,
+                )
+            except (HTTPError, URLError, ValueError) as exc:
+                self.thought_log.append(
+                    I18N.t("log_sync_submit_failed").format(error=str(exc))
+                )
+                return
+            submitted += 1
+        self.thought_log.append(
+            I18N.t("log_sync_submit_all_success").format(
+                count=submitted, skipped=skipped
+            )
+        )
 
     def handle_plugin_sync(self) -> None:
         service = GitHubPluginSyncService()
@@ -2367,6 +2413,7 @@ class FoundryGUI(QMainWindow):
         self._update_context_menu_texts(self._context_menu_count)
         self.action_fetch_segments.setText(I18N.t("menu_sync_fetch"))
         self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
+        self.action_submit_verified.setText(I18N.t("menu_sync_submit_verified"))
         self.action_sync_plugins.setText(I18N.t("menu_sync_plugins"))
         if hasattr(self, "sync_menu"):
             self.sync_menu.setTitle(I18N.t("menu_sync"))

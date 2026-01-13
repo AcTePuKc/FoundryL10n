@@ -63,8 +63,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 * [x] **Tag Safety:** Automated validation to ensure LLMs don't corrupt game tags (e.g., `%s`, `{id}`).
 * [x] **Local TM:** Searchable database of previous translations to suggest "matches" for new segments.
-* [ ] **Batch Processing:** Ability to "Submit All Verified" segments on a page in one click.
-  * Remaining gaps: no UI/CLI action exists to submit all verified segments in bulk; only per-segment verified status and suggestion submission are available.
+* [x] **Batch Processing:** Ability to "Submit All Verified" segments on a page in one click.
 
 ## 1.0 – Community Expansion
 
