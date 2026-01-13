@@ -50,6 +50,7 @@ class FoundryGUI(QMainWindow):
         self._context_menu_count = 0
         self._history_menu_item = None
         self._active_provider_id = ""
+        self._tsv_parser = FoundryParser()
         self.llm_service = LLMService()
         self.token_storage = TokenStorage()
         self._login_dialog: LoginDialog | None = None
@@ -120,8 +121,14 @@ class FoundryGUI(QMainWindow):
 
         # --- TOP CONTROL BAR ---
         top_bar = QHBoxLayout()
-        self.btn_open = QPushButton(I18N.t("btn_open_tsv"))
-        self.btn_open.clicked.connect(self.open_file)
+        self.btn_open = QPushButton(I18N.t("btn_import_tsv"))
+        self.btn_open.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_open.clicked.connect(self.request_tsv_import)
+
+        self.btn_export_tsv = QPushButton(I18N.t("btn_export_tsv"))
+        self.btn_export_tsv.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_export_tsv.setEnabled(False)
+        self.btn_export_tsv.clicked.connect(self.request_tsv_export)
 
         self.file_label = QLabel(I18N.t("ui_no_file_selected"))
         self.file_label.setStyleSheet("color: #888; font-style: italic;")
@@ -149,6 +156,7 @@ class FoundryGUI(QMainWindow):
         top_bar.addWidget(self.btn_reverse_zen)
 
         top_bar.addWidget(self.btn_open)
+        top_bar.addWidget(self.btn_export_tsv)
         top_bar.addWidget(self.file_label, 1)  # Give it stretch
         self.search_label = QLabel(I18N.t("ui_search_label"))
         top_bar.addWidget(self.search_label)
@@ -1786,16 +1794,60 @@ class FoundryGUI(QMainWindow):
         else:
             self.editor.btn_translate_now.setText(I18N.t("btn_translate_line"))
 
-    def open_file(self):
-        path, _ = QFileDialog.getOpenFileName(
+    def _capture_workflow_focus(self) -> None:
+        widget = self.focusWidget()
+        if widget is None or not widget.isVisible():
+            widget = self.editor.trans_edit
+        self._workflow_focus_widget = widget
+
+    def _restore_workflow_focus(self) -> None:
+        widget = getattr(self, "_workflow_focus_widget", None)
+        if widget is not None and widget.isVisible():
+            widget.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def request_tsv_import(self) -> None:
+        self._capture_workflow_focus()
+        dialog = QFileDialog(
             self,
-            I18N.t("btn_open_tsv"),
+            I18N.t("btn_import_tsv"),
             "",
             I18N.t("filter_tsv"),
         )
-        if not path:
-            return
+        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setModal(False)
+        dialog.fileSelected.connect(
+            lambda path: self.import_tsv_path(Path(path))
+        )
+        dialog.rejected.connect(self._restore_workflow_focus)
+        dialog.open()
+        self._tsv_dialog = dialog
 
+    def request_tsv_export(self) -> None:
+        if not self.segments:
+            return
+        self._capture_workflow_focus()
+        dialog = QFileDialog(
+            self,
+            I18N.t("btn_export_tsv"),
+            "",
+            I18N.t("filter_tsv"),
+        )
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setDefaultSuffix("tsv")
+        dialog.setModal(False)
+        default_name = self.input_path.name if self.input_path else "export.tsv"
+        dialog.selectFile(default_name)
+        dialog.fileSelected.connect(
+            lambda path: self.export_tsv_path(Path(path))
+        )
+        dialog.rejected.connect(self._restore_workflow_focus)
+        dialog.open()
+        self._tsv_dialog = dialog
+
+    def import_tsv_path(self, path: Path) -> None:
+        if not path:
+            self._restore_workflow_focus()
+            return
         self.input_path = Path(path)
         self.file_label.setText(str(self.input_path))
         self._file_loaded = True
@@ -1806,7 +1858,7 @@ class FoundryGUI(QMainWindow):
 
         try:
             # 1. Parse the TSV
-            self.segments = FoundryParser().parse_tsv(self.input_path)
+            self.segments = self._tsv_parser.parse_tsv(self.input_path)
             self.table.setRowCount(len(self.segments))
 
             # 2. Get current project settings
@@ -1861,6 +1913,21 @@ class FoundryGUI(QMainWindow):
 
         # Final consistency audit for 🔵 markers
         self.audit_database_consistency()
+        self.btn_export_tsv.setEnabled(True)
+        self._restore_workflow_focus()
+
+    def export_tsv_path(self, path: Path) -> None:
+        if not path or not self.segments:
+            self._restore_workflow_focus()
+            return
+        self._tsv_parser.save_tsv(self.segments, path)
+        self.file_label.setText(
+            I18N.t("msg_file_saved").format(path=path)
+        )
+        self._restore_workflow_focus()
+
+    def open_file(self):
+        self.request_tsv_import()
 
     def handle_run_clicked(self):
         if hasattr(self, 'worker') and self.worker.isRunning():
@@ -2222,7 +2289,8 @@ class FoundryGUI(QMainWindow):
                 I18N.t("tab_integrity"),
             )
 
-        self.btn_open.setText(I18N.t("btn_open_tsv"))
+        self.btn_open.setText(I18N.t("btn_import_tsv"))
+        self.btn_export_tsv.setText(I18N.t("btn_export_tsv"))
         if not self._file_loaded:
             self.file_label.setText(I18N.t("ui_no_file_selected"))
         self.search_label.setText(I18N.t("ui_search_label"))
