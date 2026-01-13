@@ -237,6 +237,10 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 | `target` | string | The current "Accepted" translation on the server |
 | `local_draft` | string | The user's current work-in-progress |
 
+**Note on TM entries vs. TranslationRecord**
+* Translation Memory entries **do not** include `segment_key`.
+* `segment_key` exists only on `TranslationRecord` entries and should not be inferred or injected into TM records during provider integration.
+
 **Mapping plan (segments table)**
 * Add new nullable columns: `provider_id` and `remote_id`.
 * For local-only projects, leave both columns `NULL` by default—local projects remain fully functional without provider metadata.
