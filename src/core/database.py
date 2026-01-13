@@ -27,6 +27,16 @@ class TranslationAuditRecord(SQLModel, table=True):
     variants_json: str = Field(default="[]")
 
 
+class TranslationMemoryIndex(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    project_name: str = Field(index=True)
+    segment_key: str = Field(index=True)
+    target_lang: str = Field(index=True)
+    source_text: str
+    source_norm: str = Field(index=True)
+    translation: str
+
+
 sqlite_file_name = "foundry_memory.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 engine = create_engine(sqlite_url)
@@ -44,6 +54,10 @@ def _parse_history_list(history_json: str) -> list[str]:
     if isinstance(history, list):
         return [h for h in history if isinstance(h, str)]
     return []
+
+
+def _normalize_tm_text(text: str) -> str:
+    return " ".join(text.lower().split())
 
 
 def _store_audit_variants(
@@ -74,6 +88,77 @@ def _store_audit_variants(
             variants_json=json.dumps(sorted(variants)),
         )
         session.add(record)
+
+
+def _upsert_tm_index(
+    session: Session,
+    project_name: str,
+    target_lang: str,
+    segment_key: str,
+    source_text: str,
+    translation: str,
+) -> None:
+    statement = select(TranslationMemoryIndex).where(
+        TranslationMemoryIndex.project_name == project_name,
+        TranslationMemoryIndex.target_lang == target_lang,
+        TranslationMemoryIndex.segment_key == segment_key,
+    )
+    existing = session.exec(statement).first()
+    source_norm = _normalize_tm_text(source_text)
+    if existing:
+        existing.source_text = source_text
+        existing.source_norm = source_norm
+        existing.translation = translation
+        session.add(existing)
+    else:
+        record = TranslationMemoryIndex(
+            project_name=project_name,
+            segment_key=segment_key,
+            target_lang=target_lang,
+            source_text=source_text,
+            source_norm=source_norm,
+            translation=translation,
+        )
+        session.add(record)
+
+
+def _delete_tm_index(
+    session: Session,
+    project_name: str,
+    target_lang: str,
+    segment_key: str,
+) -> None:
+    statement = select(TranslationMemoryIndex).where(
+        TranslationMemoryIndex.project_name == project_name,
+        TranslationMemoryIndex.target_lang == target_lang,
+        TranslationMemoryIndex.segment_key == segment_key,
+    )
+    existing = session.exec(statement).first()
+    if existing:
+        session.delete(existing)
+
+
+def query_translation_memory(
+    source_text: str,
+    target_lang: str,
+    project_name: str,
+    limit: int = 10,
+) -> list[TranslationMemoryIndex]:
+    source_norm = _normalize_tm_text(source_text or "")
+    if not source_norm:
+        return []
+    with Session(engine) as session:
+        statement = (
+            select(TranslationMemoryIndex)
+            .where(
+                TranslationMemoryIndex.project_name == project_name,
+                TranslationMemoryIndex.target_lang == target_lang,
+                TranslationMemoryIndex.source_norm.contains(source_norm),
+            )
+            .order_by(TranslationMemoryIndex.id.desc())
+            .limit(limit)
+        )
+        return list(session.exec(statement).all())
 
 
 def global_replace_in_db(
@@ -368,5 +453,23 @@ def save_translation(
                 history_json="[]",
             )
             session.add(record)
+
+        should_index = bool(verified and translation and translation.strip() and not skip)
+        if should_index:
+            _upsert_tm_index(
+                session,
+                project_name=project_name,
+                target_lang=target_lang,
+                segment_key=segment_key,
+                source_text=source_text,
+                translation=translation,
+            )
+        else:
+            _delete_tm_index(
+                session,
+                project_name=project_name,
+                target_lang=target_lang,
+                segment_key=segment_key,
+            )
 
         session.commit()
