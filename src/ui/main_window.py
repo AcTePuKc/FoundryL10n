@@ -88,6 +88,10 @@ class FoundryGUI(QMainWindow):
             self.settings_tab.provider_changed.connect(self.on_provider_changed)
         if hasattr(self.settings_tab, "login_requested"):
             self.settings_tab.login_requested.connect(self.open_login_dialog)
+        if hasattr(self.settings_tab, "llm_status_warning"):
+            self.settings_tab.llm_status_warning.connect(
+                self.on_llm_status_warning
+            )
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
         self.tabs.addTab(self.settings_tab, I18N.t("tab_settings"))
@@ -430,6 +434,10 @@ class FoundryGUI(QMainWindow):
                 self._login_dialog.close()
             self._login_dialog = None
         self.update_sync_action_state()
+
+    def on_llm_status_warning(self, message: str) -> None:
+        if hasattr(self, "thought_log"):
+            self.thought_log.append(message)
 
     def open_login_dialog(self, provider_id: str) -> None:
         if not self.plugin_registry or not provider_id:
