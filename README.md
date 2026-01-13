@@ -18,6 +18,7 @@ FoundryL10n is a local-first translation workstation for narrative-heavy games. 
 - [Provider Integrations](#provider-integrations)
 - [Translation Memory & Caching](#translation-memory--caching)
 - [Development](#development)
+- [Contributing](#contributing)
 
 ## Key Features
 
