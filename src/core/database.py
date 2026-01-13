@@ -151,9 +151,9 @@ def query_translation_memory(
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
+                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),  # type: ignore[attr-defined]
             )
-            .order_by(TranslationMemoryIndex.id.desc())
+            .order_by(TranslationMemoryIndex.id.desc())  # type: ignore[attr-defined]
             .limit(limit)
         )
         return list(session.exec(statement).all())
@@ -180,7 +180,7 @@ def global_replace_in_db(
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
             TranslationRecord.target_lang == target_lang,
-            target_col.like(f"%{find_text}%"),
+            target_col.like(f"%{find_text}%"),  # type: ignore[attr-defined]
         )
 
         records = session.exec(statement).all()
