@@ -7,7 +7,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 **Focus:** Making the workstation reliable for individual offline use.
 
 * [ ] **Core Workflow:** Stabilize segment navigation and auto-save.
-* [ ] **Editor UX:** Implement focus modes and keyboard shortcuts ( to confirm).
+* [ ] **Editor UX:** Implement Focus: Table/Editor modes and keyboard shortcuts ( to confirm).
 * [ ] **LLM Orchestration:** Improve local Ollama/LM Studio prompt templates for game-specific context.
 
 ## 0.3 – The Plugin Engine (Infrastructure)
