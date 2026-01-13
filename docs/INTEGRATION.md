@@ -11,6 +11,11 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 
 **Style guide:** [docs/STYLE_GUIDE.md](STYLE_GUIDE.md) (type-checking and ORM conventions).
 
+**Implementation status**
+* Mock server available.
+* Provider sync + auth completed.
+* Pylance false positives handled via style guide.
+
 ## 2. The Plugin System
 
 To support a website, a plugin must be added to the `src/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
