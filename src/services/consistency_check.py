@@ -111,6 +111,7 @@ def report_conflicts(
         if normalized_target == "translation"
         else TranslationRecord.ai_draft
     )
+    is_verified_col = TranslationRecord.is_verified
 
     statement = select(
         TranslationRecord.id,
@@ -122,9 +123,9 @@ def report_conflicts(
     if lang:
         statement = statement.where(TranslationRecord.target_lang == lang)
     if status_value == "verified":
-        statement = statement.where(TranslationRecord.is_verified.is_(True))
+        statement = statement.where(is_verified_col.is_(True))
     if status_value == "unverified":
-        statement = statement.where(TranslationRecord.is_verified.is_(False))
+        statement = statement.where(is_verified_col.is_(False))
 
     conflict_map: dict[str, dict[str, list[str]]] = {}
 

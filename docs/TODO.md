@@ -85,3 +85,5 @@ Tasks about validation and developer scripts.
 - [x] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
 - [x] Fix TranslationMemoryIndex segment_key regression.
 - [x] Fix TM regression in query column references for SQLModel compatibility.
+
+- [x] Update consistency check status filters to use direct is_verified field references and cover them in tests.
