@@ -687,12 +687,11 @@ class FoundryGUI(QMainWindow):
                     segment_id=segment_id,
                     suggestion_text=suggestion_text,
                 )
+                submitted += 1
             except (HTTPError, URLError, ValueError) as exc:
                 self.thought_log.append(
-                    I18N.t("log_sync_submit_failed").format(error=str(exc))
+                    I18N.t("log_sync_submit_failed").format(error=f"Segment '{seg.key}': {exc}")
                 )
-                return
-            submitted += 1
         self.thought_log.append(
             I18N.t("log_sync_submit_all_success").format(
                 count=submitted, skipped=skipped
