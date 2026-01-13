@@ -58,7 +58,7 @@ def _build_registry() -> PluginRegistry:
     )
 
 
-def test_submit_all_verified_explicit_trigger(qapp, qsettings, monkeypatch):
+def test_submit_all_verified_explicit_trigger(qapp, monkeypatch):
     monkeypatch.setattr(LLMService, "get_models", lambda self: ["model-a"])
     registry = _build_registry()
 
