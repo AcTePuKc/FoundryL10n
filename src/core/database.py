@@ -1,5 +1,4 @@
 from sqlmodel import Field, Session, SQLModel, create_engine, select
-from sqlalchemy import desc
 from typing import Optional
 from collections import Counter
 import hashlib
@@ -147,14 +146,15 @@ def query_translation_memory(
     if not source_norm:
         return []
     with Session(engine) as session:
+        tm_columns = TranslationMemoryIndex.__table__.c
         statement = (
             select(TranslationMemoryIndex)
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
+                tm_columns.source_norm.like(f"%{source_norm}%"),
             )
-            .order_by(desc(TranslationMemoryIndex.id))
+            .order_by(tm_columns.id.desc())
             .limit(limit)
         )
         return list(session.exec(statement).all())
