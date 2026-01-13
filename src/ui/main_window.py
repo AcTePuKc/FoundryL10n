@@ -1155,15 +1155,16 @@ class FoundryGUI(QMainWindow):
             item = self.table.item(i, 0)
             if item:
                 txt = item.text()
-                if txt == "🟢":
+                state_icon = self._resolve_state_icon(txt)
+                if state_icon == "🟢":
                     v += 1
-                elif txt == "🟡":
+                elif state_icon == "🟡":
                     qa += 1
-                elif txt == "🔶":
+                elif state_icon == "🔶":
                     risk += 1
-                elif txt == "🔴":
+                elif state_icon == "🔴":
                     err += 1
-                elif txt == "🔵":
+                elif state_icon == "🔵":
                     conflict += 1
                 else:
                     pend += 1
@@ -1181,6 +1182,14 @@ class FoundryGUI(QMainWindow):
             )
         else:
             self.lbl_stats.setText(stats_text)
+
+    def _resolve_state_icon(self, text: str) -> str:
+        if not text:
+            return ""
+        for icon in ("🔵", "🟢", "🔴", "🔶", "🟡", "⚪"):
+            if text.startswith(icon):
+                return icon
+        return ""
 
     def on_row_selected(self):
         """When a row is clicked, load data into the editor safely."""
@@ -1976,15 +1985,16 @@ class FoundryGUI(QMainWindow):
             if not item:
                 continue
             txt = item.text()
-            if txt == "🟢":
+            state_icon = self._resolve_state_icon(txt)
+            if state_icon == "🟢":
                 v += 1
-            elif txt == "🟡":
+            elif state_icon == "🟡":
                 qa += 1
-            elif txt == "🔶":
+            elif state_icon == "🔶":
                 risk += 1
-            elif txt == "🔴":
+            elif state_icon == "🔴":
                 err += 1
-            elif txt == "🔵":
+            elif state_icon == "🔵":
                 conflict += 1
             else:
                 pend += 1
