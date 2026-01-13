@@ -100,14 +100,13 @@ class FoundryParser:
             self.headers = list(segments[0].original_row.keys())
 
         with open(output_path, 'w', encoding='utf-8', newline='') as f:
-            # We explicitly use quoting=csv.QUOTE_NONE to ensure no extra quotes appear
+            # We use QUOTE_MINIMAL to quote only fields that need it (tabs/newlines/quotes).
             writer = csv.DictWriter(
                 f,
                 fieldnames=self.headers,
                 delimiter='\t',
                 extrasaction='ignore',
-                quoting=csv.QUOTE_NONE,
-                escapechar='\\',
+                quoting=csv.QUOTE_MINIMAL,
             )
             writer.writeheader()
             for seg in segments:

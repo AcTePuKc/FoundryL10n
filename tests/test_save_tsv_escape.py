@@ -30,8 +30,7 @@ def test_save_tsv_escapes_tabs_newlines_and_quotes(tmp_path: Path) -> None:
         reader = csv.reader(
             handle,
             delimiter="\t",
-            quoting=csv.QUOTE_NONE,
-            escapechar="\\",
+            quoting=csv.QUOTE_MINIMAL,
         )
         rows = list(reader)
 
