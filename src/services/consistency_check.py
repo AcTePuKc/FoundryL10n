@@ -2,6 +2,7 @@ import importlib
 from pathlib import Path
 from types import ModuleType
 from typing import Optional
+from core.database import TranslationRecord, engine
 
 import typer
 from rich import print
@@ -13,7 +14,6 @@ except ModuleNotFoundError:
     # For Python < 3.11, requires `pip install tomli`
     tomllib = importlib.import_module("tomli")
     
-from core.database import TranslationRecord, engine
 
 app = typer.Typer(help="Scan the translation memory for conflicting targets per source.")
 
