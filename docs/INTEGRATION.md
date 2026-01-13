@@ -12,6 +12,7 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 **Style guide:** [docs/STYLE_GUIDE.md](STYLE_GUIDE.md) (type-checking and ORM conventions).
 
 **Implementation status**
+
 * Mock server available.
 * Provider sync + auth completed.
 * Pylance false positives handled via style guide.
@@ -21,6 +22,7 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 To support a website, a plugin must be added to the `src/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
 
 **Canonical schema location**
+
 * **Source of truth:** `src/plugins/schema.json`.
 * **Docs copy:** `docs/draft_provider_schema.json` (kept in sync for reference and review).
 
@@ -45,12 +47,14 @@ Remote API (segments + suggestions endpoints; source of truth)
 ```
 
 **Behavioral notes**
+
 * **Suggestions-only submissions:** FoundryL10n only posts suggestions, never approves or overrides server decisions.
 * **Explicit user-triggered sync:** Fetching and submitting are manual UI actions, not background tasks.
 * **Offline-first:** Local edits, drafts, and TM persist offline; sync occurs only when explicitly requested.
 * **History tracking is local-only:** Segment history is stored per segment in the local database; remote-synced segments keep local history unless a user explicitly submits a suggestion.
 
 **Legend (layer responsibilities + validation)**
+
 * **UI Actions:** User-initiated commands that start fetch/submit flows.
 * **Integration Manager:** Validates plugin JSON on load and enforces sync policy (manual-only, suggestions-only).
 * **Active Provider:** The currently selected plugin that defines auth, endpoints, and field mapping.
@@ -59,60 +63,72 @@ Remote API (segments + suggestions endpoints; source of truth)
 ## 4. UI/UX – Manual Sync Controls + Segment Status
 
 **Where the actions live**
+
 * **Fetch** and **Submit Suggestions** live in the main toolbar next to the Provider selector, and are duplicated in the **Provider** menu for discoverability.
 * Actions are visually grouped with provider state (selector + login) so users understand they are remote operations, not local editing tools.
 
 **When the actions are enabled**
+
 * **Fetch** is enabled only when a valid provider is selected **and** the user is authenticated; it remains disabled for invalid plugins or logged-out states.
 * **Submit Suggestions** is enabled only when a provider is active, the user is authenticated, and the current segment has a local draft (or changed target) to submit.
 * Both actions are **explicit sync only**: no background fetch, no auto-submit, and no periodic polling.
 
 **Keyboard-first editing protection**
+
 * Sync actions do **not** steal focus from the segment editor or change the active segment.
 * Fetch/submit runs are non-modal and report status in the status bar to avoid blocking keyboard navigation.
 * Shortcuts (if present) are optional and never override core CAT navigation keys (e.g., segment next/prev, confirm, tag navigation).
 
 **Segment status indicators (remote vs local)**
+
 * Segments originating from a provider show a **remote-synced** indicator (e.g., cloud/check icon) and include the last sync timestamp in tooltip text.
 * Segments created locally or without provider metadata show a **local-only** indicator (e.g., local badge); they remain fully editable and are never auto-synced.
 * After a successful **Submit Suggestions**, the segment remains editable and retains its local draft state until the next explicit Fetch refreshes remote status.
 
 **POC scope: file upload + content inspection**
+
 * **Out of scope** for the current POC: FoundryL10n does not upload files to providers or offer an "inspect uploaded content" workflow.
 * The POC focuses on manual **Fetch**/**Submit Suggestions** only; file-based ingestion/inspection is explicitly deferred to a future phase.
 
 ## 5. Project Context (Provider + Project State Model)
 
 **Provider selection (what it does)**
+
 * Selecting a provider binds the UI to the provider config (auth + endpoints + mapping) and unlocks remote-only actions.
 * The selection does **not** mutate local content; it only sets the **remote context** used by manual fetch/submit.
 * Provider selection is always explicit; there is no implicit "last-used" reconnect without user action.
 
 **Project context (local-only vs remote)**
+
 * **Local-only project:** No provider is selected; segments are fully local with no remote metadata (`provider_id`/`remote_id` unset).
 * **Remote project:** A provider is selected and authenticated; segments can be fetched and carry remote metadata.
 * The active project context is reflected in the UI (provider selector state + status bar), but **editing remains available** in both modes.
 
 **Prompt templates for remote-synced projects**
+
 * Prompt templates are stored **per project name** in local settings, so remote-synced projects keep their own LLM instructions.
 * Switching projects restores that project’s last saved prompt template; sync operations never overwrite prompt templates.
 * Remote fetch/submit uses the currently active project’s template when requesting LLM drafts, keeping prompts aligned with each remote workspace.
 
 **Switching between contexts**
+
 * Switching **from local-only → remote** enables fetch/submit actions but does **not** auto-fetch; the segment list remains unchanged until explicit Fetch.
 * Switching **from remote → local-only** disables fetch/submit actions and keeps current local edits intact; remote context is cleared from the session, not from stored segments.
 * Switching providers (remote → different remote) resets the active remote context and requires an explicit Fetch to avoid mixing segment sets.
 
 **Explicit sync requirements**
+
 * **No auto-sync**: Fetch and Submit Suggestions are **only** triggered by user action.
 * Sync status updates happen only after explicit Fetch/Submit completes; no background polling.
 
 **Expected UX behavior**
+
 * Provider switches must **not steal focus** from the segment editor or change the active segment.
 * No modal prompts during provider switches; use non-blocking status messaging.
 * Fetch/Submit actions never interrupt keyboard-driven navigation (segment next/prev, confirm, tag navigation).
 
 **Workflow risks to avoid**
+
 * **Segment context drift:** Mixing segments from different providers without a clear Fetch boundary can lead to editing the wrong content.
 * **Accidental remote assumptions:** Auto-sync or implicit provider switching can cause translators to assume data is shared remotely when it is local-only.
 * **Focus loss during navigation:** Any focus change can disrupt fast segment workflows and introduce editing errors.
@@ -194,6 +210,7 @@ curl -X POST http://127.0.0.1:8000/suggestions \
 ```
 
 **Sample response (segments)**
+
 ```json
 {
   "segments": [
@@ -223,15 +240,18 @@ The runtime provider interface is implemented by a **BaseProvider** contract. Pl
 **Purpose:** Authenticate a user and return an access token (or equivalent session material).
 
 **Inputs**
+
 * `credentials`: object from the login UI (e.g., `username`/`password`, API key).
 * `auth.type`: one of `bearer`, `basic`, `oauth2` from the plugin.
 * `auth.login_endpoint`: relative or absolute URL used for login.
 
 **Outputs**
+
 * `token`: string (or token payload if provider requires more than a raw string).
 * `metadata`: optional details needed by the provider (e.g., token type, expiry).
 
 **Notes**
+
 * Token extraction uses `auth.token_path` when provided.
 * Storage is handled by the client (not the provider), but the provider must return a token value.
 
@@ -240,16 +260,19 @@ The runtime provider interface is implemented by a **BaseProvider** contract. Pl
 **Purpose:** List available projects/workspaces on the remote service (when supported).
 
 **Inputs**
+
 * `token`
 * `endpoints.fetch_projects` (optional)
 
 **Outputs**
+
 * List of project records, each containing:
   * `project_id` (string)
   * `name` (string)
   * `metadata` (optional)
 
 **Notes**
+
 * If a provider does not support projects, this method returns an empty list and the UI treats it as a single implicit project.
 
 ### C. `fetch_segments`
@@ -257,12 +280,14 @@ The runtime provider interface is implemented by a **BaseProvider** contract. Pl
 **Purpose:** Retrieve translatable segments for a project or scope.
 
 **Inputs**
+
 * `token`
 * `project_id` (optional, depending on provider)
 * `endpoints.fetch_segments` (required)
 * `pagination` (optional, e.g., `page`)
 
 **Outputs**
+
 * List of local segment records with **mapped fields**:
   * `segment_id`
   * `source`
@@ -270,6 +295,7 @@ The runtime provider interface is implemented by a **BaseProvider** contract. Pl
   * `local_draft` (initialized empty unless provider returns a draft)
 
 **Mapping rules**
+
 * `mapping.source_text` → local `source`
 * `mapping.target_text` → local `target`
 * `mapping.segment_id` → local `segment_id`
@@ -281,15 +307,18 @@ The mapping values are JSON paths (or dot paths) into the provider response. If 
 **Purpose:** Submit a translation **suggestion** for a segment.
 
 **Inputs**
+
 * `token`
 * `segment_id`
 * `suggestion_text` (from local `local_draft` or user edit)
 * `endpoints.submit_suggestion` (required)
 
 **Outputs**
+
 * Success indicator and optional server response payload.
 
 **Contract restriction (mandatory)**
+
 * **Suggestions-only:** The provider must submit suggestions only. It must **not** call any endpoint that approves, publishes, or overwrites the server’s accepted translation. The server remains the authority for acceptance.
 
 ---
@@ -308,10 +337,12 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 | `local_draft` | string | The user's current work-in-progress |
 
 **Note on TM entries vs. TranslationRecord**
+
 * Translation Memory entries **do not** include `segment_key`.
 * `segment_key` exists only on `TranslationRecord` entries and should not be inferred or injected into TM records during provider integration.
 
 **Mapping plan (segments table)**
+
 * Add new nullable columns: `provider_id` and `remote_id`.
 * For local-only projects, leave both columns `NULL` by default—local projects remain fully functional without provider metadata.
 * Migration note: create the columns with `NULL` defaults and avoid backfilling to prevent breaking existing local data.
@@ -402,11 +433,13 @@ Project Context Active
 ```
 
 **Explicit sync triggers (only):**
+
 * **Fetch Segments** (manual action) → pulls from remote into local cache.
 * **Submit Suggestions** (manual action) → sends local drafts as suggestions.
 * **Import/Export TSV** (manual action) → offline-first data exchange without remote calls.
 
 **Offline-first expectations:**
+
 * Local drafts are always editable, even when unauthenticated or offline.
 * Switching contexts never auto-syncs or discards local work; it only changes which remote context the UI is targeting.
 * Sync buttons clearly reflect their manual nature (no background polling).
@@ -418,13 +451,16 @@ Project Context Active
 FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Credential Manager, Secret Service) for provider credentials. This keeps tokens out of project files while preserving a streamlined login flow.
 
 **Key naming convention**
+
 * Keys are scoped by provider and account: `provider_id + account`.
 * `provider_id` matches the plugin identifier (e.g., `generic-poc`).
 * `account` is the user-facing login identifier (e.g., username or email).
 
 **Fallback behavior**
+
 * If the system keyring is unavailable or blocked, the app falls back to an in-memory session cache for the current runtime only.
 * Users must re-authenticate after restart in fallback mode.
 
 **Plain-text storage**
+
 * Tokens are **never** stored in plain text project files or exported data.
