@@ -89,3 +89,4 @@ Tasks about validation and developer scripts.
 - [x] Update consistency check status filters to use direct is_verified field references and cover them in tests.
 - [x] Fix global_replace_in_db column query regression for SQLModel compatibility.
 - [ ] Note: Do not check items related to TM/consistency fixes until Pylance reports zero diagnostics for the specified lines. This stops false “fixed” confirmations based only on tests. **When done:** keep the TM regression TODO item unchecked until stubs 1–3 are confirmed.
+- [ ] Docs: Add audit notes link in `docs/INTEGRATION.md` pointing to `docs/investigation.md` for UI refactor context.
