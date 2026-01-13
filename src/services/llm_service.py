@@ -182,9 +182,10 @@ class LLMService:
             return translation.strip(), thought
 
         except (httpx.TimeoutException, TimeoutError) as e:
-            warning = I18N.t("log_llm_timeout").format(
-                seconds=self.timeout if self.timeout is not None else 0
-            )
+            if self.timeout is not None:
+                warning = I18N.t("log_llm_timeout").format(seconds=self.timeout)
+            else:
+                warning = I18N.t("log_llm_timeout_default")
             return f"[TAG ERROR] {I18N.t('llm_error').format(error=str(e))}", warning
         except Exception as e:
             return f"[TAG ERROR] {I18N.t('llm_error').format(error=str(e))}", ""
