@@ -1631,9 +1631,9 @@ class FoundryGUI(QMainWindow):
             icon, color = "⚪", QColor("#222222")
 
         sync_icon, sync_tooltip = self._sync_indicator_for_segment(seg)
-        has_remote_change = (
-            self._remote_change_ready
-            and self._segment_change_key(seg) in self._remote_change_map
+        has_remote_change = self._remote_change_ready and (
+            getattr(seg, "remote_changed", False)
+            or self._segment_change_key(seg) in self._remote_change_map
         )
         if has_remote_change:
             sync_icon = f"{sync_icon}⚠️"
