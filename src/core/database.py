@@ -200,16 +200,21 @@ def global_replace_in_db(
 
 
 def get_cached_record(
-        source_text: str, 
-        target_lang: str, 
-        project_name: str) -> Optional[TranslationRecord]:
-    """Strict Lookup: Must match Source AND Language AND Project."""
+        source_text: str,
+        target_lang: str,
+        project_name: str,
+        segment_key: str | None = None) -> Optional[TranslationRecord]:
+    """Strict Lookup: Must match source, language, project, and optional segment key."""
     with Session(engine) as session:
         statement = select(TranslationRecord).where(
             TranslationRecord.source_text == source_text,
             TranslationRecord.target_lang == target_lang,
-            TranslationRecord.project_name == project_name
+            TranslationRecord.project_name == project_name,
         )
+        if segment_key is not None:
+            statement = statement.where(
+                TranslationRecord.segment_key == segment_key
+            )
         return session.exec(statement).first()
 
 

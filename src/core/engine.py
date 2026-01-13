@@ -35,7 +35,11 @@ class TranslationEngine:
                 continue
             # 1. Restore from DB for THIS project (optional but useful)
             record = get_cached_record(
-                seg.source_text, target_lang, project_name)
+                seg.source_text,
+                target_lang,
+                project_name,
+                segment_key=seg.key,
+            )
             if record:
                 seg.translation = record.translation
                 seg.is_verified = record.is_verified 
