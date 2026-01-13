@@ -47,14 +47,14 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
    * **Tests:** Mock keyring availability/unavailability to confirm persistence + fallback paths.
    * **Quick verification:** Store and retrieve a token across sessions when keyring is available; confirm in-memory fallback when not.
 
-## 0.4 – First Integration: AdventurersBG (Phase 1)
+## 0.4 – First Integration: Generic POC Provider (Phase 1)
 
 **Focus:** Proving the system works with a live community platform.
 
-* [ ] **Official Provider:** Release the `adventurers_bg.json` plugin.
+* [ ] **Official Provider:** Release the `generic_example.json` POC plugin in `src/plugins/generic_example.json`.
 * [ ] **API Sync:** Implement Login -> Fetch Page -> Push Suggestion workflow.
 * [ ] **Conflict Management:** Visual UI for when a server string has changed compared to the local draft.
-* [ ] **TSV Export:** Dedicated export profile for game engines used on AdventurersBG.
+* [ ] **TSV Export:** Dedicated export profile for the initial generic POC provider workflows.
 
 ## 0.5 – QA & Translation Memory
 

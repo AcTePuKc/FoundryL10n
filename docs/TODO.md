@@ -20,7 +20,7 @@ Tasks related to the modular plugin system and connecting to external platforms.
 * [x] **Plugin Loader:** Implement logic to scan the `/plugins` directory for JSON/JS files.
 * [x] **GitHub Sync:** Create a service to fetch/update the latest provider configs from the central GitHub repo.
 * [x] **Generic API Client:** Build a flexible HTTP handler that uses headers/endpoints defined in the active plugin.
-* [ ] **AdventurersBG Provider:** Create the first official plugin file (`adventurers_bg.json`) following the new schema.
+* [x] **Generic POC Provider:** Create the first official plugin file (`generic_example.json`) following the new schema.
 * [x] **Auth Storage:** Implement secure local storage for API tokens (keyring/secret storage).
 * [x] **Sync Logic:** Implement "Fetch Segments" and "Push Suggestions" actions within the UI.
 
