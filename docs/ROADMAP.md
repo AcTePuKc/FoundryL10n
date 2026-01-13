@@ -89,4 +89,4 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
     * **Layout jitter:** Use fixed-height containers or collapse when empty to prevent editor resizing mid-typing.
     * **Validation friction:** Do not block segment confirmation on optional fields; only block on required fields at explicit submission time.
 * [x] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
-  * Note: satisfied by the existing bottom-bar status counters + progress bar in the [main window UI](../src/ui/main_window.py), which provide per-status progress visibility without a separate dashboard view.
+  * Note: Satisfied by the progress bar and status counters in the [main window UI](../src/ui/main_window.py), which provide baseline tracking for progress and quality.
