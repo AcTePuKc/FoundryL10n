@@ -161,6 +161,13 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 Use the mock server for local integration testing without hitting a live site. It only accepts localhost traffic and speaks the same core endpoints the client expects.
 
+### Dev-only notes (mock server)
+
+* **Dev-only:** The mock server is intended for local development and integration checks only.
+* **Run path:** `tools/mock_server/mock_server.py` (invoked directly with Python).
+* **Distribution builds:** The mock server is not packaged or shipped in release/distribution builds.
+* **Docs TODO:** [x] Added dev-only + distribution guidance for the mock server.
+
 ### Run the server
 
 ```bash
