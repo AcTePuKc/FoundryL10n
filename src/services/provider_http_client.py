@@ -82,7 +82,7 @@ class ProviderHttpClient(BaseProvider):
         endpoint = self.config.endpoints.get("fetch_segments")
         if not endpoint:
             raise ValueError("Provider fetch_segments endpoint is missing.")
-        format_params = {"page": page or 1}
+        format_params: dict[str, str] = {"page": str(page or 1)}
         if project_id:
             format_params["project_id"] = project_id
 
