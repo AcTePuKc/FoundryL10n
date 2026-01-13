@@ -2,6 +2,23 @@
 
 FoundryL10n is a local-first translation workstation for narrative-heavy games. It blends a PySide6 desktop UI with a Typer-powered CLI, uses Ollama-hosted language models for machine translation, and keeps a persistent translation memory so your work never gets lost.
 
+## Table of Contents
+
+- [Key Features](#key-features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [CLI](#cli)
+  - [GUI](#gui)
+  - [Workstation tab](#workstation-tab)
+  - [Editor panel](#editor-panel)
+  - [Integrity report tab](#integrity-report-tab)
+  - [Settings tab](#settings-tab)
+- [Project Structure](#project-structure)
+- [Provider Integrations](#provider-integrations)
+- [Translation Memory & Caching](#translation-memory--caching)
+- [Development](#development)
+
 ## Key Features
 
 - **Dual Workflows** – Launch the PySide6 workstation (`python main.py gui`) or run fully headless TSV jobs from the Typer CLI.
@@ -142,6 +159,12 @@ Supporting assets:
 - `glossary.tsv`, `dialogue.tsv` – Sample resources for testing
 - `profiles/` – Saved settings and presets
 - `foundry_memory.db` – SQLite translation memory (auto-created)
+
+## Provider Integrations
+
+Provider integration modules live in `src/plugins` as JSON configs that describe how to authenticate with and talk to external translation sites. This keeps remote platform details (endpoints, headers, field mapping, auth inputs) packaged as data rather than hardcoded dependencies.
+
+The app reads the active provider config at runtime and uses the generic integration client to fetch or push segments. UI actions communicate through the provider configuration, so no direct imports of provider SDKs or site-specific code are required in the core/UI layers.
 
 ## Translation Memory & Caching
 
