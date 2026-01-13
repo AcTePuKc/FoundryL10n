@@ -55,6 +55,11 @@ def _prompt_settings_key(project_name: str) -> str:
 
 
 def _load_prompt_template(project_name: str) -> str:
+    try:
+        from PySide6.QtCore import QSettings
+    except ImportError:
+        return I18N.t("prompt_default")
+
     settings = QSettings(ORG_NAME, APP_NAME)
     key = _prompt_settings_key(project_name)
     if settings.contains(key):
