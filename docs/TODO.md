@@ -81,5 +81,5 @@ Tasks about validation and developer scripts.
 * [x] **Docs:** Finalize stepwise implementation plan guardrails in `docs/ROADMAP.md`.
 * [x] **Plugin Loader tests:** Add pytest coverage for plugin discovery and validation.
 
-- [ ] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
+- [x] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
 - [x] Fix TranslationMemoryIndex segment_key regression.
