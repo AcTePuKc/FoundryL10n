@@ -122,9 +122,9 @@ def report_conflicts(
     if lang:
         statement = statement.where(TranslationRecord.target_lang == lang)
     if status_value == "verified":
-        statement = statement.where(TranslationRecord.__table__.c.is_verified.is_(True))
+        statement = statement.where(TranslationRecord.is_verified.is_(True))
     if status_value == "unverified":
-        statement = statement.where(TranslationRecord.__table__.c.is_verified.is_(False))
+        statement = statement.where(TranslationRecord.is_verified.is_(False))
 
     conflict_map: dict[str, dict[str, list[str]]] = {}
 

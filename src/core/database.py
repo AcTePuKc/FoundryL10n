@@ -152,9 +152,9 @@ def query_translation_memory(
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                TranslationMemoryIndex.__table__.c.source_norm.like(f"%{source_norm}%"),
+                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
             )
-            .order_by(desc(TranslationMemoryIndex.__table__.c.id))
+            .order_by(desc(TranslationMemoryIndex.id))
             .limit(limit)
         )
         return list(session.exec(statement).all())
@@ -173,9 +173,9 @@ def global_replace_in_db(
     """
     with Session(engine) as session:
         target_col = (
-            TranslationRecord.__table__.c.source_text
+            TranslationRecord.source_text
             if search_source
-            else TranslationRecord.__table__.c.translation
+            else TranslationRecord.translation
         )
 
         statement = select(TranslationRecord).where(
