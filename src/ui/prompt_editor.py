@@ -26,6 +26,15 @@ class PromptEditor(QWidget):
         self.populate_library()
         self.load_template()
 
+    def get_text(self) -> str:
+        return self.editor.toPlainText()
+
+    def set_text(self, text: str) -> None:
+        self.editor.setPlainText(text)
+
+    def focus_editor(self) -> None:
+        self.editor.setFocus()
+
     def retranslate_ui(self):
         self.prompt_label.setText(I18N.t("ui_prompt_library"))
         self.editor.setPlaceholderText(I18N.t("ui_prompt_library_placeholder"))
