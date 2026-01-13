@@ -41,6 +41,31 @@ QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
 # Initialize Typer
 app = typer.Typer(help=I18N.t("cli_app_help"))
 
+ORG_NAME = "FoundryL10n"
+APP_NAME = "TranslatorApp"
+
+
+def _normalize_project_name(name: str) -> str:
+    return name.strip() or "default"
+
+
+def _prompt_settings_key(project_name: str) -> str:
+    safe_name = _normalize_project_name(project_name)
+    return f"prompt_templates/{safe_name}"
+
+
+def _load_prompt_template(project_name: str) -> str:
+    settings = QSettings(ORG_NAME, APP_NAME)
+    key = _prompt_settings_key(project_name)
+    if settings.contains(key):
+        return str(settings.value(key))
+    if settings.contains("custom_prompt"):
+        legacy_prompt = str(settings.value("custom_prompt"))
+        settings.setValue(key, legacy_prompt)
+        settings.remove("custom_prompt")
+        return legacy_prompt
+    return I18N.t("prompt_default")
+
 @app.callback()
 def main():
     """Ensure the database is initialized before any command runs."""
@@ -71,7 +96,9 @@ def translate_file(
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
     model: str = typer.Option("qwen2.5:7b", "--model", "-m", help=I18N.t("cli_opt_model_help")),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
-    style: str = typer.Option("style.md", "--style", "-s")
+    style: str = typer.Option("style.md", "--style", "-s"),
+    forbidden: str = typer.Option("forbidden.txt", "--forbidden", "-f"),
+    project: str = typer.Option("default", "--project", "-p")
 ):
     """Translate a TSV file via CLI."""
     loader = ResourceLoader()
@@ -82,6 +109,9 @@ def translate_file(
     
     glossary_content = loader.load_glossary(glossary)
     style_content = loader.load_style_guide(style)
+    forbidden_content = loader.load_forbidden_words(forbidden)
+    project_name = _normalize_project_name(project)
+    prompt_template = _load_prompt_template(project_name)
     
     input_path = Path(path)
     if not input_path.exists():
@@ -104,7 +134,16 @@ def translate_file(
             total=len(segments),
         )
         for seg in segments:
-            engine.run_translation([seg], lang, glossary=glossary_content, style=style_content, temp=0.1)
+            engine.run_translation(
+                [seg],
+                lang,
+                glossary=glossary_content,
+                style=style_content,
+                forbidden=forbidden_content,
+                temp=0.1,
+                prompt_template=prompt_template,
+                project_name=project_name,
+            )
             progress.advance(task)
 
     output_path = Path("out") / lang / input_path.name
@@ -117,7 +156,9 @@ def translate_text(
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
     model: str = typer.Option("qwen2.5:7b", "--model", "-m"),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
-    style: str = typer.Option("style.md", "--style", "-s")
+    style: str = typer.Option("style.md", "--style", "-s"),
+    forbidden: str = typer.Option("forbidden.txt", "--forbidden", "-f"),
+    project: str = typer.Option("default", "--project", "-p"),
 ):
     """Quickly translate a single string via CLI."""
     loader = ResourceLoader()
@@ -126,9 +167,20 @@ def translate_text(
     
     glossary_content = loader.load_glossary(glossary)
     style_content = loader.load_style_guide(style)
+    forbidden_content = loader.load_forbidden_words(forbidden)
+    project_name = _normalize_project_name(project)
+    prompt_template = _load_prompt_template(project_name)
     
     seg = TranslationSegment("CLI_TEST", content)
-    engine.run_translation([seg], lang, glossary=glossary_content, style=style_content)
+    engine.run_translation(
+        [seg],
+        lang,
+        glossary=glossary_content,
+        style=style_content,
+        forbidden=forbidden_content,
+        prompt_template=prompt_template,
+        project_name=project_name,
+    )
     
     print(I18N.t("cli_original_label").format(content=content))
     print(I18N.t("cli_result_label").format(result=seg.translation))
