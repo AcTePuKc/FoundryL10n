@@ -73,8 +73,8 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Multi-Provider Support:** Open documentation for other communities to write their own plugins.
   * Note: Completed. The community-facing [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md) is now available, complementing the existing [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md).
 * [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
-  * Note: partially implemented with mapping paths in the [schema](../src/plugins/schema.json), but no custom UI field rendering yet.
-  * Minimal plan (no implementation yet):
+  * Note: mapping paths exist in the [schema](../src/plugins/schema.json), but there is still no custom field UI rendering in the app codebase.
+  * Minimal plan (no implementation yet; **next steps**):
     1. **Schema-to-UI adapter:** Read provider-defined field metadata (label, type, optionality, default, validation hints) and map to existing editor widgets without adding new field types.
     2. **Field container placement:** Render custom fields in a compact, collapsible panel adjacent to the segment editor (not inline with the target editor) to avoid shifting the translation caret.
     3. **Data binding:** Persist values in per-segment metadata alongside imported TSV rows (e.g., an optional `custom_fields` JSON blob keyed by provider field IDs) so storage stays format-neutral and future DB storage can mirror the same structure; include values in provider submission payloads only when the provider declares a mapping key.
