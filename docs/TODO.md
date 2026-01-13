@@ -89,3 +89,4 @@ Tasks about validation and developer scripts.
 - [ ] Fix TranslationMemoryIndex segment_key regression.
 - [ ] Fix TM regression in query column references for SQLModel compatibility.
 - [ ] Docs: Add audit notes link in `docs/INTEGRATION.md` pointing to `docs/investigation.md` for UI refactor context.
+- [x] Pylance reports clean diagnostics for `src/core/database.py` `.like()`/`.desc()` usage.
