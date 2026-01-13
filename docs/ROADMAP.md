@@ -73,5 +73,18 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
   * Note: partially implemented via the [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md); community-facing guide is now available in [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md).
 * [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
   * Note: partially implemented with mapping paths in the [schema](../src/plugins/schema.json), but no custom UI field rendering yet.
+  * Minimal plan (no implementation yet):
+    1. **Schema-to-UI adapter:** Read provider-defined field metadata (label, type, optionality, default, validation hints) and map to existing editor widgets without adding new field types.
+    2. **Field container placement:** Render custom fields in a compact, collapsible panel adjacent to the segment editor (not inline with the target editor) to avoid shifting the translation caret.
+    3. **Data binding:** Persist values in the segment metadata and include them in provider submission payloads only when the provider declares a mapping key.
+    4. **Validation and feedback:** Surface provider constraints as non-blocking hints and lightweight warnings (no modal interruptions while typing).
+  * Expected UX behavior:
+    * Custom fields appear per-segment only when the active provider defines them; no fields show for providers without definitions.
+    * Tabbing stays within the editor by default; users enter the custom field panel via a single explicit shortcut and return with Escape to preserve translation flow.
+    * Field edits never steal focus from the target editor while typing unless the user explicitly focuses the panel.
+  * Risks / guardrails:
+    * **Keyboard flow regression:** Avoid adding fields to the default tab order; keep segment navigation shortcuts unchanged.
+    * **Layout jitter:** Use fixed-height containers or collapse when empty to prevent editor resizing mid-typing.
+    * **Validation friction:** Do not block segment confirmation on optional fields; only block on required fields at explicit submission time.
 * [ ] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
   * Note: partially implemented with basic status counters in the [main window UI](../src/ui/main_window.py); no full dashboard yet.
