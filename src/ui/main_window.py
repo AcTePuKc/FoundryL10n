@@ -608,11 +608,8 @@ class FoundryGUI(QMainWindow):
                     local_translation = record.translation
             remote_source = seg.source_text or ""
             remote_translation = seg.translation or ""
-            has_local_translation = bool(local_translation.strip())
-            source_changed = bool(local_source and local_source != remote_source)
-            translation_changed = bool(
-                has_local_translation and local_translation != remote_translation
-            )
+            source_changed = local_source != remote_source
+            translation_changed = local_translation != remote_translation
             if source_changed or translation_changed:
                 changes[key] = {
                     "local_source": local_source,
@@ -654,7 +651,7 @@ class FoundryGUI(QMainWindow):
         sections: list[str] = []
         local_source = change.get("local_source", "")
         remote_source = change.get("remote_source", "")
-        if local_source and local_source != remote_source:
+        if local_source != remote_source:
             source_diff = self._build_diff_text(
                 local_source,
                 remote_source,
@@ -667,7 +664,7 @@ class FoundryGUI(QMainWindow):
                 )
         local_translation = change.get("local_translation", "")
         remote_translation = change.get("remote_translation", "")
-        if local_translation and local_translation != remote_translation:
+        if local_translation != remote_translation:
             translation_diff = self._build_diff_text(
                 local_translation,
                 remote_translation,
