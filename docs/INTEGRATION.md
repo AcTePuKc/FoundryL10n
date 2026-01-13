@@ -197,7 +197,7 @@ python tools/mock_server/mock_server.py --host 127.0.0.1 --port 8000
 
 ### Mock server UI policy
 
-The mock server remains **API-only** (no HTML UI on `127.0.0.1:8080`). This keeps the tool lightweight, avoids maintaining a separate UI that could drift from the integration contract, and encourages testing the exact request/response payloads the client relies on. Use curl or your preferred API client to inspect segments and submit suggestions.
+The mock server remains **API-only** (no HTML UI on `127.0.0.1:8000`). This keeps the tool lightweight, avoids maintaining a separate UI that could drift from the integration contract, and encourages testing the exact request/response payloads the client relies on. Use curl or your preferred API client to inspect segments and submit suggestions.
 
 ### Minimal fetch/submit workflow
 
