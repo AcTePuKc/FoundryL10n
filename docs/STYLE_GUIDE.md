@@ -1,11 +1,9 @@
-# Style Guide
+# Style Guide — Typing and ORM Queries
 
-## Type-checking and ORM notes
+## Type-checking and SQLModel/SQLAlchemy conventions
 
-When addressing type checker warnings in SQLModel/SQLAlchemy code, follow these rules:
-
-* prefer runtime correctness,
-* don’t rewrite ORM for type checker,
-* allow `# type: ignore[attr-defined]`,
-* optional `ColumnElement` annotations,
-* never replace `like/desc/is_` with string logic.
+* Prefer runtime correctness over static typing.
+* Don’t rewrite ORM expressions purely for the type checker.
+* Allow `# type: ignore[attr-defined]` when `__table__` or runtime attributes are involved.
+* `ColumnElement` annotations are optional; use them only when they improve clarity.
+* Never replace `like`/`desc`/`is_` ORM calls with string logic.
