@@ -97,3 +97,4 @@ Tasks about validation and developer scripts.
 
 - [x] Note: Runtime package clean after mock server move (no mock server imports in src).
 - [ ] Docs: Note README provider integration overview + config-driven communication in docs backlog.
+- [ ] Docs: Add style guide for ORM/type-checking rules and link it from integration docs.
