@@ -183,7 +183,19 @@ The app reads the active provider config at runtime and uses the generic integra
   ```
 
 - PyInstaller specs are provided (`FoundryL10n.spec`) for packaging desktop builds.
-- Packaging note: distribution builds include only the app packages under `src/`; the mock server in `tools/` is dev-only and not shipped.
+
+<details>
+<summary>Dev Notes</summary>
+
+- The mock server is **dev-only** and lives under `tools/` (or `dev/` if relocated).
+- It is excluded from production/distribution builds.
+- TODO: Update this note if the mock server location changes.
+- Run it with:
+
+  ```bash
+  python tools/mock_server/mock_server.py --host 127.0.0.1 --port 8000
+  ```
+</details>
 
 ## Contributing
 
