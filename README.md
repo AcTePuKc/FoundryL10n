@@ -94,7 +94,7 @@ The workstation UI is organized into three feature-rich tabs.
 
 #### Workstation tab
 
-- Open TSV files, instantly restoring saved translations, verification states, locks, and AI drafts from the memory database.
+- Import TSV files, instantly restoring saved translations, verification states, locks, and AI drafts from the memory database.
 - Spreadsheet-like table with row filters (search text, “only errors”), bulk selection, and a right-click menu for quick verify/skip/clear actions.
 - Kick off or halt bulk translation runs that stream updates row-by-row, respecting glossary/style guidance and placeholder shielding.
 - “Follow” toggle keeps the view in sync with bulk translation progress, while **Focus: Table** hides auxiliary widgets for a distraction-free layout.
