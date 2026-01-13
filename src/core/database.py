@@ -172,10 +172,11 @@ def global_replace_in_db(
     search_source=False: search in (translation)
     """
     with Session(engine) as session:
+        record_columns = TranslationRecord.__table__.c
         target_col = (
-            TranslationRecord.source_text
+            record_columns.source_text
             if search_source
-            else TranslationRecord.translation
+            else record_columns.translation
         )
 
         statement = select(TranslationRecord).where(

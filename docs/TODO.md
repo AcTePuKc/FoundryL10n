@@ -87,3 +87,4 @@ Tasks about validation and developer scripts.
 - [x] Fix TM regression in query column references for SQLModel compatibility.
 
 - [x] Update consistency check status filters to use direct is_verified field references and cover them in tests.
+- [x] Fix global_replace_in_db column query regression for SQLModel compatibility.
