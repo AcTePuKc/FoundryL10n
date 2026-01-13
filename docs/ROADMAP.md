@@ -17,7 +17,8 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Provider Interface:** Define the standard for how the app talks to external APIs.
 * [x] **Plugin Loader:** Support loading `.json` or `.js` provider configs from a local `/plugins` folder.
 * [ ] **GitHub Sync:** Implement auto-updating of the `/plugins` folder from the central repository.
-* [ ] **Secure Vault:** Implement encrypted local storage for user API tokens and credentials.
+  * Remaining gaps: sync service exists but there is no UI/CLI wiring for user-triggered updates or scheduled auto-sync.
+* [x] **Secure Vault:** Implement encrypted local storage for user API tokens and credentials.
 * [x] **Implementation Plan:** Review and align stepwise commits with priorities, tests, and guardrails.
 
 ### Implementation Plan (stepwise commits)
@@ -52,16 +53,17 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 **Focus:** Proving the system works with a live community platform.
 
 * [x] **Official Provider:** Release the `generic_example.json` POC plugin in `src/plugins/generic_example.json`.
-* [ ] **API Sync:** Implement Login -> Fetch Page -> Push Suggestion workflow.
+* [x] **API Sync:** Implement Login -> Fetch Page -> Push Suggestion workflow.
 * [ ] **Conflict Management:** Visual UI for when a server string has changed compared to the local draft.
+  * Remaining gaps: remote change detection/visual diff UI is not implemented (current conflict tooling is local TM-focused).
 * [x] **TSV Export:** Dedicated export profile for the initial generic POC provider workflows.
 
 ## 0.5 – QA & Translation Memory
 
 **Focus:** Quality control and consistency across large projects.
 
-* [ ] **Tag Safety:** Automated validation to ensure LLMs don't corrupt game tags (e.g., `%s`, `{id}`).
-* [ ] **Local TM:** Searchable database of previous translations to suggest "matches" for new segments.
+* [x] **Tag Safety:** Automated validation to ensure LLMs don't corrupt game tags (e.g., `%s`, `{id}`).
+* [x] **Local TM:** Searchable database of previous translations to suggest "matches" for new segments.
 * [ ] **Batch Processing:** Ability to "Submit All Verified" segments on a page in one click.
 
 ## 1.0 – Community Expansion
