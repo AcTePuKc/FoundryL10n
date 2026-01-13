@@ -9,6 +9,8 @@ The app uses a **Provider Plugin Architecture**. Instead of hardcoding website l
 
 **Audit notes:** [docs/investigation.md](investigation.md) (pre-integration, still relevant for UI refactors). Pylance must be clean; see the latest audit for current error hotspots.
 
+**Style guide:** [docs/STYLE_GUIDE.md](STYLE_GUIDE.md) (type-checking and ORM conventions).
+
 ## 2. The Plugin System
 
 To support a website, a plugin must be added to the `src/plugins` directory. Users can contribute these via Pull Request to the official GitHub repository.
