@@ -76,4 +76,4 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
   * Note: partially implemented with mapping paths in the [schema](../src/plugins/schema.json), but no custom UI field rendering yet.
 * [ ] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
-  * Note: partially implemented with basic status counters in the bottom bar; no full dashboard yet.
+  * Note: partially implemented with basic status counters in the [main window UI](../src/ui/main_window.py); no full dashboard yet.
