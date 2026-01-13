@@ -112,8 +112,8 @@ class PluginLoader:
             )
             entries.append(entry)
 
-            if entry.is_valid:
-                providers[metadata_id] = data
+            if entry.is_valid and entry.metadata_id is not None and entry.data is not None:
+                providers[entry.metadata_id] = entry.data
             else:
                 warnings.extend(entry.errors)
 

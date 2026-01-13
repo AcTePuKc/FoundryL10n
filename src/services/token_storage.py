@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 import importlib
+import importlib.util
 
 
 DEFAULT_SERVICE_NAME = "FoundryL10n"

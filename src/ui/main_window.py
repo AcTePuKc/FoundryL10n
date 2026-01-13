@@ -549,7 +549,7 @@ class FoundryGUI(QMainWindow):
         for item in items:
             segment_id = item.get("segment_id") or item.get("id")
             remote_id = item.get("remote_id") or segment_id
-            source_text = item.get("source") or ""
+            source_text = str(item.get("source") or "")
             translation = item.get("target") or ""
             ai_draft = item.get("local_draft") or ""
             last_sync = self._resolve_remote_sync_timestamp(item)
@@ -1032,7 +1032,6 @@ class FoundryGUI(QMainWindow):
         self.update_history_action_state()
 
         # 4. Conditional Fuzzy Match Search
-        is_verified = getattr(seg, 'is_verified', False)
         is_skip = getattr(seg, 'never_translate', False)
 
         if self._segment_needs_fuzzy(seg) and not is_skip:
@@ -1049,8 +1048,6 @@ class FoundryGUI(QMainWindow):
 
         if self.current_row < 0:
             return
-
-        seg = self.segments[self.current_row]
 
         settings = self.settings_tab.get_settings()
         engine_helper = TranslationEngine(self.llm_service)
