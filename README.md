@@ -145,6 +145,18 @@ Launch the GUI with:
 python main.py gui
 ```
 
+<details>
+<summary>Dev Notes</summary>
+
+- The mock server is **dev-only** and lives under `tools/` (or `dev/` if relocated).
+- It is excluded from production/distribution builds.
+- Run it with:
+
+  ```bash
+  python tools/mock_server/mock_server.py --host 127.0.0.1 --port 8000
+  ```
+</details>
+
 ## Project Structure
 
 ```bash
