@@ -1,14 +1,17 @@
+import importlib
 from pathlib import Path
+from types import ModuleType
 from typing import Optional
 
 import typer
 from rich import print
 from sqlmodel import Session, select
+tomllib: ModuleType
 try:
-    import tomllib
-except ImportError:
+    tomllib = importlib.import_module("tomllib")
+except ModuleNotFoundError:
     # For Python < 3.11, requires `pip install tomli`
-    import tomli as tomllib
+    tomllib = importlib.import_module("tomli")
     
 from core.database import TranslationRecord, engine
 
@@ -119,9 +122,9 @@ def report_conflicts(
     if lang:
         statement = statement.where(TranslationRecord.target_lang == lang)
     if status_value == "verified":
-        statement = statement.where(TranslationRecord.is_verified.is_(True))
+        statement = statement.where(TranslationRecord.__table__.c.is_verified.is_(True))
     if status_value == "unverified":
-        statement = statement.where(TranslationRecord.is_verified.is_(False))
+        statement = statement.where(TranslationRecord.__table__.c.is_verified.is_(False))
 
     conflict_map: dict[str, dict[str, list[str]]] = {}
 

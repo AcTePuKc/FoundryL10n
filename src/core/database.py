@@ -154,9 +154,9 @@ def query_translation_memory(
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
+                TranslationMemoryIndex.__table__.c.source_norm.like(f"%{source_norm}%"),
             )
-            .order_by(desc(TranslationMemoryIndex.id))
+            .order_by(desc(TranslationMemoryIndex.__table__.c.id))
             .limit(limit)
         )
         return list(session.exec(statement).all())
@@ -174,15 +174,16 @@ def global_replace_in_db(
     search_source=False: search in (translation)
     """
     with Session(engine) as session:
-        target_col = getattr(
-            TranslationRecord,
-            "source_text" if search_source else "translation",
+        target_col = (
+            TranslationRecord.__table__.c.source_text
+            if search_source
+            else TranslationRecord.__table__.c.translation
         )
 
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
             TranslationRecord.target_lang == target_lang,
-            target_col.like(f"%{find_text}%"),  # type: ignore[attr-defined]
+            target_col.like(f"%{find_text}%"),
         )
 
         records = session.exec(statement).all()
@@ -249,7 +250,7 @@ def get_project_integrity_report(project_name: str, target_lang: str):
                 for h_trans in h_list:
                     if h_trans.strip():
                         master_map[norm_src]["variants"].add(h_trans.strip())
-            except:
+            except json.JSONDecodeError:
                 pass
 
     report = []
