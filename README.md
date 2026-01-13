@@ -18,6 +18,8 @@ FoundryL10n is a local-first translation workstation for narrative-heavy games. 
 - [Provider Integrations](#provider-integrations)
 - [Translation Memory & Caching](#translation-memory--caching)
 - [Development](#development)
+  - [Style Guide](#style-guide)
+  - [Dev Notes](#dev-notes)
 - [Contributing](#contributing)
 
 ## Key Features
@@ -183,6 +185,12 @@ The app reads the active provider config at runtime and uses the generic integra
   ```
 
 - PyInstaller specs are provided (`FoundryL10n.spec`) for packaging desktop builds.
+
+### Style Guide
+
+Refer to the ORM/type-checking conventions in [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md) when updating database queries or resolving Pylance typing issues.
+
+### Dev Notes
 
 <details>
 <summary>Dev Notes</summary>
