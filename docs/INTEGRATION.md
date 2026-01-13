@@ -7,7 +7,7 @@ FoundryL10n is a local CAT (Computer-Assisted Translation) workstation designed 
 
 The app uses a **Provider Plugin Architecture**. Instead of hardcoding website logic, the app loads small configuration files (JSON/JS) that define how to communicate with specific community backends (e.g., the Generic POC Provider defined in `src/plugins/generic_example.json`).
 
-**Audit notes:** [docs/investigation.md](investigation.md) (pre-integration, still relevant for UI refactors).
+**Audit notes:** [docs/investigation.md](investigation.md) (pre-integration, still relevant for UI refactors). Pylance must be clean; see the latest audit for current error hotspots.
 
 ## 2. The Plugin System
 

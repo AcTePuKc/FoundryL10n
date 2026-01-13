@@ -1,18 +1,19 @@
-# FoundryL10n Audit Notes (src/)
+# Audit Note — Database TM/Replace + Consistency Status Filter
 
 ## Scope
-Focused on `src/ui`, `src/core`, and `src/services` for likely refactor hotspots, unused definitions, and prompt/template connectivity relevant to CAT workflows (segment navigation, QA markers, and tag safety).
+Focused only on:
+- `src/core/database.py` TM query and global replace usage of `__table__`.
+- `src/services/consistency_check.py` status filter path using `__table__`.
 
-## Likely refactor hotspots (CAT impact)
-- **`src/ui/main_window.py`** — High-density coordinator: constructs widgets, owns signal wiring, context menus, translation flow, and DB persistence in one file. This is a refactor hotspot because UI behavior (segment workflow, QA statuses, and menu actions) is tightly coupled here. Any CAT UX change (navigation, verification, QA markers) will land in this module and should be done carefully to preserve keyboard-driven workflows and state flags.【F:src/ui/main_window.py†L40-L940】
-- **`src/ui/settings_tab.py`** — Large multi-section form (general/translation/appearance/resources/prompt/tools). It’s a hotspot for future modularization, but current hookups look cohesive. Changes here can affect translator defaults, prompt behavior, and resource loading paths, so they should remain incremental.【F:src/ui/settings_tab.py†L18-L220】
-- **`src/core/engine.py`** — Mixes translation orchestration, audit logic, and fuzzy match. It’s a hotspot because it drives segment state and QA heuristics; any refactor must preserve verification flags, tag safety, and risk indicators used by the CAT UI.【F:src/core/engine.py†L1-L215】
-- **`src/services/llm_service.py`** — Prompt assembly + response cleanup + placeholder validation. It’s a hotspot because prompt templates and post-processing directly affect tag safety and translation quality. CAT workflow depends on preserving placeholders and avoiding “chatty” output.【F:src/services/llm_service.py†L1-L162】
+## Pylance error locations (exact)
+- `src/core/database.py:149` — `TranslationMemoryIndex.__table__.c` used to build TM query columns in `query_translation_memory`. Likely Pylance error: cannot access member `__table__` on `TranslationMemoryIndex` (SQLModel class) because the attribute is injected at runtime and not typed.【F:src/core/database.py†L139-L160】
+- `src/core/database.py:175` — `TranslationRecord.__table__.c` used to pick columns in `global_replace_in_db`. Likely Pylance error: cannot access member `__table__` on `TranslationRecord` for the same reason.【F:src/core/database.py†L163-L200】
+- `src/services/consistency_check.py:109` — `TranslationRecord.__table__.c` used to derive `target_col`/`is_verified_col`. Likely Pylance error: cannot access member `__table__` on `TranslationRecord`, causing the status filter lines to be flagged even though SQLAlchemy resolves them at runtime.【F:src/services/consistency_check.py†L109-L129】
 
+## Suspected cause
+`__table__` is dynamically attached by SQLModel/SQLAlchemy at runtime, but Pylance’s static typing for `SQLModel` does not advertise `__table__`, so any access like `TranslationRecord.__table__` or `TranslationMemoryIndex.__table__` is flagged even though it works at runtime. This shows up in TM short-listing and in the status filter condition because both rely on `__table__.c` columns for `.like()` and `.is_()` operations.【F:src/core/database.py†L139-L200】【F:src/services/consistency_check.py†L109-L129】
 
-## Planned Refactoring
-- **Tag helper consolidation** — Tag insertion and placeholder handling should be consolidated to a single helper surface (menu + shortcuts + editor hooks) to avoid divergent behavior across panels. Treat this as an intentional refactor area rather than ad-hoc edits.
-
-## Open UX proposals
-- **Focus: Editor (editor focus)** — Current Focus: Table is table-centric (hides the editor panel and expands the table). A complementary Focus: Editor would hide/minimize the table and expand the editor panel for deep editing, QA tag fixes, and keyboard-forward translation review. This preserves the existing Focus: Table while adding an editor-centric option for polishing workflows.
-- **Tag insertion panel** — Add a lightweight panel or popover listing available tags/placeholders, with click-to-insert and keyboard insertion shortcuts. This should integrate with the same tag helper logic used by context menus so translators can insert tags without leaving the editor.
+## Fix strategy (short)
+- Prefer model column attributes directly (e.g., `TranslationMemoryIndex.source_norm`, `TranslationRecord.is_verified`) or `getattr(TranslationRecord, "translation")` to avoid `__table__` access.
+- If table column access is truly needed, add a typed helper or local alias with explicit type casting to satisfy Pylance.
+- Keep the query semantics unchanged (especially `like` filters and status filter values) while removing `__table__` usage to keep Pylance clean.
