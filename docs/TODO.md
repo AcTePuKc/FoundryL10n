@@ -91,3 +91,4 @@ Tasks about validation and developer scripts.
 - [ ] Docs: Add audit notes link in `docs/INTEGRATION.md` pointing to `docs/investigation.md` for UI refactor context.
 - [x] Pylance reports clean diagnostics for `src/core/database.py` `.like()`/`.desc()` usage.
 - [x] Pylance reports clean diagnostics for `src/services/consistency_check.py` `.is_()` usage.
+- [x] Docs: Add Mock Server Quickstart section to `docs/INTEGRATION.md`.

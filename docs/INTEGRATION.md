@@ -146,7 +146,58 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 ---
 
-## 8. BaseProvider Contract (Abstract Methods + Mapping)
+## 8. Mock Server Quickstart
+
+Use the mock server for local integration testing without hitting a live site. It only accepts localhost traffic and speaks the same core endpoints the client expects.
+
+### Run the server
+
+```bash
+python src/services/mock_server.py --host 127.0.0.1 --port 8000
+```
+
+### Available endpoints
+
+* `POST /login` → returns a mock token.
+* `GET /segments` → returns a static list of segments.
+* `POST /suggestions` → echoes back the submitted suggestion.
+
+### Minimal fetch/submit workflow
+
+```bash
+curl -X POST http://127.0.0.1:8000/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"tester","password":"demo"}'
+
+curl http://127.0.0.1:8000/segments
+
+curl -X POST http://127.0.0.1:8000/suggestions \
+  -H "Content-Type: application/json" \
+  -d '{"segment_id":"seg-001","suggestion":"Bienvenue, aventurier !"}'
+```
+
+**Sample response (segments)**
+```json
+{
+  "segments": [
+    {
+      "segment_id": "seg-001",
+      "source": "Welcome, adventurer!",
+      "target": ""
+    },
+    {
+      "segment_id": "seg-002",
+      "source": "Press {0} to open the inventory.",
+      "target": ""
+    }
+  ],
+  "page": 1
+}
+```
+
+To verify segment content, confirm the `source` strings and placeholder tags (e.g., `{0}`) match what you expect before submitting suggestions.
+
+## 9. BaseProvider Contract (Abstract Methods + Mapping)
 
 The runtime provider interface is implemented by a **BaseProvider** contract. Plugin JSON defines the concrete endpoints and mapping paths, while the BaseProvider enforces the shape of inputs/outputs so the rest of the app can treat all providers uniformly.
 
@@ -226,7 +277,7 @@ The mapping values are JSON paths (or dot paths) into the provider response. If 
 
 ---
 
-## 9. Data Model (Universal Mapping)
+## 10. Data Model (Universal Mapping)
 
 Regardless of the website, FoundryL10n maps data into this internal structure:
 
@@ -250,7 +301,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 ---
 
-## 9. Standard API Assumptions
+## 11. Standard API Assumptions
 
 Plugins generally follow this flow:
 
@@ -286,7 +337,7 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 10. Local Workflow & Safety
+## 12. Local Workflow & Safety
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
@@ -294,7 +345,7 @@ POST /api/segments/{id}/suggestions
 
 ---
 
-## 11. Project Context State Model (Design)
+## 13. Project Context State Model (Design)
 
 This section describes how the UI models provider selection and project context, emphasizing offline-first expectations and explicit sync triggers.
 
@@ -345,7 +396,7 @@ Project Context Active
 
 ---
 
-## 12. Security & Credential Storage
+## 14. Security & Credential Storage
 
 FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Credential Manager, Secret Service) for provider credentials. This keeps tokens out of project files while preserving a streamlined login flow.
 
