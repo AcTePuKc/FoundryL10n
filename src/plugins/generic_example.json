@@ -1,12 +1,13 @@
 {
   "metadata": {
-    "id": "example-provider",
-    "name": "Example Translation Platform",
+    "id": "generic-poc",
+    "name": "Generic POC Provider",
     "version": "1.0.0",
-    "homepage": "https://example.com"
+    "homepage": "https://example.com",
+    "description": "Official proof-of-concept provider for the generic API workflow."
   },
   "auth": {
-    "type": "Bearer",       
+    "type": "bearer",
     "token_header": "Authorization",
     "token_prefix": "Bearer "
   },

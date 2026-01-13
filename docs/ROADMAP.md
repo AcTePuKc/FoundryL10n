@@ -52,7 +52,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 **Focus:** Proving the system works with a live community platform.
 
-* [ ] **Official Provider:** Release the `generic_example.json` POC plugin in `src/plugins/generic_example.json`.
+* [x] **Official Provider:** Release the `generic_example.json` POC plugin in `src/plugins/generic_example.json`.
 * [ ] **API Sync:** Implement Login -> Fetch Page -> Push Suggestion workflow.
 * [ ] **Conflict Management:** Visual UI for when a server string has changed compared to the local draft.
 * [ ] **TSV Export:** Dedicated export profile for the initial generic POC provider workflows.
