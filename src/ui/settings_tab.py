@@ -12,8 +12,10 @@ from PySide6.QtWidgets import (
     QLabel, QVBoxLayout, QGroupBox, QFormLayout, QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import QSettings, Signal, Qt
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtGui import QIcon, QFont, QStandardItemModel
 from ui.prompt_editor import PromptEditor
+from services.plugin_loader import PluginRegistry
+
 from ui.theme_helpers import get_available_themes, load_theme
 
 
@@ -741,7 +743,10 @@ class SettingsTab(QWidget):
             index = self.provider_dropdown.count()
             self.provider_dropdown.addItem(label, entry.metadata_id or "")
             model = self.provider_dropdown.model()
-            item = model.item(index) if model is not None else None
+            item = None
+            if isinstance(model, QStandardItemModel):
+                item = model.item(index)
+
             if item is not None:
                 item.setEnabled(False)
                 if entry.errors:

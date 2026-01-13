@@ -2,9 +2,8 @@ import os
 import sys
 import csv
 import json
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 from urllib.error import HTTPError, URLError
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QFileDialog, QTableWidget,
@@ -34,6 +33,7 @@ from core.database import (save_translation, get_cached_record,
                            find_translation_conflicts, get_project_integrity_report,
                            normalize_project_term)
 from core.parser import TranslationSegment
+from services.plugin_loader import PluginRegistry
 
 
 class FoundryGUI(QMainWindow):
@@ -1465,21 +1465,25 @@ class FoundryGUI(QMainWindow):
         if row_idx == self.current_row:
             self._refresh_fuzzy_for_segment(seg)
 
-    def _resolve_remote_sync_timestamp(self, item: dict[str, object]) -> str:
+    def _resolve_remote_sync_timestamp(self, item: dict[str, Any]) -> str | None:
         for key in ("last_sync", "synced_at", "updated_at"):
             value = item.get(key)
             if value:
                 return str(value)
-        return datetime.now(timezone.utc).isoformat(timespec="seconds")
+        return None
 
     def _sync_indicator_for_segment(self, seg: TranslationSegment) -> tuple[str, str]:
         if self._has_remote_metadata(seg):
-            last_sync = self._resolve_segment_sync_timestamp(seg)
-            if not last_sync:
-                last_sync = datetime.now(timezone.utc).isoformat(timespec="seconds")
-                seg.last_sync = last_sync
-            return "☁️", I18N.t("status_sync_remote").format(timestamp=last_sync)
+            last_sync = self._resolve_remote_sync_timestamp(seg.original_row or {})
+            if last_sync:
+                timestamp_text = last_sync
+            else:
+                timestamp_text = I18N.t("status_sync_unknown")
+
+            return "☁️", I18N.t("status_sync_remote").format(timestamp=timestamp_text)
+
         return "🏠", I18N.t("status_sync_local")
+
 
     def _has_remote_metadata(self, seg: TranslationSegment) -> bool:
         row = getattr(seg, "original_row", {}) or {}
