@@ -396,7 +396,8 @@ class FoundryGUI(QMainWindow):
         record = get_cached_record(
             seg.source_text,
             settings['lang'],
-            project_name=settings.get('project_name', 'default')
+            project_name=settings.get('project_name', 'default'),
+            segment_key=seg.key,
         )
 
         if record and record.history_json:
@@ -1018,6 +1019,7 @@ class FoundryGUI(QMainWindow):
                 seg.source_text,
                 settings.get("lang", "BG"),
                 project_name=settings.get("project_name", "default"),
+                segment_key=seg.key,
             )
 
             if record and record.history_json:
@@ -1570,7 +1572,11 @@ class FoundryGUI(QMainWindow):
 
             # 2. DATABASE LOOKUP
             record = get_cached_record(
-                seg.source_text, lang, project_name=p_name)
+                seg.source_text,
+                lang,
+                project_name=p_name,
+                segment_key=seg.key,
+            )
 
             if record:
                 # Only overwrite if the DB has a VERIFIED translation
@@ -1884,7 +1890,10 @@ class FoundryGUI(QMainWindow):
             # 4. Load cached translations + audit-on-load
             for i, seg in enumerate(self.segments):
                 record = get_cached_record(
-                    seg.source_text, target_lang, project_name
+                    seg.source_text,
+                    target_lang,
+                    project_name,
+                    segment_key=seg.key,
                 )
                 if record:
                     seg.translation = record.translation

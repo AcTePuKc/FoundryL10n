@@ -55,7 +55,7 @@ Tasks about the local database schema and storage.
 
 * [x] **Schema Update:** Add `provider_id` and `remote_id` to the segments table.
 * [x] **Translation Memory:** Index successfully "Verified" translations for local reuse.
-* [ ] **History Tracking:** Log changes per segment to allow local rollbacks.
+* [x] **History Tracking:** Log changes per segment to allow local rollbacks.
 
 ---
 

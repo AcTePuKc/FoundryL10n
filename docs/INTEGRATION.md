@@ -39,6 +39,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 * **Suggestions-only submissions:** FoundryL10n only posts suggestions, never approves or overrides server decisions.
 * **Explicit user-triggered sync:** Fetching and submitting are manual UI actions, not background tasks.
 * **Offline-first:** Local edits, drafts, and TM persist offline; sync occurs only when explicitly requested.
+* **History tracking is local-only:** Segment history is stored per segment in the local database; remote-synced segments keep local history unless a user explicitly submits a suggestion.
 
 **Legend (layer responsibilities + validation)**
 * **UI Actions:** User-initiated commands that start fetch/submit flows.
