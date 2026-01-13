@@ -93,4 +93,4 @@ Tasks about validation and developer scripts.
 - [x] Pylance reports clean diagnostics for `src/services/consistency_check.py` `.is_()` usage.
 - [x] Docs: Add Mock Server Quickstart section to `docs/INTEGRATION.md`.
 - [ ] Note: Keep the TM regression follow-ups above until they are resolved; they remain related to the Pylance gating milestone.
-- [x] Docs: Mock Server note marked complete after relocating mock server path.
+- [x] Docs: Update Mock Server path in Quickstart documentation.
