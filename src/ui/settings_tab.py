@@ -155,6 +155,14 @@ class SettingsTab(QWidget):
         self.temp_spin.setValue(0.1)
         self.temp_spin.setMaximumWidth(70)
 
+        self.llm_timeout_label = QLabel(I18N.t("ui_llm_timeout"))
+        self.llm_timeout_spin = QDoubleSpinBox()
+        self.llm_timeout_spin.setRange(0.0, 600.0)
+        self.llm_timeout_spin.setSingleStep(5.0)
+        self.llm_timeout_spin.setDecimals(1)
+        self.llm_timeout_spin.setValue(0.0)
+        self.llm_timeout_spin.setMaximumWidth(90)
+
         self.strict_mode = QCheckBox(I18N.t("ui_strict"))
         self.strict_mode.setChecked(True)
 
@@ -162,6 +170,7 @@ class SettingsTab(QWidget):
         translation_layout.addRow(self.model_label, model_row)
         translation_layout.addRow(self.llm_status_label, self.llm_status_value)
         translation_layout.addRow(self.temp_label, self.temp_spin)
+        translation_layout.addRow(self.llm_timeout_label, self.llm_timeout_spin)
         translation_layout.addRow(self.strict_mode)
 
         layout.addWidget(self.translation_group)
@@ -386,6 +395,7 @@ class SettingsTab(QWidget):
         self.model_label.setText(I18N.t("ui_model"))
         self.llm_status_label.setText(I18N.t("ui_llm_status"))
         self.temp_label.setText(I18N.t("ui_temp"))
+        self.llm_timeout_label.setText(I18N.t("ui_llm_timeout"))
         self.font_label.setText(I18N.t("ui_font"))
         self.theme_label.setText(I18N.t("ui_theme"))
         self.ui_lang_label.setText(I18N.t("ui_interface_lang"))
@@ -583,6 +593,12 @@ class SettingsTab(QWidget):
             if "temp" in data:
                 try:
                     self.temp_spin.setValue(float(data["temp"]))
+                except (ValueError, TypeError):
+                    pass
+
+            if "llm_timeout" in data:
+                try:
+                    self.llm_timeout_spin.setValue(float(data["llm_timeout"]))
                 except (ValueError, TypeError):
                     pass
 
@@ -822,6 +838,7 @@ class SettingsTab(QWidget):
         settings.setValue("style_path", self.style_path.text())
         settings.setValue("forbidden_path", self.forbidden_path.text())
         settings.setValue("temp", self.temp_spin.value())
+        settings.setValue("llm_timeout", self.llm_timeout_spin.value())
         settings.setValue("strict_mode", self.strict_mode.isChecked())
         # Save the current text in the prompt editor
         self._save_prompt_template(project_name)
@@ -880,6 +897,12 @@ class SettingsTab(QWidget):
         except (ValueError, TypeError):
             self.font_size_spin.setValue(12)
 
+        try:
+            llm_timeout = float(str(settings.value("llm_timeout", 0)))
+            self.llm_timeout_spin.setValue(llm_timeout)
+        except (ValueError, TypeError):
+            self.llm_timeout_spin.setValue(0.0)
+
         theme_name = self.get_valid_theme(
             str(settings.value("ui_theme", "dark"))
         )
@@ -899,6 +922,7 @@ class SettingsTab(QWidget):
             "provider_id": self.provider_dropdown.currentData(),
             "model": self.model_dropdown.currentText(),
             "temp": self.temp_spin.value(),
+            "llm_timeout": self.llm_timeout_spin.value(),
             "lang": self.target_lang_input.text(),
             "glossary_path": self.gloss_path.text(),
             "style_path": self.style_path.text(),

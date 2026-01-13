@@ -19,7 +19,7 @@ def test_prompt_assembly_includes_source_glossary_style_context(service, monkeyp
         captured["options"] = options
         return {"response": "OK"}
 
-    monkeypatch.setattr(ollama, "generate", fake_generate)
+    monkeypatch.setattr(service.client, "generate", fake_generate)
 
     prompt_template = "SRC:{source}\nGLOSS:{glossary}\nSTYLE:{style}\nCTX:{context}"
 
@@ -50,7 +50,7 @@ def test_context_prefix_added_when_template_missing_context(service, monkeypatch
         captured["prompt"] = prompt
         return {"response": "OK"}
 
-    monkeypatch.setattr(ollama, "generate", fake_generate)
+    monkeypatch.setattr(service.client, "generate", fake_generate)
 
     prompt_template = "SRC:{source}\nGLOSS:{glossary}\nSTYLE:{style}"
 

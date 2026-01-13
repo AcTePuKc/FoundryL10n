@@ -1106,7 +1106,10 @@ class FoundryGUI(QMainWindow):
 
         project_name = settings.get("project_name", "default")
 
-        svc = LLMService(model_name=settings["model"])
+        svc = LLMService(
+            model_name=settings["model"],
+            timeout=settings.get("llm_timeout"),
+        )
         self.single_worker = TranslationWorker(
             segments=[seg],
             target_lang=settings["lang"],
@@ -2190,7 +2193,10 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
 
-        svc = LLMService(model_name=settings['model'])
+        svc = LLMService(
+            model_name=settings['model'],
+            timeout=settings.get("llm_timeout"),
+        )
         self.worker = TranslationWorker(
             segments=self.segments,
             target_lang=settings['lang'],

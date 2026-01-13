@@ -6,8 +6,15 @@ from services.llm_service import LLMService
 
 
 def test_check_connection_success(monkeypatch):
+    class FakeClient:
+        def list(self):
+            return {"models": []}
+
+    monkeypatch.setattr(
+        "services.llm_service.ollama.Client",
+        lambda **kwargs: FakeClient(),
+    )
     service = LLMService()
-    monkeypatch.setattr("services.llm_service.ollama.list", lambda: {"models": []})
 
     ok, error = service.check_connection()
 
@@ -16,12 +23,18 @@ def test_check_connection_success(monkeypatch):
 
 
 def test_check_connection_failure(monkeypatch):
-    service = LLMService()
-
     def _raise_error():
         raise RuntimeError("no server")
 
-    monkeypatch.setattr("services.llm_service.ollama.list", _raise_error)
+    class FakeClient:
+        def list(self):
+            _raise_error()
+
+    monkeypatch.setattr(
+        "services.llm_service.ollama.Client",
+        lambda **kwargs: FakeClient(),
+    )
+    service = LLMService()
 
     ok, error = service.check_connection()
 
