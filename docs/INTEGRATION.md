@@ -284,6 +284,7 @@ POST /api/segments/{id}/suggestions
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
+* **Remote-synced context awareness:** When segments originate from a remote provider, the LLM context includes the remote source + target text to preserve upstream intent, and drafting never triggers auto-sync; submissions stay manual via "Submit Suggestions."
 
 ---
 

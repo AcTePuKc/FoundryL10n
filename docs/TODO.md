@@ -43,7 +43,7 @@ Tasks related to the desktop UI, layouts, and editor behavior.
 Tasks related to translation orchestration and local model behavior.
 
 * [x] **Ollama Integration:** Ensure stable connection to local LLM endpoints.
-* [ ] **Context Awareness:** Pass "Current Translation" from the server to the LLM as context for better drafts.
+* [x] **Context Awareness:** Pass "Current Translation" from the server to the LLM as context for better drafts.
 * [x] **Tag Protection:** Implement regex-based validation to ensure LLM doesn't break game tags (e.g., `{0}`, `\n`).
 * [x] **Prompt Templates:** Allow users to customize the LLM prompt per project.
 
