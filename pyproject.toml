@@ -1,7 +1,7 @@
 [project]
 name = "foundryl10n"
 version = "0.1.0"
-description = "Add your description here"
+description = "Professional local-first localization workstation for games and software. Powered by local LLMs (Ollama) with technical tag protection, persistent project-aware memory, and a specialized review interface."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -26,11 +26,6 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.sdist]
-exclude = [
-    "tools/**",
-    "dev/**",
-]
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
