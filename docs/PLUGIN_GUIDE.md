@@ -12,37 +12,41 @@ Use the schema as your contract for required fields, valid values, and optional 
 ## 2. Create a plugin file
 
 1. Create a new JSON file in `src/plugins/`.
-2. Use a unique `id` (lowercase, dash-separated), and provide a friendly `name`.
-3. Fill in `website` and `api_base_url` so the UI can display the provider and resolve endpoints.
+2. Start with the **metadata** object:
+   * `id` (lowercase, dash-separated)
+   * `name` (friendly display name)
+   * `homepage` (the provider’s website URL)
 
 ## 3. Define authentication
 
-Choose an auth type supported by your service:
+Choose an auth type supported by your service (case-sensitive, schema-valid options):
 
-* `bearer`
-* `basic`
-* `oauth2`
+* `bearer` or `Bearer`
+* `basic` or `Basic`
+* `oauth2` or `OAuth2`
 
 Specify the `login_endpoint` and (if needed) a `token_path` to extract the token from the login response payload.
 
-## 4. Map endpoints + fields
+## 4. Configure endpoints
 
-Provide endpoint paths under `endpoints` for:
+Define the **endpoints** object:
 
+* `base_url` (the API base, previously referred to as `api_base_url`)
 * `fetch_segments`
 * `submit_suggestion`
 
 If your service supports project selection, also define `fetch_projects`.
 
-Then map remote fields to FoundryL10n’s internal model in `mapping`:
+## 5. Map fields to FoundryL10n
 
+Provide the `mapping` object to map remote fields into FoundryL10n’s internal model:
 * `segment_id`
 * `source_text`
 * `target_text`
 
 > Keep mappings simple and explicit. The UI and local DB rely on consistent `segment_id` + `source` values for stable keyboard-driven editing.
 
-## 5. Respect CAT workflow guardrails
+## 6. Respect CAT workflow guardrails
 
 FoundryL10n is **offline-first** and **suggestions-only**:
 
@@ -50,14 +54,14 @@ FoundryL10n is **offline-first** and **suggestions-only**:
 * Providers must **not** publish or approve final translations; they submit **suggestions** only.
 * Tag/placeholder safety is enforced locally; keep `source_text` intact so placeholders (e.g., `{0}`) can be preserved.
 
-## 6. Quick checklist before PR
+## 7. Quick checklist before PR
 
 * [ ] Plugin validates against `src/plugins/schema.json`.
 * [ ] `id` is unique and stable.
-* [ ] Endpoints are relative to `api_base_url` (or absolute URLs if required).
+* [ ] Endpoints are relative to `base_url` (or absolute URLs if required).
 * [ ] Field mappings resolve cleanly for sample API payloads.
 * [ ] Provider only **suggests** translations (no publish/approve calls).
 
-## 7. Contributing
+## 8. Contributing
 
 Open a PR with your plugin file and a brief summary of the service, auth type, and example endpoints. Use `docs/INTEGRATION.md` as the deeper reference for architecture expectations and UI behavior.
