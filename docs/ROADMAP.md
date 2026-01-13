@@ -17,7 +17,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Provider Interface:** Define the standard for how the app talks to external APIs.
 * [x] **Plugin Loader:** Support loading `.json` or `.js` provider configs from a local `/plugins` folder.
 * [ ] **GitHub Sync:** Implement auto-updating of the `/plugins` folder from the central repository.
-  * Remaining gaps: sync service exists but there is no UI/CLI wiring for user-triggered updates or scheduled auto-sync.
+  * Remaining gaps: sync service exists but there is no UI menu/toolbar action or CLI command that invokes plugin sync for user-triggered updates.
 * [x] **Secure Vault:** Implement encrypted local storage for user API tokens and credentials.
 * [x] **Implementation Plan:** Review and align stepwise commits with priorities, tests, and guardrails.
 
