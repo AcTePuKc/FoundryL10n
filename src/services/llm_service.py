@@ -41,6 +41,13 @@ class LLMService:
     def __init__(self, model_name="qwen2.5:7b"):
         self.model = model_name
 
+    def check_connection(self):
+        try:
+            ollama.list()
+            return True, None
+        except Exception as exc:
+            return False, str(exc)
+
     def get_models(self):
         try:
             response = ollama.list()

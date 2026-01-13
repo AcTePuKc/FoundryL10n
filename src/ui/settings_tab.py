@@ -22,6 +22,7 @@ class SettingsTab(QWidget):
     language_changed = Signal(str)
     provider_changed = Signal(str)
     login_requested = Signal(str)
+    llm_status_warning = Signal(str)
     ORGANIZATION_NAME = "FoundryL10n"
     APP_NAME = "TranslatorApp"
 
@@ -107,6 +108,13 @@ class SettingsTab(QWidget):
         self.model_label = QLabel(I18N.t("ui_model"))
         self.model_dropdown = QComboBox()
         self.model_dropdown.setMinimumWidth(200)
+        self.llm_status_label = QLabel(I18N.t("ui_llm_status"))
+        self.llm_status_value = QLabel("")
+        self.llm_status_value.setWordWrap(True)
+        self._llm_status_ok = None
+        self._llm_status_error = None
+        self._llm_status_count = None
+        self._last_llm_warning = None
 
         self.provider_label = QLabel(I18N.t("ui_provider"))
         self.provider_dropdown = QComboBox()
@@ -146,6 +154,7 @@ class SettingsTab(QWidget):
 
         translation_layout.addRow(self.provider_label, provider_row)
         translation_layout.addRow(self.model_label, model_row)
+        translation_layout.addRow(self.llm_status_label, self.llm_status_value)
         translation_layout.addRow(self.temp_label, self.temp_spin)
         translation_layout.addRow(self.strict_mode)
 
@@ -383,6 +392,7 @@ class SettingsTab(QWidget):
         self.profile_label.setText(I18N.t("ui_profile"))
         self.provider_label.setText(I18N.t("ui_provider"))
         self.model_label.setText(I18N.t("ui_model"))
+        self.llm_status_label.setText(I18N.t("ui_llm_status"))
         self.temp_label.setText(I18N.t("ui_temp"))
         self.font_label.setText(I18N.t("ui_font"))
         self.theme_label.setText(I18N.t("ui_theme"))
@@ -417,6 +427,7 @@ class SettingsTab(QWidget):
 
         self.update_theme_labels()
         self.populate_providers()
+        self._refresh_llm_status_label()
 
     def update_ui_language(self):
         lang = self.target_lang_input.text().upper()
@@ -651,10 +662,42 @@ class SettingsTab(QWidget):
             line_edit.setText(file_path)
 
     def refresh_models(self):
-        models = self.llm_service.get_models()
+        ok, error = self.llm_service.check_connection()
+        models = []
+        if ok:
+            models = self.llm_service.get_models()
         self.model_dropdown.clear()
         if models:
             self.model_dropdown.addItems(models)
+        else:
+            self.model_dropdown.addItem(I18N.t("llm_model_unavailable"))
+        self.update_llm_status(ok, error, len(models))
+
+    def update_llm_status(self, is_available, error, model_count):
+        self._llm_status_ok = is_available
+        self._llm_status_error = error
+        self._llm_status_count = model_count
+        self._refresh_llm_status_label()
+
+    def _refresh_llm_status_label(self):
+        if self._llm_status_ok is None:
+            return
+        if self._llm_status_ok:
+            count = self._llm_status_count or 0
+            status = I18N.t("llm_status_available").format(count=count)
+            self.llm_status_value.setStyleSheet("color: #2e7d32;")
+            self.llm_status_value.setToolTip(status)
+        else:
+            error = self._llm_status_error or I18N.t("llm_status_unknown_error")
+            status = I18N.t("llm_status_unavailable").format(error=error)
+            self.llm_status_value.setStyleSheet("color: #d97706;")
+            self.llm_status_value.setToolTip(status)
+            warning = I18N.t("log_llm_unavailable").format(error=error)
+            if warning != self._last_llm_warning:
+                self._last_llm_warning = warning
+                print(warning)
+                self.llm_status_warning.emit(warning)
+        self.llm_status_value.setText(status)
 
     def populate_providers(self):
         focused = QApplication.focusWidget()
