@@ -146,15 +146,14 @@ def query_translation_memory(
     if not source_norm:
         return []
     with Session(engine) as session:
-        tm_columns = TranslationMemoryIndex.__table__.c
         statement = (
             select(TranslationMemoryIndex)
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                tm_columns.source_norm.like(f"%{source_norm}%"),
+                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
             )
-            .order_by(tm_columns.id.desc())
+            .order_by(TranslationMemoryIndex.id.desc())
             .limit(limit)
         )
         return list(session.exec(statement).all())
@@ -172,11 +171,10 @@ def global_replace_in_db(
     search_source=False: search in (translation)
     """
     with Session(engine) as session:
-        record_columns = TranslationRecord.__table__.c
         target_col = (
-            record_columns.source_text
+            TranslationRecord.source_text
             if search_source
-            else record_columns.translation
+            else TranslationRecord.translation
         )
 
         statement = select(TranslationRecord).where(
