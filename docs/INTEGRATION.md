@@ -164,7 +164,7 @@ Use the mock server for local integration testing without hitting a live site. I
 ### Run the server
 
 ```bash
-python src/services/mock_server.py --host 127.0.0.1 --port 8000
+python tools/mock_server/mock_server.py --host 127.0.0.1 --port 8000
 ```
 
 ### Available endpoints
