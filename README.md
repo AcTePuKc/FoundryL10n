@@ -193,7 +193,7 @@ Refer to the ORM/type-checking conventions in [docs/STYLE_GUIDE.md](docs/STYLE_G
 ### Dev Notes
 
 <details>
-<summary>Dev Notes</summary>
+<summary>Click to expand</summary>
 
 - The mock server is **dev-only** and lives under `tools/` (or `dev/` if relocated).
 - It is excluded from production/distribution builds.
