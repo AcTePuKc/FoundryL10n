@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 import ctypes
+from typing import NamedTuple
 try:
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("FoundryL10n.Workspace.V1")
 except Exception:
@@ -71,6 +72,35 @@ def _load_prompt_template(project_name: str) -> str:
         return legacy_prompt
     return I18N.t("prompt_default")
 
+
+class CliResources(NamedTuple):
+    glossary_content: str
+    style_content: str
+    forbidden_content: str
+    project_name: str
+    prompt_template: str
+
+
+def _load_cli_resources(
+    glossary_path: str,
+    style_path: str,
+    forbidden_path: str,
+    project: str,
+) -> CliResources:
+    loader = ResourceLoader()
+    glossary_content = loader.load_glossary(glossary_path)
+    style_content = loader.load_style_guide(style_path)
+    forbidden_content = loader.load_forbidden_words(forbidden_path)
+    project_name = _normalize_project_name(project)
+    prompt_template = _load_prompt_template(project_name)
+    return CliResources(
+        glossary_content,
+        style_content,
+        forbidden_content,
+        project_name,
+        prompt_template,
+    )
+
 @app.callback()
 def main():
     """Ensure the database is initialized before any command runs."""
@@ -106,17 +136,18 @@ def translate_file(
     project: str = typer.Option("default", "--project", "-p")
 ):
     """Translate a TSV file via CLI."""
-    loader = ResourceLoader()
     parser = FoundryParser()
     
     llm_service = LLMService(model_name=model)
     engine = TranslationEngine(llm_service)
     
-    glossary_content = loader.load_glossary(glossary)
-    style_content = loader.load_style_guide(style)
-    forbidden_content = loader.load_forbidden_words(forbidden)
-    project_name = _normalize_project_name(project)
-    prompt_template = _load_prompt_template(project_name)
+    (
+        glossary_content,
+        style_content,
+        forbidden_content,
+        project_name,
+        prompt_template,
+    ) = _load_cli_resources(glossary, style, forbidden, project)
     
     input_path = Path(path)
     if not input_path.exists():
@@ -166,15 +197,16 @@ def translate_text(
     project: str = typer.Option("default", "--project", "-p"),
 ):
     """Quickly translate a single string via CLI."""
-    loader = ResourceLoader()
     llm_service = LLMService(model_name=model)
     engine = TranslationEngine(llm_service)
     
-    glossary_content = loader.load_glossary(glossary)
-    style_content = loader.load_style_guide(style)
-    forbidden_content = loader.load_forbidden_words(forbidden)
-    project_name = _normalize_project_name(project)
-    prompt_template = _load_prompt_template(project_name)
+    (
+        glossary_content,
+        style_content,
+        forbidden_content,
+        project_name,
+        prompt_template,
+    ) = _load_cli_resources(glossary, style, forbidden, project)
     
     seg = TranslationSegment("CLI_TEST", content)
     engine.run_translation(
