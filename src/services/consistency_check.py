@@ -106,12 +106,13 @@ def report_conflicts(
     if status_value not in {"all", "verified", "unverified"}:
         raise typer.BadParameter("status must be one of: all, verified, unverified.")
 
+    record_columns = TranslationRecord.__table__.c
     target_col = (
-        TranslationRecord.translation
+        record_columns.translation
         if normalized_target == "translation"
-        else TranslationRecord.ai_draft
+        else record_columns.ai_draft
     )
-    is_verified_col = TranslationRecord.is_verified
+    is_verified_col = record_columns.is_verified
 
     statement = select(
         TranslationRecord.id,
