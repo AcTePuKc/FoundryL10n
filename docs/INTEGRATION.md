@@ -5,7 +5,7 @@
 
 FoundryL10n is a local CAT (Computer-Assisted Translation) workstation designed to bridge the gap between web-based community platforms and local LLM workflows.
 
-The app uses a **Provider Plugin Architecture**. Instead of hardcoding website logic, the app loads small configuration files (JSON/JS) that define how to communicate with specific community backends (e.g., the generic POC provider defined in `src/plugins/generic_example.json`).
+The app uses a **Provider Plugin Architecture**. Instead of hardcoding website logic, the app loads small configuration files (JSON/JS) that define how to communicate with specific community backends (e.g., the Generic POC Provider defined in `src/plugins/generic_example.json`).
 
 ## 2. The Plugin System
 
@@ -230,7 +230,7 @@ Regardless of the website, FoundryL10n maps data into this internal structure:
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `provider_id` | string | Unique ID of the website (e.g., `example-provider`) |
+| `provider_id` | string | Unique ID of the website (e.g., `generic-poc`) |
 | `segment_id` | string | Local segment identifier |
 | `remote_id` | string | The server-assigned ID for the string |
 | `source` | string | The original text to be translated |
@@ -345,7 +345,7 @@ FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Creden
 
 **Key naming convention**
 * Keys are scoped by provider and account: `provider_id + account`.
-* `provider_id` matches the plugin identifier (e.g., `example-provider`).
+* `provider_id` matches the plugin identifier (e.g., `generic-poc`).
 * `account` is the user-facing login identifier (e.g., username or email).
 
 **Fallback behavior**
