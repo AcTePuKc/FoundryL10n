@@ -124,6 +124,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 * **Local Storage:** Manages a local DB for segments, LLM drafts, and Translation Memory.
 * **LLM Orchestration:** Handles prompts and tag safety via local models (Ollama).
 * **Submission:** Acts as a **Contributor Client**. It submits *Suggestions* only and never attempts to bypass the website’s editorial review.
+* **Tag/placeholder protection:** Before LLM calls, tags are masked into `@@PLACEHOLDER_n@@` tokens and the response is validated to ensure all placeholders remain. Missing placeholders trigger a `[TAG ERROR]` prefix in the draft. This behavior is identical for remote-synced segments because only local drafts are masked; fetched remote text is left unchanged.
 
 ### External Website (The Server)
 
