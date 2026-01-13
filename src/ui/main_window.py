@@ -26,6 +26,7 @@ from ui.login_dialog import LoginDialog
 from services.llm_service import LLMService
 from services.provider_http_client import ProviderHttpClient
 from services.token_storage import TokenStorage
+from services.plugin_sync_service import GitHubPluginSyncService
 from core.i18n import I18N
 from core.tag_utils import extract_tags, strip_tags
 from core.database import (save_translation, get_cached_record,
@@ -319,15 +320,22 @@ class FoundryGUI(QMainWindow):
         self.action_submit_suggestion = QAction(self)
         self.action_submit_suggestion.triggered.connect(self.handle_submit_suggestion)
 
+        self.action_sync_plugins = QAction(self)
+        self.action_sync_plugins.triggered.connect(self.handle_plugin_sync)
+
     def _init_sync_controls(self) -> None:
         self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
         self.sync_menu.addAction(self.action_fetch_segments)
         self.sync_menu.addAction(self.action_submit_suggestion)
+        self.sync_menu.addSeparator()
+        self.sync_menu.addAction(self.action_sync_plugins)
 
         self.sync_toolbar = QToolBar(I18N.t("menu_sync"), self)
         self.sync_toolbar.setObjectName("sync_toolbar")
         self.sync_toolbar.addAction(self.action_fetch_segments)
         self.sync_toolbar.addAction(self.action_submit_suggestion)
+        self.sync_toolbar.addSeparator()
+        self.sync_toolbar.addAction(self.action_sync_plugins)
         self.addToolBar(self.sync_toolbar)
         self.update_sync_action_state()
 
@@ -493,6 +501,7 @@ class FoundryGUI(QMainWindow):
         is_enabled = bool(token)
         self.action_fetch_segments.setEnabled(is_enabled)
         self.action_submit_suggestion.setEnabled(is_enabled)
+        self.action_sync_plugins.setEnabled(True)
 
     def _get_provider_token(self) -> str | None:
         provider_id, _ = self._get_active_provider()
@@ -643,6 +652,27 @@ class FoundryGUI(QMainWindow):
             )
             return
         self.thought_log.append(I18N.t("log_sync_submit_success"))
+
+    def handle_plugin_sync(self) -> None:
+        service = GitHubPluginSyncService()
+        result = service.sync_plugins()
+        for error in result.errors:
+            self.thought_log.append(
+                I18N.t("log_plugin_sync_error").format(error=error)
+            )
+        if result.conflicts:
+            self.thought_log.append(
+                I18N.t("log_plugin_sync_conflicts").format(
+                    count=len(result.conflicts)
+                )
+            )
+        self.thought_log.append(
+            I18N.t("log_plugin_sync_complete").format(
+                downloaded=len(result.downloaded),
+                updated=len(result.updated),
+                skipped=len(result.skipped),
+            )
+        )
 
     def get_current_project(self):
         return self.settings_tab.get_settings().get('project_name', 'default')
@@ -2337,6 +2367,7 @@ class FoundryGUI(QMainWindow):
         self._update_context_menu_texts(self._context_menu_count)
         self.action_fetch_segments.setText(I18N.t("menu_sync_fetch"))
         self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
+        self.action_sync_plugins.setText(I18N.t("menu_sync_plugins"))
         if hasattr(self, "sync_menu"):
             self.sync_menu.setTitle(I18N.t("menu_sync"))
         if hasattr(self, "sync_toolbar"):
