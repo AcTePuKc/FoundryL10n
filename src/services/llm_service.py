@@ -1,5 +1,6 @@
 import ollama
 import re
+import httpx
 
 from core.i18n import I18N
 
@@ -38,19 +39,33 @@ def validate_placeholders(original: str, translated: str) -> bool:
 
 
 class LLMService:
-    def __init__(self, model_name="qwen2.5:7b"):
+    def __init__(self, model_name="qwen2.5:7b", timeout: float | None = None):
         self.model = model_name
+        self.timeout = self._normalize_timeout(timeout)
+        self.client = ollama.Client(timeout=self.timeout)
+
+    @staticmethod
+    def _normalize_timeout(timeout: float | None) -> float | None:
+        if timeout is None:
+            return None
+        try:
+            value = float(timeout)
+        except (TypeError, ValueError):
+            return None
+        if value <= 0:
+            return None
+        return value
 
     def check_connection(self):
         try:
-            ollama.list()
+            self.client.list()
             return True, None
         except Exception as exc:
             return False, str(exc)
 
     def get_models(self):
         try:
-            response = ollama.list()
+            response = self.client.list()
             models_list = getattr(response, 'models',
                                   response.get('models', []))
             return [getattr(m, 'model', m.get('name', 'unknown')) for m in models_list]
@@ -87,7 +102,7 @@ class LLMService:
             full_prompt = CONTEXT_PREFIX.format(context=context_extra) + full_prompt
 
         try:
-            response = ollama.generate(
+            response = self.client.generate(
                 model=self.model,
                 prompt=full_prompt,
                 options={
@@ -166,5 +181,11 @@ class LLMService:
 
             return translation.strip(), thought
 
+        except (httpx.TimeoutException, TimeoutError) as e:
+            if self.timeout is not None:
+                warning = I18N.t("log_llm_timeout").format(seconds=self.timeout)
+            else:
+                warning = I18N.t("log_llm_timeout_default")
+            return f"[TAG ERROR] {I18N.t('llm_error').format(error=str(e))}", warning
         except Exception as e:
-            return I18N.t("llm_error").format(error=str(e)), ""
+            return f"[TAG ERROR] {I18N.t('llm_error').format(error=str(e))}", ""
