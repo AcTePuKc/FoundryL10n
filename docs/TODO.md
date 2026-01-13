@@ -80,3 +80,5 @@ Tasks about validation and developer scripts.
 * [x] **Docs:** Align plugin directory references with `src/plugins` and confirm schema path in `docs/INTEGRATION.md`.
 * [x] **Docs:** Finalize stepwise implementation plan guardrails in `docs/ROADMAP.md`.
 * [x] **Plugin Loader tests:** Add pytest coverage for plugin discovery and validation.
+
+- [ ] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
