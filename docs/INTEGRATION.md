@@ -70,6 +70,10 @@ Remote API (segments + suggestions endpoints; source of truth)
 * Segments created locally or without provider metadata show a **local-only** indicator (e.g., local badge); they remain fully editable and are never auto-synced.
 * After a successful **Submit Suggestions**, the segment remains editable and retains its local draft state until the next explicit Fetch refreshes remote status.
 
+**POC scope: file upload + content inspection**
+* **Out of scope** for the current POC: FoundryL10n does not upload files to providers or offer an "inspect uploaded content" workflow.
+* The POC focuses on manual **Fetch**/**Submit Suggestions** only; file-based ingestion/inspection is explicitly deferred to a future phase.
+
 ## 5. Project Context (Provider + Project State Model)
 
 **Provider selection (what it does)**
