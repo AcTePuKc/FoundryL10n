@@ -12,6 +12,15 @@ class TranslationEngine:
     def __init__(self, llm_service: LLMService | None):
         self.llm = llm_service
         self.masker = Masker()
+
+    def _segment_is_remote(self, seg) -> bool:
+        row = getattr(seg, "original_row", {}) or {}
+        return bool(
+            getattr(seg, "provider_id", None)
+            or getattr(seg, "remote_id", None)
+            or row.get("provider_id")
+            or row.get("remote_id")
+        )
         
     def run_translation(
             self,
@@ -232,6 +241,20 @@ class TranslationEngine:
             raise RuntimeError(
                 "TranslationEngine.translate_single_segment called without an LLMService instance"
             )
+
+        if self._segment_is_remote(seg):
+            remote_context_bits = []
+            if seg.source_text:
+                remote_context_bits.append(f"REMOTE SOURCE: {seg.source_text}")
+            if clean_context:
+                remote_context_bits.append(f"REMOTE TARGET: {clean_context}")
+            if remote_context_bits:
+                remote_context = "\n".join(remote_context_bits)
+                context_extra = (
+                    f"{remote_context}\n{context_extra}".strip()
+                    if context_extra
+                    else remote_context
+                )
 
         raw_translation, thought = self.llm.translate_segment(
             text=masked_text,
