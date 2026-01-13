@@ -42,6 +42,12 @@ def test_llm_timeout_setting_persists_and_passes(qapp, qsettings, monkeypatch):
     new_tab = SettingsTab()
     assert new_tab.llm_timeout_spin.value() == 12.5
 
+    new_tab.llm_timeout_spin.setValue(0.0)
+    new_tab.save_settings()
+
+    zero_tab = SettingsTab()
+    assert zero_tab.llm_timeout_spin.value() == 0.0
+
     captured = {}
 
     class FakeClient:
@@ -53,7 +59,7 @@ def test_llm_timeout_setting_persists_and_passes(qapp, qsettings, monkeypatch):
         lambda **kwargs: FakeClient(**kwargs),
     )
 
-    settings = new_tab.get_settings()
+    settings = zero_tab.get_settings()
     LLMService(model_name="model-a", timeout=settings["llm_timeout"])
 
-    assert captured["timeout"] == settings["llm_timeout"]
+    assert captured["timeout"] is None
