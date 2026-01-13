@@ -133,7 +133,8 @@ def translate_file(
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s"),
     forbidden: str = typer.Option("forbidden.txt", "--forbidden", "-f"),
-    project: str = typer.Option("default", "--project", "-p")
+    project: str = typer.Option("default", "--project", "-p"),
+    out: str | None = typer.Option(None, "--out", "-o"),
 ):
     """Translate a TSV file via CLI."""
     parser = FoundryParser()
@@ -182,7 +183,7 @@ def translate_file(
             )
             progress.advance(task)
 
-    output_path = Path("out") / lang / input_path.name
+    output_path = Path(out) if out else Path("out") / lang / input_path.name
     parser.save_tsv(segments, output_path)
     print(I18N.t("cli_done_results").format(output_path=output_path))
 

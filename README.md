@@ -103,6 +103,7 @@ Common options:
 - `--style / -s` – Path to a Markdown style guide.
 - `--forbidden / -f` – Path to a forbidden-terms text file (one per line).
 - `--project / -p` – Project name to load the matching prompt template from settings.
+- `--out / -o` – Override the output path for `file` (default: `out/<language>/<filename>`).
 
 Example:
 
