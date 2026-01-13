@@ -31,7 +31,6 @@ class TranslationAuditRecord(SQLModel, table=True):
 class TranslationMemoryIndex(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     project_name: str = Field(index=True)
-    segment_key: str = Field(index=True)
     target_lang: str = Field(index=True)
     source_text: str
     source_norm: str = Field(index=True)
@@ -95,17 +94,16 @@ def _upsert_tm_index(
     session: Session,
     project_name: str,
     target_lang: str,
-    segment_key: str,
     source_text: str,
     translation: str,
 ) -> None:
+    source_norm = _normalize_tm_text(source_text)
     statement = select(TranslationMemoryIndex).where(
         TranslationMemoryIndex.project_name == project_name,
         TranslationMemoryIndex.target_lang == target_lang,
-        TranslationMemoryIndex.segment_key == segment_key,
+        TranslationMemoryIndex.source_norm == source_norm,
     )
     existing = session.exec(statement).first()
-    source_norm = _normalize_tm_text(source_text)
     if existing:
         existing.source_text = source_text
         existing.source_norm = source_norm
@@ -114,7 +112,6 @@ def _upsert_tm_index(
     else:
         record = TranslationMemoryIndex(
             project_name=project_name,
-            segment_key=segment_key,
             target_lang=target_lang,
             source_text=source_text,
             source_norm=source_norm,
@@ -127,12 +124,13 @@ def _delete_tm_index(
     session: Session,
     project_name: str,
     target_lang: str,
-    segment_key: str,
+    source_text: str,
 ) -> None:
+    source_norm = _normalize_tm_text(source_text)
     statement = select(TranslationMemoryIndex).where(
         TranslationMemoryIndex.project_name == project_name,
         TranslationMemoryIndex.target_lang == target_lang,
-        TranslationMemoryIndex.segment_key == segment_key,
+        TranslationMemoryIndex.source_norm == source_norm,
     )
     existing = session.exec(statement).first()
     if existing:
@@ -467,7 +465,6 @@ def save_translation(
                 session,
                 project_name=project_name,
                 target_lang=target_lang,
-                segment_key=segment_key,
                 source_text=source_text,
                 translation=translation,
             )
@@ -476,7 +473,7 @@ def save_translation(
                 session,
                 project_name=project_name,
                 target_lang=target_lang,
-                segment_key=segment_key,
+                source_text=source_text,
             )
 
         session.commit()

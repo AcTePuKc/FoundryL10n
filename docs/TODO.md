@@ -82,3 +82,4 @@ Tasks about validation and developer scripts.
 * [x] **Plugin Loader tests:** Add pytest coverage for plugin discovery and validation.
 
 - [ ] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
+- [x] Fix TranslationMemoryIndex segment_key regression.
