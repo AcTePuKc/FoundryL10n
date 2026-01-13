@@ -101,7 +101,14 @@ class FoundryParser:
 
         with open(output_path, 'w', encoding='utf-8', newline='') as f:
             # We explicitly use quoting=csv.QUOTE_NONE to ensure no extra quotes appear
-            writer = csv.DictWriter(f, fieldnames=self.headers, delimiter='\t', extrasaction='ignore', quoting=csv.QUOTE_NONE)
+            writer = csv.DictWriter(
+                f,
+                fieldnames=self.headers,
+                delimiter='\t',
+                extrasaction='ignore',
+                quoting=csv.QUOTE_NONE,
+                escapechar='\\',
+            )
             writer.writeheader()
             for seg in segments:
                 row = seg.original_row.copy()
