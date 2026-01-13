@@ -8,11 +8,12 @@ from sqlmodel import SQLModel, delete, col
 from services.llm_service import LLMService
 from PySide6.QtWidgets import (
     QApplication, QWidget, QComboBox, QDoubleSpinBox, QLineEdit, QPushButton,
-    QInputDialog, QHBoxLayout, QFileDialog, QMessageBox, QCheckBox, QTextEdit,
+    QInputDialog, QHBoxLayout, QFileDialog, QMessageBox, QCheckBox,
     QLabel, QVBoxLayout, QGroupBox, QFormLayout, QScrollArea, QSizePolicy
 )
 from PySide6.QtCore import QSettings, Signal, Qt
 from PySide6.QtGui import QIcon, QFont
+from ui.prompt_editor import PromptEditor
 from ui.theme_helpers import get_available_themes, load_theme
 
 
@@ -67,6 +68,9 @@ class SettingsTab(QWidget):
         self.project_label = QLabel(I18N.t("ui_project"))
         self.project_name = QLineEdit("default_game")
         self.project_name.setMaximumWidth(200)
+        self.project_name.editingFinished.connect(
+            self.on_project_name_committed
+        )
 
         self.profile_label = QLabel(I18N.t("ui_profile"))
         self.profile_name = QLineEdit("New_Profile")
@@ -263,31 +267,14 @@ class SettingsTab(QWidget):
         self.prompt_group.setMinimumHeight(300)
 
         header = QHBoxLayout()
-
-        self.template_label = QLabel(I18N.t("ui_template"))
-        header.addWidget(self.template_label)
-
-        self.template_combo = QComboBox()
-        self.template_combo.addItems([
-            I18N.t("tmpl_standard"),
-            I18N.t("tmpl_technical_pass2"),
-            I18N.t("tmpl_creative_polish")
-        ])
-        self.template_combo.currentIndexChanged.connect(self.apply_template)
-
-        header.addWidget(self.template_combo)
-
         self.reset_prompt_button = QPushButton(I18N.t("btn_reset_prompt"))
         self.reset_prompt_button.clicked.connect(self.reset_prompt_to_default)
+        header.addStretch()
         header.addWidget(self.reset_prompt_button)
-
         header.addStretch()
         header.setContentsMargins(0, 0, 0, 0)
 
-        self.prompt_editor = QTextEdit()
-        self.prompt_editor.setAcceptRichText(False)
-        self.prompt_editor.setFont(QFont("Consolas", 10))
-        self.prompt_editor.setPlaceholderText(I18N.t("ui_prompt_placeholder"))
+        self.prompt_editor = PromptEditor()
         self.prompt_editor.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding
@@ -360,6 +347,9 @@ class SettingsTab(QWidget):
         self.populate_providers()
         self.refresh_models()
         self.load_settings()
+        self._active_project_name = self._normalize_project_name(
+            self.project_name.text()
+        )
 
     def change_interface_language(self, lang_code: str):
         """Change Language"""
@@ -397,15 +387,7 @@ class SettingsTab(QWidget):
         self.font_label.setText(I18N.t("ui_font"))
         self.theme_label.setText(I18N.t("ui_theme"))
         self.ui_lang_label.setText(I18N.t("ui_interface_lang"))
-        self.prompt_editor.setPlaceholderText(
-            I18N.t("ui_prompt_placeholder")
-        )
-
-        # Template label + combo items
-        self.template_label.setText(I18N.t("ui_template"))
-        self.template_combo.setItemText(0, I18N.t("tmpl_standard"))
-        self.template_combo.setItemText(1, I18N.t("tmpl_technical_pass2"))
-        self.template_combo.setItemText(2, I18N.t("tmpl_creative_polish"))
+        self.prompt_editor.retranslate_ui()
 
         # Buttons
         self.btn_replace.setText(I18N.t("btn_global_replace"))
@@ -569,10 +551,10 @@ class SettingsTab(QWidget):
 
     def reset_prompt_to_default(self):
         default_prompt = self.get_default_prompt()
-        self.prompt_editor.setPlainText(default_prompt)
+        self.prompt_editor.set_text(default_prompt)
         settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
-        settings.remove("custom_prompt")
-        self.prompt_editor.setFocus(Qt.FocusReason.OtherFocusReason)
+        settings.remove(self._prompt_settings_key(self.project_name.text()))
+        self.prompt_editor.focus_editor()
 
     def apply_profile_from_file(self, path: str, show_message: bool = True):
         """Reads JSON and force-updates all UI fields."""
@@ -603,7 +585,7 @@ class SettingsTab(QWidget):
                     pass
 
             if "prompt_template" in data:
-                self.prompt_editor.setPlainText(data["prompt_template"])
+                self.prompt_editor.set_text(data["prompt_template"])
 
             if "model" in data:
                 idx = self.model_dropdown.findText(data["model"])
@@ -619,6 +601,9 @@ class SettingsTab(QWidget):
 
             profile_base = os.path.basename(path).replace(".json", "")
             self.profile_name.setText(profile_base)
+            self._active_project_name = self._normalize_project_name(
+                self.project_name.text()
+            )
             self.save_settings()
             self.profile_loaded.emit()
 
@@ -636,19 +621,44 @@ class SettingsTab(QWidget):
                 I18N.t("msg_profile_load_failed").format(error=e),
             )
 
-    def apply_template(self):
-        """Pre-loads specific prompt structures based on selection."""
-        idx = self.template_combo.currentIndex()
-        if idx == 0:  # Standard
-            self.prompt_editor.setPlainText(self.get_default_prompt())
-        elif idx == 1:  # Fixer
-            self.prompt_editor.setPlainText(
-                I18N.t("prompt_template_technical")
-            )
-        elif idx == 2:  # Creative
-            self.prompt_editor.setPlainText(
-                I18N.t("prompt_template_creative")
-            )
+    def _normalize_project_name(self, name: str) -> str:
+        return name.strip() or "default"
+
+    def _prompt_settings_key(self, project_name: str) -> str:
+        safe_name = self._normalize_project_name(project_name)
+        return f"prompt_templates/{safe_name}"
+
+    def _save_prompt_template(self, project_name: str) -> None:
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
+        current_prompt = self.prompt_editor.get_text()
+        default_prompt = self.get_default_prompt()
+        key = self._prompt_settings_key(project_name)
+        if current_prompt == default_prompt:
+            settings.remove(key)
+        else:
+            settings.setValue(key, current_prompt)
+
+    def _load_prompt_template(self, project_name: str) -> str:
+        settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
+        key = self._prompt_settings_key(project_name)
+        if settings.contains(key):
+            return str(settings.value(key))
+        if settings.contains("custom_prompt"):
+            legacy_prompt = str(settings.value("custom_prompt"))
+            settings.setValue(key, legacy_prompt)
+            settings.remove("custom_prompt")
+            return legacy_prompt
+        return self.get_default_prompt()
+
+    def on_project_name_committed(self) -> None:
+        new_name = self._normalize_project_name(self.project_name.text())
+        if new_name != self.project_name.text():
+            self.project_name.setText(new_name)
+        if self._active_project_name and self._active_project_name != new_name:
+            self._save_prompt_template(self._active_project_name)
+        self._active_project_name = new_name
+        self.prompt_editor.set_text(self._load_prompt_template(new_name))
+        self.save_settings()
 
     def browse_file(self, line_edit, file_filter):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -796,7 +806,10 @@ class SettingsTab(QWidget):
     def save_settings(self):
         """Saves only the form-related settings."""
         settings = QSettings(self.ORGANIZATION_NAME, self.APP_NAME)
-        settings.setValue("project_name", self.project_name.text())
+        project_name = self._normalize_project_name(self.project_name.text())
+        if project_name != self.project_name.text():
+            self.project_name.setText(project_name)
+        settings.setValue("project_name", project_name)
         settings.setValue("target_lang", self.target_lang_input.text())
         settings.setValue("model", self.model_dropdown.currentText())
         settings.setValue("provider_id", self.provider_dropdown.currentData())
@@ -806,12 +819,7 @@ class SettingsTab(QWidget):
         settings.setValue("temp", self.temp_spin.value())
         settings.setValue("strict_mode", self.strict_mode.isChecked())
         # Save the current text in the prompt editor
-        current_prompt = self.prompt_editor.toPlainText()
-        default_prompt = self.get_default_prompt()
-        if current_prompt == default_prompt:
-            settings.remove("custom_prompt")
-        else:
-            settings.setValue("custom_prompt", current_prompt)
+        self._save_prompt_template(project_name)
         # Save the font size
         settings.setValue("ui_font_size", self.font_size_spin.value())
         # Save the theme selection
@@ -827,8 +835,11 @@ class SettingsTab(QWidget):
             return
 
         # 2. Fallback
-        self.project_name.setText(
-            str(settings.value("project_name", "default_game")))
+        project_name = self._normalize_project_name(
+            str(settings.value("project_name", "default_game"))
+        )
+        self.project_name.setText(project_name)
+        self._active_project_name = project_name
         self.target_lang_input.setText(
             str(settings.value("target_lang", "BG")))
 
@@ -855,10 +866,7 @@ class SettingsTab(QWidget):
             "strict_mode", "true")).lower() == "true"
         self.strict_mode.setChecked(is_strict)
 
-        default_p = self.get_default_prompt()
-        self.prompt_editor.setPlainText(
-            str(settings.value("custom_prompt", default_p))
-        )
+        self.prompt_editor.set_text(self._load_prompt_template(project_name))
 
         try:
             f_size = float(str(settings.value("ui_font_size", 12)))
@@ -880,7 +888,9 @@ class SettingsTab(QWidget):
 
     def get_settings(self):
         return {
-            "project_name": self.project_name.text(),
+            "project_name": self._normalize_project_name(
+                self.project_name.text()
+            ),
             "provider_id": self.provider_dropdown.currentData(),
             "model": self.model_dropdown.currentText(),
             "temp": self.temp_spin.value(),
@@ -889,7 +899,7 @@ class SettingsTab(QWidget):
             "style_path": self.style_path.text(),
             "forbidden_path": self.forbidden_path.text(),
             "strict_mode": self.strict_mode.isChecked(),
-            "prompt_template": self.prompt_editor.toPlainText()
+            "prompt_template": self.prompt_editor.get_text()
         }
 
     def on_provider_changed(self):

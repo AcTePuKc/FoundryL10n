@@ -79,6 +79,11 @@ Remote API (segments + suggestions endpoints; source of truth)
 * **Remote project:** A provider is selected and authenticated; segments can be fetched and carry remote metadata.
 * The active project context is reflected in the UI (provider selector state + status bar), but **editing remains available** in both modes.
 
+**Prompt templates for remote-synced projects**
+* Prompt templates are stored **per project name** in local settings, so remote-synced projects keep their own LLM instructions.
+* Switching projects restores that project’s last saved prompt template; sync operations never overwrite prompt templates.
+* Remote fetch/submit uses the currently active project’s template when requesting LLM drafts, keeping prompts aligned with each remote workspace.
+
 **Switching between contexts**
 * Switching **from local-only → remote** enables fetch/submit actions but does **not** auto-fetch; the segment list remains unchanged until explicit Fetch.
 * Switching **from remote → local-only** disables fetch/submit actions and keeps current local edits intact; remote context is cleared from the session, not from stored segments.
