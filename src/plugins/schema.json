@@ -8,28 +8,42 @@
       "properties": {
         "name": { "type": "string" },
         "id": { "type": "string" },
-        "base_url": { "type": "string", "format": "uri" },
-        "description": { "type": "string" }
+        "version": { "type": "string" },
+        "homepage": { "type": "string", "format": "uri" },
+        "description": { "type": "string" },
+        "base_url": { "type": "string", "format": "uri" }
       },
-      "required": ["name", "id", "base_url"]
+      "required": ["name", "id", "version"]
     },
     "auth": {
       "type": "object",
       "properties": {
-        "type": { "enum": ["bearer", "basic", "oauth2"] },
+        "type": { "enum": ["bearer", "basic", "oauth2", "Bearer", "Basic", "OAuth2"] },
         "login_endpoint": { "type": "string" },
-        "token_path": { "type": "string", "description": "JSON path to the token in the response" }
+        "token_path": { "type": "string", "description": "JSON path to the token in the response" },
+        "token_header": { "type": "string" },
+        "token_prefix": { "type": "string" }
       },
-      "required": ["type", "login_endpoint"]
+      "required": ["type"]
     },
     "endpoints": {
       "type": "object",
       "properties": {
-        "fetch_projects": { "type": "string" },
-        "fetch_segments": { "type": "string", "description": "Expects placeholders like {project_id} and {page}" },
-        "submit_suggestion": { "type": "string", "description": "Expects placeholder like {segment_id}" }
+        "base_url": { "type": "string", "format": "uri" },
+        "fetch_projects": { "oneOf": [
+          { "type": "string" },
+          { "$ref": "#/definitions/endpoint" }
+        ] },
+        "fetch_segments": { "oneOf": [
+          { "type": "string", "description": "Expects placeholders like {project_id} and {page}" },
+          { "$ref": "#/definitions/endpoint" }
+        ] },
+        "submit_suggestion": { "oneOf": [
+          { "type": "string", "description": "Expects placeholder like {segment_id}" },
+          { "$ref": "#/definitions/endpoint" }
+        ] }
       },
-      "required": ["fetch_segments", "submit_suggestion"]
+      "required": ["base_url", "fetch_segments", "submit_suggestion"]
     },
     "mapping": {
       "type": "object",
@@ -38,7 +52,31 @@
         "target_text": { "type": "string", "default": "current_translation" },
         "segment_id": { "type": "string", "default": "segment_id" }
       }
+    },
+    "tsv": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "key_field": { "type": "string" }
+      },
+      "required": ["columns", "key_field"]
     }
   },
-  "required": ["metadata", "auth", "endpoints"]
+  "required": ["metadata", "auth", "endpoints"],
+  "definitions": {
+    "endpoint": {
+      "type": "object",
+      "properties": {
+        "method": { "type": "string" },
+        "path": { "type": "string" },
+        "query": { "type": "object" },
+        "headers": { "type": "object" },
+        "body": { "type": "object" }
+      },
+      "required": ["method", "path"]
+    }
+  }
 }
