@@ -55,7 +55,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Official Provider:** Release the `generic_example.json` POC plugin in `src/plugins/generic_example.json`.
 * [x] **API Sync:** Implement Login -> Fetch Page -> Push Suggestion workflow.
 * [ ] **Conflict Management:** Visual UI for when a server string has changed compared to the local draft.
-  * Remaining gaps: remote change detection/visual diff UI is not implemented (current conflict tooling is local TM-focused).
+  * Remaining gaps: remote change detection and the visual diff UI are not implemented; current conflict tooling is focused on the local Translation Memory.
 * [x] **TSV Export:** Dedicated export profile for the initial generic POC provider workflows.
 
 ## 0.5 – QA & Translation Memory
