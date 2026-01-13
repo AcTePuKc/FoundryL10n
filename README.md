@@ -101,6 +101,8 @@ Common options:
 - `--model / -m` – Ollama model to use (default: `qwen2.5:7b`).
 - `--glossary / -g` – Path to a TSV/CSV glossary file.
 - `--style / -s` – Path to a Markdown style guide.
+- `--forbidden / -f` – Path to a forbidden-terms text file (one per line).
+- `--project / -p` – Project name to load the matching prompt template from settings.
 
 Example:
 
