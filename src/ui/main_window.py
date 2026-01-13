@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import json
+import difflib
 from pathlib import Path
 from typing import Optional, Any
 from urllib.error import HTTPError, URLError
@@ -55,6 +56,8 @@ class FoundryGUI(QMainWindow):
         self.llm_service = LLMService()
         self.token_storage = TokenStorage()
         self._login_dialog: LoginDialog | None = None
+        self._remote_change_ready = False
+        self._remote_change_map: dict[str, dict[str, str]] = {}
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -557,6 +560,127 @@ class FoundryGUI(QMainWindow):
                 return str(value)
         return None
 
+    def _segment_change_key(self, seg: TranslationSegment) -> str:
+        return self._resolve_segment_id(seg) or seg.key
+
+    def _reset_remote_change_state(self) -> None:
+        self._remote_change_ready = False
+        self._remote_change_map = {}
+        if hasattr(self, "editor"):
+            self.editor.set_remote_change(None)
+
+    def _build_local_snapshot(self) -> dict[str, dict[str, str]]:
+        snapshot: dict[str, dict[str, str]] = {}
+        for seg in self.segments:
+            key = self._segment_change_key(seg)
+            snapshot[key] = {
+                "source": seg.source_text or "",
+                "translation": seg.translation or "",
+            }
+        return snapshot
+
+    def _detect_remote_changes(
+        self,
+        local_snapshot: dict[str, dict[str, str]],
+        fetched_segments: list[TranslationSegment],
+    ) -> dict[str, dict[str, str]]:
+        settings = self.settings_tab.get_settings()
+        project_name = settings.get("project_name", "default")
+        target_lang = settings.get("lang", "BG")
+        changes: dict[str, dict[str, str]] = {}
+        for seg in fetched_segments:
+            key = self._segment_change_key(seg)
+            local_source = ""
+            local_translation = ""
+            snapshot = local_snapshot.get(key)
+            if snapshot:
+                local_source = snapshot.get("source", "")
+                local_translation = snapshot.get("translation", "")
+            else:
+                record = get_cached_record(
+                    seg.source_text,
+                    target_lang,
+                    project_name=project_name,
+                    segment_key=seg.key,
+                )
+                if record:
+                    local_source = record.source_text
+                    local_translation = record.translation
+            remote_source = seg.source_text or ""
+            remote_translation = seg.translation or ""
+            has_local_translation = bool(local_translation.strip())
+            source_changed = bool(local_source and local_source != remote_source)
+            translation_changed = bool(
+                has_local_translation and local_translation != remote_translation
+            )
+            if source_changed or translation_changed:
+                changes[key] = {
+                    "local_source": local_source,
+                    "remote_source": remote_source,
+                    "local_translation": local_translation,
+                    "remote_translation": remote_translation,
+                }
+        return changes
+
+    def _build_diff_text(
+        self,
+        local_text: str,
+        remote_text: str,
+        local_label: str,
+        remote_label: str,
+    ) -> str:
+        local_lines = (local_text or "").splitlines()
+        remote_lines = (remote_text or "").splitlines()
+        diff_lines = list(
+            difflib.unified_diff(
+                local_lines,
+                remote_lines,
+                fromfile=local_label,
+                tofile=remote_label,
+                lineterm="",
+            )
+        )
+        return "\n".join(diff_lines).strip()
+
+    def _update_remote_change_panel(self, seg: TranslationSegment) -> None:
+        if not self._remote_change_ready:
+            self.editor.set_remote_change(None)
+            return
+        key = self._segment_change_key(seg)
+        change = self._remote_change_map.get(key)
+        if not change:
+            self.editor.set_remote_change(None)
+            return
+        sections: list[str] = []
+        local_source = change.get("local_source", "")
+        remote_source = change.get("remote_source", "")
+        if local_source and local_source != remote_source:
+            source_diff = self._build_diff_text(
+                local_source,
+                remote_source,
+                I18N.t("ui_remote_diff_local_source"),
+                I18N.t("ui_remote_diff_remote_source"),
+            )
+            if source_diff:
+                sections.append(
+                    f"{I18N.t('ui_remote_diff_source_header')}\n{source_diff}"
+                )
+        local_translation = change.get("local_translation", "")
+        remote_translation = change.get("remote_translation", "")
+        if local_translation and local_translation != remote_translation:
+            translation_diff = self._build_diff_text(
+                local_translation,
+                remote_translation,
+                I18N.t("ui_remote_diff_local_target"),
+                I18N.t("ui_remote_diff_remote_target"),
+            )
+            if translation_diff:
+                sections.append(
+                    f"{I18N.t('ui_remote_diff_target_header')}\n{translation_diff}"
+                )
+        diff_text = "\n\n".join(sections).strip()
+        self.editor.set_remote_change(diff_text if diff_text else None)
+
     def _build_segments_from_provider(
         self,
         items: list[dict[str, object]],
@@ -616,6 +740,7 @@ class FoundryGUI(QMainWindow):
         settings = self.settings_tab.get_settings()
         project_id = settings.get("project_name") or None
         page = int(settings.get("sync_page", 1))
+        local_snapshot = self._build_local_snapshot()
         client = ProviderHttpClient(provider)
         try:
             segments = client.fetch_segments(token, project_id=project_id, page=page)
@@ -626,12 +751,23 @@ class FoundryGUI(QMainWindow):
             return
         self._file_loaded = True
         self.file_label.setText(I18N.t("ui_remote_segments_loaded"))
-        self._load_segments_into_table(
-            self._build_segments_from_provider(segments, provider_id)
+        new_segments = self._build_segments_from_provider(segments, provider_id)
+        self._remote_change_map = self._detect_remote_changes(
+            local_snapshot, new_segments
         )
+        self._remote_change_ready = True
+        for seg in new_segments:
+            seg.remote_changed = self._segment_change_key(seg) in self._remote_change_map
+        self._load_segments_into_table(new_segments)
         self.thought_log.append(
             I18N.t("log_sync_fetch_success").format(count=len(segments))
         )
+        if self._remote_change_map:
+            self.thought_log.append(
+                I18N.t("log_sync_remote_changes").format(
+                    count=len(self._remote_change_map)
+                )
+            )
 
     def handle_submit_suggestion(self) -> None:
         resolved = self._get_provider_and_token()
@@ -1115,6 +1251,8 @@ class FoundryGUI(QMainWindow):
             self.editor.fuzzy_display.clear()
             self.editor.btn_use_fuzzy.setVisible(False)
 
+        self._update_remote_change_panel(seg)
+
     def search_fuzzy_matches(self, text):
         """Looks for similar lines and updates the editor panel."""
         self.editor.fuzzy_display.clear()
@@ -1487,6 +1625,12 @@ class FoundryGUI(QMainWindow):
             icon, color = "⚪", QColor("#222222")
 
         sync_icon, sync_tooltip = self._sync_indicator_for_segment(seg)
+        has_remote_change = (
+            self._remote_change_ready
+            and self._segment_change_key(seg) in self._remote_change_map
+        )
+        if has_remote_change:
+            sync_icon = f"{sync_icon}⚠️"
 
         # --- APPLY VISUALS ---
         if state_item:
@@ -1524,6 +1668,8 @@ class FoundryGUI(QMainWindow):
 
         if state_item:
             status_msg += "\n" + sync_tooltip
+            if has_remote_change:
+                status_msg += "\n" + I18N.t("status_sync_remote_changed")
             state_item.setToolTip(status_msg)
 
         # QoL: show full text on hover
@@ -1938,6 +2084,7 @@ class FoundryGUI(QMainWindow):
         if not path:
             self._restore_workflow_focus()
             return
+        self._reset_remote_change_state()
         self.input_path = Path(path)
         self.file_label.setText(str(self.input_path))
         self._file_loaded = True

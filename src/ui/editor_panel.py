@@ -60,6 +60,30 @@ class EditorPanel(QWidget):
             I18N.t("ui_editor_active_translation_label")
         )
         layout.addWidget(self.active_translation_label)
+
+        self.remote_change_container = QWidget()
+        remote_layout = QVBoxLayout(self.remote_change_container)
+        remote_layout.setContentsMargins(0, 0, 0, 0)
+        remote_layout.setSpacing(4)
+        self.remote_change_label = QLabel(I18N.t("ui_remote_change_detected"))
+        self.remote_change_label.setStyleSheet(
+            "color: #ffcc80; font-weight: bold;"
+        )
+        self.remote_change_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        remote_layout.addWidget(self.remote_change_label)
+        self.remote_change_diff = QTextEdit()
+        self.remote_change_diff.setReadOnly(True)
+        self.remote_change_diff.setMaximumHeight(140)
+        self.remote_change_diff.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.remote_change_diff.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.remote_change_diff.setStyleSheet(
+            "background-color: #263238; color: #ffecb3; font-family: monospace;"
+        )
+        remote_layout.addWidget(self.remote_change_diff)
+        self.remote_change_container.setVisible(False)
+        layout.addWidget(self.remote_change_container)
         self.trans_edit = QTextEdit()
         layout.addWidget(self.trans_edit)
 
@@ -203,6 +227,15 @@ class EditorPanel(QWidget):
         self.trans_edit.setFont(font_obj)
         self.ai_draft_display.setFont(font_obj)
         self.history_list.setFont(font_obj)
+        self.remote_change_diff.setFont(font_obj)
+
+    def set_remote_change(self, diff_text: str | None) -> None:
+        if diff_text:
+            self.remote_change_diff.setPlainText(diff_text)
+            self.remote_change_container.setVisible(True)
+        else:
+            self.remote_change_diff.clear()
+            self.remote_change_container.setVisible(False)
 
     def retranslate_ui(self):
         translatable_widgets = {
@@ -210,6 +243,7 @@ class EditorPanel(QWidget):
             self.ai_draft_label: "ui_editor_ai_draft_label",
             self.tag_helper_label: "ui_tag_helper_label",
             self.active_translation_label: "ui_editor_active_translation_label",
+            self.remote_change_label: "ui_remote_change_detected",
             self.cb_verified: "ui_mark_verified",
             self.btn_save: "btn_save_ctrl_enter",
             self.btn_rollback: "btn_reset_ai_draft",
