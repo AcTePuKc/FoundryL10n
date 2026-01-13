@@ -1,4 +1,5 @@
-from sqlmodel import Field, Session, SQLModel, create_engine, select, col
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlalchemy import desc
 from typing import Optional
 from collections import Counter
 import hashlib
@@ -153,9 +154,9 @@ def query_translation_memory(
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                col(TranslationMemoryIndex.source_norm).like(f"%{source_norm}%"),
+                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),
             )
-            .order_by(col(TranslationMemoryIndex.id).desc())
+            .order_by(desc(TranslationMemoryIndex.id))
             .limit(limit)
         )
         return list(session.exec(statement).all())
