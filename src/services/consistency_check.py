@@ -1,11 +1,12 @@
 import importlib
 from pathlib import Path
 from types import ModuleType
-from typing import Optional
+from typing import Optional, cast
 from core.database import TranslationRecord, engine
 
 import typer
 from rich import print
+from sqlalchemy.sql import ColumnElement
 from sqlmodel import Session, select
 tomllib: ModuleType
 try:
@@ -111,7 +112,7 @@ def report_conflicts(
         if normalized_target == "translation"
         else TranslationRecord.ai_draft
     )
-    is_verified_col = TranslationRecord.is_verified
+    is_verified_col = cast(ColumnElement[bool], TranslationRecord.is_verified)
 
     statement = select(
         TranslationRecord.id,
