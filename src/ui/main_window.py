@@ -709,11 +709,11 @@ class FoundryGUI(QMainWindow):
         # 2. Dynamic Column Stretching
         header = self.table.horizontalHeader()
         if is_zen:
-            # In Zen Mode, make Source and Translation fill the screen
+            # In Focus: Table, make Source and Translation fill the screen
             header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         else:
-            # When leaving Zen, go back to Interactive (Excel-style)
+            # When leaving Focus: Table, go back to Interactive (Excel-style)
             # This allows you to drag them again
             header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
             header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)

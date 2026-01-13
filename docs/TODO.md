@@ -34,7 +34,7 @@ Tasks related to the desktop UI, layouts, and editor behavior.
 * [x] **Login Modal:** Create a dynamic login form that adapts to the provider's requirements (User/Pass vs API Key).
 * [x] **Sync Status Icons:** Add visual indicators to segments (e.g., "Synced", "Draft", "Conflict").
 * [x] **Manual TSV Tools:** Add "Import TSV" and "Export TSV" buttons for file-based workflows.
-* [ ] **Focus Mode:** Implement a distraction-free editing view.
+* [x] **Focus Mode:** Implement a distraction-free editing view.
 
 ---
 
