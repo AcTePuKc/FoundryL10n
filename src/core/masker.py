@@ -1,5 +1,4 @@
 import re
-from typing import List, Tuple
 
 from core.tag_utils import extract_tags, original_tag_regex
 
