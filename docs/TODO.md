@@ -84,7 +84,7 @@ Tasks about validation and developer scripts.
 
 - [x] Update consistency check status filters to use direct is_verified field references and cover them in tests.
 - [x] Fix global_replace_in_db column query regression for SQLModel compatibility.
-- [ ] Note: Do not check items related to TM/consistency fixes until Pylance reports zero diagnostics for the specified lines (consistency_check.py now clean). This stops false “fixed” confirmations based only on tests. **When done:** keep the TM regression TODO item unchecked until stubs 1–3 are confirmed.
+- [x] Note: Do not check items related to TM/consistency fixes until Pylance reports zero diagnostics for the specified lines (consistency_check.py now clean). This stops false “fixed” confirmations based only on tests. **When done:** keep the TM regression TODO item unchecked until stubs 1–3 are confirmed.
 - [ ] Remove segment_key usage from TranslationMemoryIndex indexing/filtering and keep TM scoped to source/target/project only.
 - [ ] Fix TranslationMemoryIndex segment_key regression.
 - [ ] Fix TM regression in query column references for SQLModel compatibility.
@@ -92,3 +92,4 @@ Tasks about validation and developer scripts.
 - [x] Pylance reports clean diagnostics for `src/core/database.py` `.like()`/`.desc()` usage.
 - [x] Pylance reports clean diagnostics for `src/services/consistency_check.py` `.is_()` usage.
 - [x] Docs: Add Mock Server Quickstart section to `docs/INTEGRATION.md`.
+- [ ] Note: Keep the TM regression follow-ups above until they are resolved; they remain related to the Pylance gating milestone.
