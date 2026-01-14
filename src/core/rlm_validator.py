@@ -41,14 +41,10 @@ def validate_segments(
         elif len(source_tags) < len(target_tags):
             risk_flags.append("extra_tag")
 
-    source_tag_sequence = _tag_sequence(source_segments)
-    target_tag_sequence = _tag_sequence(target_segments)
-    if source_tag_sequence != target_tag_sequence:
+    source_kind_sequence = [seg.kind for seg in source_segments]
+    target_kind_sequence = [seg.kind for seg in target_segments]
+    if source_kind_sequence != target_kind_sequence:
         risk_flags.append("segment_boundary_mismatch")
 
     is_valid = not risk_flags
     return ValidationResult(is_valid, mismatches, sorted(set(risk_flags)))
-
-
-def _tag_sequence(segments: list[Segment]) -> list[str]:
-    return [seg.value for seg in segments if seg.kind == "tag"]
