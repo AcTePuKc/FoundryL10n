@@ -100,8 +100,8 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 
 ### Repair Loop Inputs
 
-- **source_line** + **candidate_translation**
-- **source_tags** + **target_tags**
+- **source_line** and **candidate_translation**
+- **source_tags** and **target_tags**
 - **QA signals** (from validator + QA pipeline): missing tags, extra tags, reorder.
 - **TM hints** (optional): if a prior verified translation exists, prefer its placeholder ordering.
 
