@@ -468,3 +468,29 @@ FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Creden
 **Plain-text storage**
 
 * Tokens are **never** stored in plain text project files or exported data.
+
+---
+
+## 15. LLM + QA Metrics Dashboard (Design Spec)
+
+**Current stats/counters (UI)**
+
+* **Bottom-bar counters:** The workstation status bar shows counts derived from segment state icons: Verified (🟢), Draft/AI (🟡), Risk/Audit warning (🔶), Tag/Error (🔴), Conflict (🔵), and Pending/Untranslated (⚪). The same counters are recomputed for multi-selection using the same icon mapping, and the label tooltip explains each bucket. These counters are updated by `update_stats()` and `update_selection_info()` in the main window. 【F:src/ui/main_window.py†L240-L341】【F:src/ui/main_window.py†L1128-L1181】【F:src/ui/main_window.py†L1972-L2021】
+* **Progress bar:** The bottom progress bar is set to the number of verified segments after load and is updated during bulk processing, so it currently represents “verified count vs total.” 【F:src/ui/main_window.py†L254-L340】【F:src/ui/main_window.py†L2120-L2164】
+* **Row state indicators:** The table state column combines local state (icons above) with sync indicators, and risk/tag error status is driven by audit warnings (`⚠️`) and `[TAG ERROR]` markers. This is the source of truth for the counters. 【F:src/ui/main_window.py†L1588-L1675】
+
+**Current logging for LLM usage / QA**
+
+* **UI log (thought log):** The main window logs provider sync events, integrity scan findings, and LLM availability warnings (via the settings tab signal). It does **not** log per-request LLM usage, tokens, or latency. 【F:src/ui/main_window.py†L240-L341】【F:src/ui/main_window.py†L420-L510】【F:src/ui/main_window.py†L1875-L1907】
+* **LLM timeout/errors captured per segment:** `LLMService.translate_segment()` returns warnings for timeouts/errors, which are stored in `seg.thought` and then drive the “risk” state. This is per-segment metadata, not aggregated usage telemetry. 【F:src/services/llm_service.py†L75-L191】【F:src/core/engine.py†L244-L289】
+
+**New metrics needed (LLM usage, accuracy, failures)**
+
+* **LLM usage:** per-run and per-segment counts (requests, success/failure), model name, latency, and token usage (prompt + completion). Add a lightweight “last N runs” roll-up and session totals to the dashboard (local-only). 
+* **Accuracy / QA quality:** verified rate, AI draft acceptance rate, edit distance vs AI draft (proxy for accuracy), tag/placeholder error rate, audit risk rate (⚠️), glossary miss count, and conflict rate.
+* **Failures:** LLM timeouts/errors, placeholder validation failures, audit blockers (tag error), provider sync failures, and integrity scan conflicts.
+
+**Dashboard placement (UX recommendation)**
+
+* Add a **new “Metrics” tab** in the main QTabWidget, positioned near “Integrity.” This keeps the translation workspace uncluttered while providing a focused, scrollable summary view. Optional: a “View metrics” link from the existing status bar to open the tab without breaking keyboard flow.
+* Avoid a sidebar panel for now to prevent layout jitter and focus shifts in the editor during rapid segment navigation.
