@@ -1119,6 +1119,7 @@ class FoundryGUI(QMainWindow):
             forbidden_path=settings["forbidden_path"],
             prompt_template=settings["prompt_template"],
             temp=settings["temp"],
+            strict=settings["strict_mode"],
             project_name=project_name,
         )
 
@@ -2206,7 +2207,8 @@ class FoundryGUI(QMainWindow):
             forbidden_path=settings['forbidden_path'],
             prompt_template=settings['prompt_template'],
             project_name=settings.get('project_name', 'default'),
-            temp=settings['temp']
+            temp=settings['temp'],
+            strict=settings["strict_mode"],
         )
         self.worker.progress_signal.connect(self.update_row_ui)
         self.worker.finished_signal.connect(self.on_done)

@@ -130,15 +130,21 @@ def translate_file(
     path: str = typer.Argument(..., help=I18N.t("cli_arg_file")),
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
     model: str = typer.Option("qwen2.5:7b", "--model", "-m", help=I18N.t("cli_opt_model_help")),
+    timeout: float | None = typer.Option(
+        None,
+        "--timeout",
+        help=I18N.t("cli_opt_timeout_help"),
+    ),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s"),
     forbidden: str = typer.Option("forbidden.txt", "--forbidden", "-f"),
-    project: str = typer.Option("default", "--project", "-p")
+    project: str = typer.Option("default", "--project", "-p"),
+    out: str | None = typer.Option(None, "--out", "-o"),
 ):
     """Translate a TSV file via CLI."""
     parser = FoundryParser()
     
-    llm_service = LLMService(model_name=model)
+    llm_service = LLMService(model_name=model, timeout=timeout)
     engine = TranslationEngine(llm_service)
     
     (
@@ -182,7 +188,7 @@ def translate_file(
             )
             progress.advance(task)
 
-    output_path = Path("out") / lang / input_path.name
+    output_path = Path(out) if out else Path("out") / lang / input_path.name
     parser.save_tsv(segments, output_path)
     print(I18N.t("cli_done_results").format(output_path=output_path))
 
@@ -191,13 +197,18 @@ def translate_text(
     content: str = typer.Argument(..., help=I18N.t("cli_arg_text")),
     lang: str = typer.Option("Bulgarian", "--lang", "-l"),
     model: str = typer.Option("qwen2.5:7b", "--model", "-m"),
+    timeout: float | None = typer.Option(
+        None,
+        "--timeout",
+        help=I18N.t("cli_opt_timeout_help"),
+    ),
     glossary: str = typer.Option("glossary.tsv", "--glossary", "-g"),
     style: str = typer.Option("style.md", "--style", "-s"),
     forbidden: str = typer.Option("forbidden.txt", "--forbidden", "-f"),
     project: str = typer.Option("default", "--project", "-p"),
 ):
     """Quickly translate a single string via CLI."""
-    llm_service = LLMService(model_name=model)
+    llm_service = LLMService(model_name=model, timeout=timeout)
     engine = TranslationEngine(llm_service)
     
     (

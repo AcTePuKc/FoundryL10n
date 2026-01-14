@@ -103,6 +103,7 @@ Common options:
 - `--style / -s` – Path to a Markdown style guide.
 - `--forbidden / -f` – Path to a forbidden-terms text file (one per line).
 - `--project / -p` – Project name to load the matching prompt template from settings.
+- `--out / -o` – Override the output path for `file` (default: `out/<language>/<filename>`).
 
 Example:
 
@@ -138,7 +139,7 @@ The workstation UI is organized into three feature-rich tabs.
 #### Settings tab
 
 - Manage project profiles: set target language, project name, save/load presets, and refresh the list of Ollama models.
-- Adjust LLM parameters (model, temperature, timeout), font size, and strict-tag mode.
+- Adjust LLM parameters (model, temperature, timeout in seconds—set 0 for default), font size, and strict-tag mode.
 - Configure resource paths (glossary, style guide, forbidden terms) via quick file pickers.
 - Edit prompt templates directly, or pick from curated presets tailored for localization, tag surgery, or creative polish.
 - Database utilities let you run global replace, purge unverified entries, clear tag mismatches, or wipe the entire memory for a project.
