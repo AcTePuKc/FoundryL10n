@@ -52,3 +52,4 @@ tests/*.txt
 !tests/__init__.py
 tests/*.md
 *.egg-info/
+.continue/
