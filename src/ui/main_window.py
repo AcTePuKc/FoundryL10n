@@ -748,10 +748,20 @@ class FoundryGUI(QMainWindow):
             custom_fields = provider.get("custom_fields", [])
         if not isinstance(custom_fields, list):
             custom_fields = []
-        field_values = getattr(seg, "original_row", {}) or {}
-        if not isinstance(field_values, dict):
-            field_values = {}
+        field_values = self._segment_custom_field_values(seg)
         self.editor.set_provider_fields(custom_fields, field_values)
+
+    def _segment_custom_field_values(self, seg: TranslationSegment) -> dict:
+        custom_fields = seg.original_row.get("custom_fields")
+        return self._tsv_parser.parse_custom_fields(custom_fields)
+
+    def _store_provider_fields_for_segment(self, seg: TranslationSegment) -> None:
+        if not hasattr(self.editor, "get_provider_field_values"):
+            return
+        values = self.editor.get_provider_field_values()
+        if not isinstance(values, dict):
+            return
+        seg.original_row["custom_fields"] = values
 
     def _build_segments_from_provider(
         self,
@@ -850,17 +860,20 @@ class FoundryGUI(QMainWindow):
             self.thought_log.append(I18N.t("log_sync_no_selection"))
             return
         seg = self.segments[self.current_row]
+        self._store_provider_fields_for_segment(seg)
         segment_id = self._resolve_segment_id(seg)
         if not segment_id:
             self.thought_log.append(I18N.t("log_sync_missing_segment_id"))
             return
         suggestion_text = seg.translation or ""
+        custom_fields = self._segment_custom_field_values(seg)
         client = ProviderHttpClient(provider)
         try:
             client.submit_suggestion(
                 token,
                 segment_id=segment_id,
                 suggestion_text=suggestion_text,
+                custom_fields=custom_fields,
             )
         except (HTTPError, URLError, ValueError) as exc:
             self.thought_log.append(
@@ -880,6 +893,8 @@ class FoundryGUI(QMainWindow):
         if not verified_segments:
             self.thought_log.append(I18N.t("log_sync_submit_all_none"))
             return
+        if self.current_row >= 0:
+            self._store_provider_fields_for_segment(self.segments[self.current_row])
         client = ProviderHttpClient(provider)
         submitted = 0
         skipped = 0
@@ -889,11 +904,13 @@ class FoundryGUI(QMainWindow):
                 skipped += 1
                 continue
             suggestion_text = seg.translation or ""
+            custom_fields = self._segment_custom_field_values(seg)
             try:
                 client.submit_suggestion(
                     token,
                     segment_id=segment_id,
                     suggestion_text=suggestion_text,
+                    custom_fields=custom_fields,
                 )
                 submitted += 1
             except (HTTPError, URLError, ValueError) as exc:
@@ -1308,6 +1325,9 @@ class FoundryGUI(QMainWindow):
         row = self.table.currentRow()
         if row < 0:
             return
+        if self.current_row >= 0 and self.current_row != row:
+            previous_seg = self.segments[self.current_row]
+            self._store_provider_fields_for_segment(previous_seg)
 
         self.current_row = row
         seg = self.segments[row]
@@ -2381,6 +2401,8 @@ class FoundryGUI(QMainWindow):
         if not path or not self.segments:
             self._restore_workflow_focus()
             return
+        if self.current_row >= 0:
+            self._store_provider_fields_for_segment(self.segments[self.current_row])
         self._tsv_parser.save_tsv(self.segments, path)
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=path)

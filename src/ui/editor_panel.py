@@ -344,6 +344,23 @@ class EditorPanel(QWidget):
         self.provider_fields_placeholder.setVisible(not has_fields)
         self.provider_fields_content.setVisible(has_fields)
 
+    def get_provider_field_values(self) -> dict[str, object]:
+        values: dict[str, object] = {}
+        for field_id, widget in self.provider_field_widgets.items():
+            if isinstance(widget, QLineEdit):
+                values[field_id] = widget.text()
+            elif isinstance(widget, QTextEdit):
+                values[field_id] = widget.toPlainText()
+            elif isinstance(widget, QDoubleSpinBox):
+                values[field_id] = widget.value()
+            elif isinstance(widget, QCheckBox):
+                values[field_id] = widget.isChecked()
+            elif isinstance(widget, QComboBox):
+                values[field_id] = widget.currentText()
+            elif isinstance(widget, QDateEdit):
+                values[field_id] = widget.date().toString(Qt.DateFormat.ISODate)
+        return values
+
     def _wire_signals(self) -> None:
         self.btn_invisibles.clicked.connect(self.toggle_invisibles)
         self.provider_fields_toggle.toggled.connect(

@@ -1,4 +1,5 @@
 import csv
+import json
 from typing import List, Dict, Optional
 from pathlib import Path
 
@@ -49,6 +50,30 @@ class FoundryParser:
         self.headers: List[str] = []
         self.text_col: str = ""
         self.target_col: str = ""
+        self._custom_fields_col = "custom_fields"
+
+    def parse_custom_fields(self, value: object) -> Dict:
+        if not value:
+            return {}
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+            except json.JSONDecodeError:
+                return {}
+            return parsed if isinstance(parsed, dict) else {}
+        return {}
+
+    def _serialize_custom_fields(self, value: object) -> str:
+        if not value:
+            return ""
+        if isinstance(value, str):
+            return value
+        try:
+            return json.dumps(value, ensure_ascii=False)
+        except (TypeError, ValueError):
+            return ""
 
     def parse_tsv(self, file_path: Path) -> List[TranslationSegment]:
         segments: List[TranslationSegment] = []
@@ -79,6 +104,10 @@ class FoundryParser:
                     or row.get("synced_at")
                     or row.get("updated_at")
                 )
+                if self._custom_fields_col in row:
+                    row[self._custom_fields_col] = self.parse_custom_fields(
+                        row.get(self._custom_fields_col)
+                    )
                 
                 segments.append(
                     TranslationSegment(
@@ -99,10 +128,14 @@ class FoundryParser:
         if not segments: 
             return
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # If we lost headers during manual edit, reconstruct them purely from the row keys
         if not self.headers:
             self.headers = list(segments[0].original_row.keys())
+        if any(
+            self._custom_fields_col in seg.original_row for seg in segments
+        ) and self._custom_fields_col not in self.headers:
+            self.headers.append(self._custom_fields_col)
 
         with open(output_path, 'w', encoding='utf-8', newline='') as f:
             # We use QUOTE_MINIMAL to quote only fields that need it (tabs/newlines/quotes).
@@ -119,4 +152,8 @@ class FoundryParser:
                 # Clean up any leading/trailing whitespace in the keys to prevent "ghost" columns
                 clean_row = {str(k).strip(): v for k, v in row.items()}
                 clean_row[self.target_col] = seg.translation
+                if self._custom_fields_col in clean_row:
+                    clean_row[self._custom_fields_col] = self._serialize_custom_fields(
+                        clean_row.get(self._custom_fields_col)
+                    )
                 writer.writerow(clean_row)
