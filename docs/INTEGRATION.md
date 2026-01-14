@@ -395,7 +395,19 @@ POST /api/segments/{id}/suggestions
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
+* **Optional JSON Import:** JSON can be imported alongside TSV. Minimal format is a list of objects (or `{ "segments": [...] }`) containing `key` and `source` fields; `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps are optional.
 * **Remote-synced context awareness:** When segments originate from a remote provider, the LLM context includes the remote source + target text to preserve upstream intent, and drafting never triggers auto-sync; submissions stay manual via "Submit Suggestions."
+
+```json
+[
+  {
+    "key": "dialogue.0001",
+    "source": "Hello, world!",
+    "translation": "",
+    "context": "Greeting line"
+  }
+]
+```
 
 ---
 
