@@ -19,6 +19,10 @@ from services.plugin_loader import PluginRegistry
 from ui.theme_helpers import get_available_themes, load_theme
 
 
+ROW_SPACING = 12
+ROW_STRETCH_FACTOR = 1
+
+
 class SettingsTab(QWidget):
     font_changed = Signal(float)
     profile_loaded = Signal()
@@ -97,8 +101,6 @@ class SettingsTab(QWidget):
         gen.addRow(self.project_label, self.project_name)
         gen.addRow(self.profile_label, profile_row)
 
-        layout.addWidget(self.general_group)
-
         # =====================================================
         # TRANSLATION
         # =====================================================
@@ -173,8 +175,6 @@ class SettingsTab(QWidget):
         translation_layout.addRow(self.llm_timeout_label, self.llm_timeout_spin)
         translation_layout.addRow(self.strict_mode)
 
-        layout.addWidget(self.translation_group)
-
         # =====================================================
         # APPEARANCE
         # =====================================================
@@ -210,8 +210,6 @@ class SettingsTab(QWidget):
         appearance_layout.addRow(self.font_label, self.font_size_spin)
         appearance_layout.addRow(self.theme_label, self.theme_combo)
         appearance_layout.addRow(self.ui_lang_label, self.ui_lang_combo)
-
-        layout.addWidget(self.appearance_group)
 
         # =====================================================
         # RESOURCES
@@ -269,7 +267,28 @@ class SettingsTab(QWidget):
 
             res.addRow(label_widget, h)
 
-        layout.addWidget(self.res_group)
+        for group in (
+            self.general_group,
+            self.translation_group,
+            self.appearance_group,
+            self.res_group,
+        ):
+            group.setSizePolicy(
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Preferred
+            )
+
+        top_row = QHBoxLayout()
+        top_row.setSpacing(ROW_SPACING)
+        top_row.addWidget(self.general_group, ROW_STRETCH_FACTOR)
+        top_row.addWidget(self.appearance_group, ROW_STRETCH_FACTOR)
+        layout.addLayout(top_row)
+
+        second_row = QHBoxLayout()
+        second_row.setSpacing(ROW_SPACING)
+        second_row.addWidget(self.translation_group, ROW_STRETCH_FACTOR)
+        second_row.addWidget(self.res_group, ROW_STRETCH_FACTOR)
+        layout.addLayout(second_row)
         # =====================================================
         # PROMPT (dominant)
         # =====================================================
