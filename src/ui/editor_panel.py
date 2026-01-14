@@ -1,9 +1,11 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
                                QPushButton, QHBoxLayout, QCheckBox,
-                               QListWidget, QToolButton)
+                               QListWidget, QToolButton, QLineEdit,
+                               QFormLayout, QComboBox, QDateEdit,
+                               QDoubleSpinBox)
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
-from PySide6.QtCore import Qt, Signal, QEvent
+from PySide6.QtCore import Qt, Signal, QEvent, QDate
 from core.i18n import I18N
 from core.tag_utils import extract_tags, tag_regex
 
@@ -180,20 +182,141 @@ class EditorPanel(QWidget):
         provider_fields_layout.addWidget(self.provider_fields_toggle)
 
         self.provider_fields_body = QWidget()
-        provider_fields_body_layout = QVBoxLayout(self.provider_fields_body)
-        provider_fields_body_layout.setContentsMargins(4, 0, 0, 0)
-        provider_fields_body_layout.setSpacing(4)
+        self.provider_fields_body_layout = QVBoxLayout(self.provider_fields_body)
+        self.provider_fields_body_layout.setContentsMargins(4, 0, 0, 0)
+        self.provider_fields_body_layout.setSpacing(4)
         self.provider_fields_placeholder = QLabel(
             I18N.t("ui_provider_fields_empty")
         )
         self.provider_fields_placeholder.setStyleSheet(
             "color: #90a4ae; font-style: italic;"
         )
-        provider_fields_body_layout.addWidget(
+        self.provider_fields_body_layout.addWidget(
             self.provider_fields_placeholder
         )
+        self.provider_fields_content = QWidget()
+        self.provider_fields_form = QFormLayout(self.provider_fields_content)
+        self.provider_fields_form.setContentsMargins(0, 0, 0, 0)
+        self.provider_fields_form.setSpacing(4)
+        self.provider_fields_content.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.provider_fields_body_layout.addWidget(self.provider_fields_content)
+        self.provider_fields_content.setVisible(False)
         provider_fields_layout.addWidget(self.provider_fields_body)
         self.provider_fields_body.setVisible(False)
+        self.provider_field_widgets: dict[str, QWidget] = {}
+
+    def _clear_provider_fields(self) -> None:
+        while self.provider_fields_form.count():
+            item = self.provider_fields_form.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            elif item.layout() is not None:
+                layout = item.layout()
+                while layout.count():
+                    child = layout.takeAt(0)
+                    child_widget = child.widget()
+                    if child_widget is not None:
+                        child_widget.deleteLater()
+        self.provider_field_widgets.clear()
+
+    def _build_provider_field_widget(
+        self,
+        field_type: str,
+        validation: dict,
+        value: object,
+    ) -> QWidget | None:
+        normalized_type = field_type.lower()
+        widget: QWidget | None = None
+        if normalized_type == "text":
+            widget = QLineEdit()
+            if value is not None:
+                widget.setText(str(value))
+            if placeholder := validation.get("placeholder"):
+                widget.setPlaceholderText(str(placeholder))
+        elif normalized_type == "textarea":
+            widget = QTextEdit()
+            if value is not None:
+                widget.setPlainText(str(value))
+            if placeholder := validation.get("placeholder"):
+                widget.setPlaceholderText(str(placeholder))
+            widget.setMaximumHeight(120)
+        elif normalized_type == "number":
+            widget = QDoubleSpinBox()
+            widget.setDecimals(4)
+            widget.setMinimum(float(validation.get("min", -1e9)))
+            widget.setMaximum(float(validation.get("max", 1e9)))
+            if step := validation.get("step"):
+                widget.setSingleStep(float(step))
+            if value is not None:
+                try:
+                    widget.setValue(float(value))
+                except (TypeError, ValueError):
+                    pass
+        elif normalized_type == "boolean":
+            widget = QCheckBox()
+            if value is not None:
+                if isinstance(value, str):
+                    widget.setChecked(value.strip().lower() in {"1", "true", "yes", "y"})
+                else:
+                    widget.setChecked(bool(value))
+        elif normalized_type == "select":
+            widget = QComboBox()
+            options = validation.get("options", [])
+            if isinstance(options, list):
+                widget.addItems([str(opt) for opt in options])
+            if value is not None:
+                value_text = str(value)
+                if widget.findText(value_text) < 0:
+                    widget.addItem(value_text)
+                widget.setCurrentText(value_text)
+        elif normalized_type == "date":
+            widget = QDateEdit()
+            widget.setCalendarPopup(True)
+            if isinstance(value, QDate):
+                widget.setDate(value)
+            elif isinstance(value, str):
+                parsed = QDate.fromString(value, Qt.DateFormat.ISODate)
+                if parsed.isValid():
+                    widget.setDate(parsed)
+            widget.setDisplayFormat("yyyy-MM-dd")
+        if widget is not None:
+            widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+            if help_text := validation.get("help"):
+                widget.setToolTip(str(help_text))
+        return widget
+
+    def set_provider_fields(
+        self,
+        custom_fields: list[dict],
+        field_values: dict | None = None,
+    ) -> None:
+        self._clear_provider_fields()
+        has_fields = False
+        values = field_values if isinstance(field_values, dict) else {}
+        for field in custom_fields:
+            if not isinstance(field, dict):
+                continue
+            field_id = str(field.get("id", "")).strip()
+            if not field_id:
+                continue
+            label_text = str(field.get("label") or field_id)
+            if field.get("required"):
+                label_text = f"{label_text} *"
+            field_type = str(field.get("type", "text"))
+            validation = field.get("validation") if isinstance(field.get("validation"), dict) else {}
+            value = values.get(field_id, field.get("default"))
+            widget = self._build_provider_field_widget(field_type, validation, value)
+            if widget is None:
+                continue
+            label = QLabel(label_text)
+            if help_text := validation.get("help"):
+                label.setToolTip(str(help_text))
+            self.provider_fields_form.addRow(label, widget)
+            self.provider_field_widgets[field_id] = widget
+            has_fields = True
+        self.provider_fields_placeholder.setVisible(not has_fields)
+        self.provider_fields_content.setVisible(has_fields)
 
     def _wire_signals(self) -> None:
         self.btn_invisibles.clicked.connect(self.toggle_invisibles)
