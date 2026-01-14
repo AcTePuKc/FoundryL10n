@@ -33,7 +33,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 ### Inputs
 
 - **raw_line (str):** Original source line as stored/imported.
-- **masked_line (str | None):** Optional line after `masker` pass. Used when the provider indicates masking rules should be applied before segmentation.
+- **masked_line (str | None):** Optional line after `masker` pass. Used when a provider's configuration specifies that masking rules should be applied before segmentation.
 - **context (dict):** Optional context for segmentation decisions.
   - Example keys: `source_lang`, `target_lang`, `provider_id`, `is_strict`, `segment_id`.
 - **metadata (dict):** Optional segment metadata.
