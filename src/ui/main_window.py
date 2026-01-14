@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QTableWidgetItem, QHeaderView, QProgressBar,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
-                               QScrollArea, QApplication, QToolBar)
+                               QScrollArea, QApplication)
 from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings, QTimer
 from sqlmodel import select, col
@@ -338,15 +338,6 @@ class FoundryGUI(QMainWindow):
         self.sync_menu.addAction(self.action_submit_verified)
         self.sync_menu.addSeparator()
         self.sync_menu.addAction(self.action_sync_plugins)
-
-        self.sync_toolbar = QToolBar(I18N.t("menu_sync"), self)
-        self.sync_toolbar.setObjectName("sync_toolbar")
-        self.sync_toolbar.addAction(self.action_fetch_segments)
-        self.sync_toolbar.addAction(self.action_submit_suggestion)
-        self.sync_toolbar.addAction(self.action_submit_verified)
-        self.sync_toolbar.addSeparator()
-        self.sync_toolbar.addAction(self.action_sync_plugins)
-        self.addToolBar(self.sync_toolbar)
         self.update_sync_action_state()
 
     def _update_context_menu_texts(self, count: int) -> None:
