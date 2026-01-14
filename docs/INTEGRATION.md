@@ -31,6 +31,7 @@ To support a website, a plugin must be added to the `src/plugins` directory. Use
 * **Identity:** Name, Website URL, and API Base URL.
 * **Authentication:** Defines if the site uses OAuth2, Bearer Tokens, or Session Cookies.
 * **Data Mapping:** Maps remote JSON fields (like `original_text`) to local FoundryL10n fields (like `source`).
+* **Custom Field Metadata:** Providers may declare `custom_fields` definitions (label/type/required/default/validation hints); the loader captures these in the registry for future UI binding (no UI rendering yet).
 
 ---
 
