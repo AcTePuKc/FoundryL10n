@@ -114,6 +114,7 @@ class ProviderHttpClient(BaseProvider):
         *,
         segment_id: str,
         suggestion_text: str,
+        custom_fields: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         endpoint = self.config.endpoints.get("submit_suggestion")
         if not endpoint:
@@ -122,6 +123,19 @@ class ProviderHttpClient(BaseProvider):
             raise ValueError("submit_suggestion endpoint violates suggestions-only policy.")
         url = self.format_endpoint(endpoint, segment_id=segment_id)
         payload = {"segment_id": segment_id, "suggestion_text": suggestion_text}
+        if isinstance(custom_fields, dict):
+            mapping = self.config.mapping or {}
+            custom_mapping = mapping.get("custom_fields")
+            if isinstance(custom_mapping, dict):
+                for field_id, target_path in custom_mapping.items():
+                    if not isinstance(target_path, str) or not target_path.strip():
+                        continue
+                    if field_id not in custom_fields:
+                        continue
+                    value = custom_fields.get(field_id)
+                    if value is None:
+                        continue
+                    self._assign_by_path(payload, target_path, value)
         response = self._requester("POST", url, self._auth_headers(token), payload)
         return {"ok": True, "response": response}
 
@@ -171,6 +185,18 @@ class ProviderHttpClient(BaseProvider):
                 return None
             return None
         return current
+
+    def _assign_by_path(self, payload: dict[str, Any], path: str, value: Any) -> None:
+        parts = path.split(".")
+        current: Any = payload
+        for part in parts[:-1]:
+            if not isinstance(current, dict):
+                return
+            if part not in current or not isinstance(current[part], dict):
+                current[part] = {}
+            current = current[part]
+        if isinstance(current, dict):
+            current[parts[-1]] = value
 
     def _default_request(
         self,

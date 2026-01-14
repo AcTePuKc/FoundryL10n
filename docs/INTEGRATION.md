@@ -32,6 +32,7 @@ To support a website, a plugin must be added to the `src/plugins` directory. Use
 * **Authentication:** Defines if the site uses OAuth2, Bearer Tokens, or Session Cookies.
 * **Data Mapping:** Maps remote JSON fields (like `original_text`) to local FoundryL10n fields (like `source`).
 * **Custom Field Metadata:** Providers may declare `custom_fields` definitions (label/type/required/default/validation hints); the editor renders these inside the provider fields panel using existing input widgets only, with click-focus behavior so tab navigation stays in the main editor.
+* **Custom Field Persistence + Submission:** Per-segment `custom_fields` values are stored locally in the TSV metadata and reloaded into the provider fields panel. Submission payloads include mapped custom field values only when `mapping.custom_fields` declares the field IDs and target payload paths.
 
 ---
 

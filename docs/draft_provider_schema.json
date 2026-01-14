@@ -50,7 +50,12 @@
       "properties": {
         "source_text": { "type": "string", "default": "source" },
         "target_text": { "type": "string", "default": "current_translation" },
-        "segment_id": { "type": "string", "default": "segment_id" }
+        "segment_id": { "type": "string", "default": "segment_id" },
+        "custom_fields": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Maps custom field IDs to payload paths for submit_suggestion."
+        }
       }
     },
     "custom_fields": {

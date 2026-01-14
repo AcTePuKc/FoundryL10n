@@ -79,7 +79,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
   * Minimal plan (**next steps**):
     1. **Schema extension + parsing (Phase A):** ✅ Completed. Provider-defined custom field metadata (labels, types, optionality, defaults, validation hints) now lives in the schema and is loaded alongside existing mapping paths.
     2. **Schema-to-UI adapter (Phase B):** ✅ Completed. Convert field metadata into editor widgets (reusing existing input types only) and render them inside the provider fields panel.
-    3. **Data binding + persistence:** Store per-segment custom field values (e.g., `custom_fields` JSON keyed by field IDs) and include them in provider submission payloads when the provider mapping declares the field.
+    3. **Data binding + persistence:** ✅ Completed. Store per-segment custom field values (e.g., `custom_fields` JSON keyed by field IDs) and include them in provider submission payloads when the provider mapping declares the field.
     4. **Validation + hints:** Surface provider constraints as non-blocking hints and lightweight warnings without interrupting typing flow.
   * Expected UX behavior:
     * Custom fields appear per-segment only when the active provider defines them; no fields show for providers without definitions.
