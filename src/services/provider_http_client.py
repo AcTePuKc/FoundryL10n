@@ -130,12 +130,9 @@ class ProviderHttpClient(BaseProvider):
                 for field_id, target_path in custom_mapping.items():
                     if not isinstance(target_path, str) or not target_path.strip():
                         continue
-                    if field_id not in custom_fields:
-                        continue
                     value = custom_fields.get(field_id)
-                    if value is None:
-                        continue
-                    self._assign_by_path(payload, target_path, value)
+                    if value is not None:
+                        self._assign_by_path(payload, target_path, value)
         response = self._requester("POST", url, self._auth_headers(token), payload)
         return {"ok": True, "response": response}
 

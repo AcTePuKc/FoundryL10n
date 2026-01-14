@@ -752,19 +752,8 @@ class FoundryGUI(QMainWindow):
         self.editor.set_provider_fields(custom_fields, field_values)
 
     def _segment_custom_field_values(self, seg: TranslationSegment) -> dict:
-        row = getattr(seg, "original_row", {}) or {}
-        if not isinstance(row, dict):
-            return {}
-        custom_fields = row.get("custom_fields")
-        if isinstance(custom_fields, dict):
-            return custom_fields
-        if isinstance(custom_fields, str):
-            try:
-                parsed = json.loads(custom_fields)
-            except json.JSONDecodeError:
-                return {}
-            return parsed if isinstance(parsed, dict) else {}
-        return {}
+        custom_fields = seg.original_row.get("custom_fields")
+        return self._tsv_parser.parse_custom_fields(custom_fields)
 
     def _store_provider_fields_for_segment(self, seg: TranslationSegment) -> None:
         if not hasattr(self.editor, "get_provider_field_values"):
@@ -772,11 +761,7 @@ class FoundryGUI(QMainWindow):
         values = self.editor.get_provider_field_values()
         if not isinstance(values, dict):
             return
-        row = getattr(seg, "original_row", {}) or {}
-        if not isinstance(row, dict):
-            row = {}
-        row["custom_fields"] = values
-        seg.original_row = row
+        seg.original_row["custom_fields"] = values
 
     def _build_segments_from_provider(
         self,

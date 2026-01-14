@@ -52,7 +52,7 @@ class FoundryParser:
         self.target_col: str = ""
         self._custom_fields_col = "custom_fields"
 
-    def _parse_custom_fields(self, value: object) -> Dict:
+    def parse_custom_fields(self, value: object) -> Dict:
         if not value:
             return {}
         if isinstance(value, dict):
@@ -105,7 +105,7 @@ class FoundryParser:
                     or row.get("updated_at")
                 )
                 if self._custom_fields_col in row:
-                    row[self._custom_fields_col] = self._parse_custom_fields(
+                    row[self._custom_fields_col] = self.parse_custom_fields(
                         row.get(self._custom_fields_col)
                     )
                 
@@ -133,9 +133,7 @@ class FoundryParser:
         if not self.headers:
             self.headers = list(segments[0].original_row.keys())
         if any(
-            isinstance(getattr(seg, "original_row", {}), dict)
-            and self._custom_fields_col in (seg.original_row or {})
-            for seg in segments
+            self._custom_fields_col in seg.original_row for seg in segments
         ) and self._custom_fields_col not in self.headers:
             self.headers.append(self._custom_fields_col)
 
