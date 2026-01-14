@@ -98,4 +98,13 @@ Tasks about validation and developer scripts.
 * [x] Note: Runtime package clean after mock server move (no mock server imports in src).
 * [x] Docs: Note README provider integration overview + config-driven communication in docs backlog.
 * [x] Docs: Add style guide for ORM/type-checking rules and link it from integration docs.
-* [x] Note: Added optional JSON import format documentation and parser support alongside TSV.
+* [ ] **Note:** Added optional JSON import format support and documentation alongside TSV.  
+      JSONL is currently not supported — we need to add JSONL to the supported import formats.  
+      Also renamed `Import TSV` to `Import` since multiple file formats are now allowed.
+
+* [ ] **Note:** Implement export based on the imported file format, with the option to export as `TSV` / `JSON` / `JSONL`.  
+      Renamed `Export TSV` to `Export` for consistency with multi-format support.
+
+> Currently we only support exporting to `TSV/CSV`, which is inconsistent since we now allow importing JSON as well.  
+> The CSV option may simply be a Windows association quirk rather than intentional behavior.  
+> We should revisit the export format logic and ensure proper `TSV/JSON/JSONL` round-tripping.

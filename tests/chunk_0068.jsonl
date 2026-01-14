@@ -1,0 +1,187 @@
+{"key": "HARDYLOOT_DISCOVERED_HEADER", "source": "STOLEN ART DISCOVERED", "translation": "", "note": ""}
+{"key": "HARO_Q_FINDCORRUPTED_001", "source": "<TSMARKER_0>Th-thank you. <TSMARKER_1>I knew what we were doing was insane, but I didn't care. <TSMARKER_2>All I knew was, those people were evil...and they had to die.", "translation": "", "note": ""}
+{"key": "HARO_Q_FINDCORRUPTED_002", "source": "<TSMARKER_0>Just a voice, <TSMARKER_1>telling us to kill the people we hate, before they kill us. <TSMARKER_2>Oh, and a <TSMARKER_3>feeling...<TSMARKER_4>that there's another group, even bigger than ours.", "translation": "", "note": ""}
+{"key": "HARO_Q_FINDCORRUPTED_003", "source": "<TSMARKER_0>Th-thank you. <TSMARKER_1>I knew what we're doing was wrong, but I couldn't stop myself. ", "translation": "", "note": ""}
+{"key": "HARY_M_A3_NORMANAPT_R_001", "source": "<TSMARKER_0>Hey dad. <TSMARKER_1>On my way to Dr. Michael's for one last shot before the, umm,<TSMARKER_2>the big trip.<TSMARKER_3>Hey, if you're gonna meet me there, could you grab my journal from my room?<TSMARKER_4>I just wanted to record some thoughts on the big bon voyage day.<TSMARKER_5>Anyway...<TSMARKER_6>Listen, I know I don't say this enough but,<TSMARKER_7>thank you, dad.<TSMARKER_8>You know, for doing this.<TSMARKER_9>I love you.", "translation": "", "note": ""}
+{"key": "HARY_M_A3_NORMANAPT_R_002", "source": "<TSMARKER_0>Hey it's Harry - <TSMARKER_1>leave a message!", "translation": "", "note": ""}
+{"key": "HARY_M_A3_NORMANAPT_R_003", "source": "<TSMARKER_0>You've reached Harry Osborn. <TSMARKER_1>Please leave a detailed message and I'll call you back!", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_001", "source": "<TSMARKER_0>Pete, hey I need a favor. <TSMARKER_1>My mom's pet project was research stations that could benefit the public. <TSMARKER_2>Now, I launched 'em, but now that I'm...<TSMARKER_3>away...Oscorp's gonna shut them down unless they prove their value. ", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_002", "source": "<TSMARKER_0>Hey, Pete. <TSMARKER_1>So this station monitors water pressure, down to the individual building.<TSMARKER_2>Structures above four stories use water towers to augment the city's system. <TSMARKER_3>The idea is to identify problems before they spread, y'know?", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_003", "source": "<TSMARKER_0>This station's simple, but really important. <TSMARKER_1>It measures toxins in the air...way more sensitive than anything the city has. Bad air hits <TSMARKER_2>children and the elderly first. <TSMARKER_3>This was a big one for my mom.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_004", "source": "<TSMARKER_0>I've got a couple stations measuring air pollution. <TSMARKER_1>The idea's to catch the... oh, what's the word... contaminants before they reach toxic levels. <TSMARKER_2>Between you and me, <TSMARKER_3>I think Oscorp wants this to fail because it might show they're polluting.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_007", "source": "<TSMARKER_0>OK Pete, this lab has feeders to lure in birds and analyze their droppings. <TSMARKER_1>Yeah, that's right - <TSMARKER_2>I got an MBA to test bird poop. Haha. Seriously, though, you probably know that birds carry <TSMARKER_3>diseases that affect people and we need to make sure they're healthy. <TSMARKER_4>You know, I really wish I was there to hear your finest toilet humor on this one.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_008", "source": "<TSMARKER_0>Hey Pete, <TSMARKER_1>this lab monitors the health of marine life. <TSMARKER_2>We've got a bunch of medicine on site if you need it. <TSMARKER_3>The effects these diseases have, they're just... <TSMARKER_4>they are not something any living creature should go through.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_009", "source": "<TSMARKER_0>So, we installed energy-saving LED billboards all around this area. <TSMARKER_1>This station monitors how they're performing. <TSMARKER_2>I'm just hoping it saves enough money that Oscorp keeps this program going.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_011", "source": "<TSMARKER_0>This is one of Mom's earliest projects. We were trying to develop a bacteria that would dissolve <TSMARKER_1>all the plastic in the oceans. <TSMARKER_2>But we, umm... well...<TSMARKER_3>she ran out of time. <TSMARKER_4>Look, if you have any ideas, it would really mean a lot.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_012", "source": "<TSMARKER_0>Hey, pal. This station tests particulate matter in the air. Now, <TSMARKER_1>you'd probably have some science-jargon-y way to say this, but basically: <TSMARKER_2>too much is not good.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_013", "source": "<TSMARKER_0>I was hoping you could watch 'em? <TSMARKER_1>I left details in each one. <TSMARKER_2>Thanks, man ...<TSMARKER_3>as long as they're here, it's like a part of my mom is too.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_015", "source": "<TSMARKER_0>Hey, Pete. <TSMARKER_1>This station's one of my pet projects. <TSMARKER_2>I always thought the cellular network was vulnerable to terrorist attacks, so I set this up to <TSMARKER_3>monitor it. <TSMARKER_4>Can you do me a favor? Look for anything suspicious.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_020", "source": "<TSMARKER_0>Okay, be careful in here, Pete. <TSMARKER_1>This station analyzes hazardous chemicals... Uh, basically trying to figure out how to counteract <TSMARKER_2>them if they ever get out in the world. Which, <TSMARKER_3>hopefully, <TSMARKER_4>they never will.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_021", "source": "<TSMARKER_0>Hey, Pete. <TSMARKER_1>Now this station tracks GPS chips deployed around the city on birds and other wildlife. <TSMARKER_2>It collects data on the environment, which Mom wanted, and helps improve GPS on Oscorp tech, which <TSMARKER_3>Dad wanted. <TSMARKER_4>So... it's actually probably safe. You know what, bud, I should've remembered to tell you not to <TSMARKER_5>bother with this one.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_022", "source": "<TSMARKER_0>Most people don't know it, but there's a fault line that runs under Central Park. Mom set up this <TSMARKER_1>station to monitor seismic activity. But the fault is stable, so... I've got a bad feeling this <TSMARKER_2>station's gonna be the first to go.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_023", "source": "<TSMARKER_0>Hey Pete, do you remember that steam pipe explosion when we were kids? Well, that's what Mom built <TSMARKER_1>this station to prevent. It monitors the pressure in the pipes and pinpoints trouble spots. ", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_024", "source": "<TSMARKER_0>Okay, so this station collects overflow data from all the others. <TSMARKER_1>God forbid we waste Oscorp server space. <TSMARKER_2>Anyway, do me a favor and make sure it's running smoothly, or <TSMARKER_3>everything these stations do is for nothing.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_025", "source": "<TSMARKER_0>This station analyzes thunderstorms ...and acts as a failsafe for the others. <TSMARKER_1>Now they're all susceptible to lighting strikes, which would erase their databanks.  <TSMARKER_2>If they're in danger, they'll automatically transfer their data to Oscorp's servers. <TSMARKER_3>Just... make sure it works, okay, pal?", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_027", "source": "<TSMARKER_0>Pete, my mom was a big believer in the city's steam heating... <TSMARKER_1>it's better for the environment than fossil fuels. But high pressure can lead to deadly explosions. <TSMARKER_2>This station was designed to monitor the pressure in specific buildings. <TSMARKER_3>Help me show Oscorp it's worth the cost...please?", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_028", "source": "<TSMARKER_0>This is one of my labs that monitors water quality. Any nasty stuff gets in, it tells you. <TSMARKER_1>I wanted to check on it myself, but... there's <TSMARKER_2>just never enough time.", "translation": "", "note": ""}
+{"key": "HARY_WORLD_RESEARCH_029", "source": "<TSMARKER_0>This station may be safe, 'cause it's helping test an Oscorp military application: <TSMARKER_1>cloaking tech. <TSMARKER_2>But I don't love using armed drones to test it. Someone might get hurt.", "translation": "", "note": ""}
+{"key": "HELP_A1_FISK_BREAKGUARD", "source": "<SPAN_EMPHASIS_OPEN_0>Fisk<SPAN_CLOSE_2> will block your melee attacks. Use <SPAN_EMPHASIS_OPEN_1>webs<SPAN_CLOSE_3> to make him vulnerable. ", "translation": "", "note": ""}
+{"key": "HELP_A1_FISK_BREAKGUARD2", "source": "Use <SPAN_EMPHASIS_OPEN_0>webs<SPAN_CLOSE_2> and <SPAN_EMPHASIS_OPEN_1>throwables<SPAN_CLOSE_3> to make Fisk vulnerable.", "translation": "", "note": ""}
+{"key": "HELP_A1_FISK_DRAW_OUT_REINFORCEMENTS", "source": "Take out enemy patrols to draw out reinforcements.", "translation": "", "note": ""}
+{"key": "HELP_A1_FISK_WEBFISK", "source": "Tap [BTN_RB] <SPAN_EMPHASIS_OPEN_0>repeatedly<SPAN_CLOSE_1> to web up Fisk.", "translation": "", "note": ""}
+{"key": "HELP_A2_AUNTMAY_FUSEBOXES", "source": "Hold [BTN_LT] + [BTN_Y] Web Fuse Boxes", "translation": "", "note": ""}
+{"key": "HELP_A2_GCT_FINDSOURCES", "source": "Press [STICK_RIGHT_PRESS] to <SPAN_EMPHASIS_OPEN_0>find sources<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_A2_GCT_LOOK", "source": "Use [STICK_RIGHT] to <SPAN_EMPHASIS_OPEN_0>look around<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_ACT3_HARASSERS", "source": "Defeating an enemy group will prevent that group from returning.", "translation": "", "note": ""}
+{"key": "HELP_ACTIVATE_HEAL", "source": "Press [DPAD_DOWN] to <SPAN_EMPHASIS_OPEN_0>heal<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_AIM_CAMERA", "source": "Hold [BTN_LT] to aim the <SPAN_EMPHASIS_OPEN_0>Camera<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_AIM_CAMERA_TOGGLE", "source": "Tap [BTN_LT] to aim the <SPAN_EMPHASIS_OPEN_0>Camera<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_AIR_COMBO", "source": "Tap [BTN_X] <SPAN_EMPHASIS_OPEN_0>repeatedly<SPAN_CLOSE_2>  to perform an <SPAN_EMPHASIS_OPEN_1>Air Combo<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_AIR_LAUNCH", "source": "Hold [BTN_X] to perform an <SPAN_EMPHASIS_OPEN_0>Air Launch<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_ATTACK_FROM_BEHIND", "source": "Press [BTN_X] to attack from behind.", "translation": "", "note": ""}
+{"key": "HELP_BASIC_ATTACK", "source": "Press [BTN_X] to <SPAN_EMPHASIS_OPEN_0>attack<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_BC04_FINALE_HELICOPTERATTACH", "source": "Press [BTN_Y] to attach to the helicopter", "translation": "", "note": ""}
+{"key": "HELP_BEHIND_TD", "source": "Get behind an enemy for a <SPAN_EMPHASIS_OPEN_0>Stealth Takedown<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_BUILD_FOCUS_01", "source": "Attack [BTN_X] enemies to build <SPAN_EMPHASIS_OPEN_0>Focus<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_CORRUPTED_AMBUSH", "source": "Martin Li's corrupted will ambush Spider-Man on sight.", "translation": "", "note": ""}
+{"key": "HELP_CRIME_PERCHTOSIGNAL", "source": "Hold [BTN_LT] to <SPAN_EMPHASIS_OPEN_0>aim<SPAN_CLOSE_1>, then [ACTION_WEB_ZIP_OBJ2] to get in range and fix the signal.", "translation": "", "note": ""}
+{"key": "HELP_CTNS_SB_DRONE_DISABLE", "source": "Hit the secondary drone's cameras with webs to disable them.", "translation": "", "note": ""}
+{"key": "HELP_CTNS_SB_EMP_ORDER", "source": "Destroy the emitters in the correct order to avoid taking damage.", "translation": "", "note": ""}
+{"key": "HELP_CTNS_SB_EMP_PHOTOBOMB", "source": "Web Tunnel through the highlighted object for a bonus.", "translation": "", "note": ""}
+{"key": "HELP_CTNS_SS_DISASTER_SAFEAREA", "source": "Find a safe area where Peter can use his powers.", "translation": "", "note": ""}
+{"key": "HELP_DEMONS_STORY_TAIL_CEILINGATTACH", "source": "Press [BTN_LT] to aim at the ceiling, then [ACTION_WEB_ZIP_OBJ2] to zip to it.", "translation": "", "note": ""}
+{"key": "HELP_DODGE", "source": "Press [BTN_B] to <SPAN_EMPHASIS_OPEN_0>dodge<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_DODGE_DIRECTIONAL", "source": "Press [BTN_B] and use [STICK_LEFT] to<SPAN_EMPHASIS_OPEN_0> dodge to the side<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_DODGE_UNDER_1", "source": "Press [BTN_B] to perform a <SPAN_EMPHASIS_OPEN_0>Dodge Under<SPAN_CLOSE_1> move after an attack.", "translation": "", "note": ""}
+{"key": "HELP_DODGE_UNDER_2", "source": "Press [BTN_X] then [BTN_B] to perform the <SPAN_EMPHASIS_OPEN_0>Dodge Under<SPAN_CLOSE_1> move.", "translation": "", "note": ""}
+{"key": "HELP_DROP_CEILING", "source": "Press [BTN_B] to <SPAN_EMPHASIS_OPEN_0>drop<SPAN_CLOSE_2> from the <SPAN_EMPHASIS_OPEN_1>ceiling<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_ELECTRIC_WEB_REQUIRED", "source": "This research station requires you to continue playing the story to unlock the <SPAN_EMPHASIS_OPEN_0>Electric Web<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_EQUIP_CAMERA", "source": "Press [DPAD_UP] to equip your <SPAN_EMPHASIS_OPEN_0>Camera<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_FAST_TRAVEL_LOCKED", "source": "Fast Travel Locked", "translation": "", "note": ""}
+{"key": "HELP_FIRE_IMPACTWEB", "source": "Tap [BTN_RB] to fire an <SPAN_EMPHASIS_OPEN_0>Impact Web<SPAN_CLOSE_1> at an enemy.", "translation": "", "note": ""}
+{"key": "HELP_FIRE_WEBBOMB", "source": "Tap [BTN_RB] to fire a <SPAN_EMPHASIS_OPEN_0>Web Bomb<SPAN_CLOSE_1> at an enemy.", "translation": "", "note": ""}
+{"key": "HELP_FISK_AMBUSH", "source": "Undercover Fisk Thugs will attack Spider-Man on sight.", "translation": "", "note": ""}
+{"key": "HELP_FISK_WALLRUN", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>Wall Run<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_AIMEDPERCH", "source": "Hold [BTN_LT] to <SPAN_EMPHASIS_OPEN_0>aim<SPAN_CLOSE_2>, then [ACTION_WEB_ZIP_OBJ2] to <SPAN_EMPHASIS_OPEN_1>perch<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_BREAKBLOCK", "source": "Hold [BTN_X] to break block.", "translation": "", "note": ""}
+{"key": "HELP_GEN_COMBATCONTROLS", "source": "[BTN_X] Melee Attack<BR_0>[BTN_B] Dodge<BR_1>[BTN_Y] Web Strike<BR_2>[BTN_RB] Web Shooter", "translation": "", "note": ""}
+{"key": "HELP_GEN_DESTROYPOWERNODES", "source": "Press [BTN_LT] to aim and [BTN_RB] to destroy transformers with <SPAN_EMPHASIS_OPEN_0>Web Shooters<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_DIVE", "source": "Hold [STICK_LEFT_PRESS] while in the air to <SPAN_EMPHASIS_OPEN_0>dive<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_DODGEUNDER", "source": "Press [BTN_X] then [BTN_B] to perform the <SPAN_EMPHASIS_OPEN_0>Dodge Under<SPAN_CLOSE_1> move while in ground combat.", "translation": "", "note": ""}
+{"key": "HELP_GEN_DRONECONTROLS", "source": "[STICK_LEFT] Fly<BR_0>[BTN_X] Shock Enemy", "translation": "", "note": ""}
+{"key": "HELP_GEN_ENLARGEPHOTO", "source": "Press [STICK_RIGHT_PRESS] to <SPAN_EMPHASIS_OPEN_0>enlarge photo<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_HACK", "source": "Hold [BTN_Y] to <SPAN_EMPHASIS_OPEN_0>hack<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_HIGHLIGHTENEMIES", "source": "Press [STICK_LEFT_PRESS] to <SPAN_EMPHASIS_OPEN_0>highlight enemies<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_LEAVING_MISSION", "source": "You are leaving the mission.", "translation": "", "note": ""}
+{"key": "HELP_GEN_MILESVAULT", "source": "Press [STICK_LEFT] forward and [BTN_A] to <SPAN_EMPHASIS_OPEN_0>vault<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_PAKOURTOSWING", "source": "Press [BTN_A] to <SPAN_EMPHASIS_OPEN_0>jump<SPAN_CLOSE_2>, then hold [BTN_R2] to <SPAN_EMPHASIS_OPEN_1>swing<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_PARKOUR", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>parkour<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_RUNUPWALLS", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>run<SPAN_CLOSE_2> up <SPAN_EMPHASIS_OPEN_1>walls<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SCAN", "source": "Press [STICK_RIGHT_PRESS] to <SPAN_EMPHASIS_OPEN_0>scan<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SEARCH", "source": "Press [STICK_LEFT_PRESS] to <SPAN_EMPHASIS_OPEN_0>search<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SPIDERBOTSYNC", "source": "Press [STICK_RIGHT_PRESS] to sync with Spider-bot.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SPRINT", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>sprint<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SWING", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>swing<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SWINGCONTROLSCOMBINED", "source": "Hold [BTN_RT] <SPAN_EMPHASIS_OPEN_0>Swing<SPAN_CLOSE_2> <BR_4>[BTN_A] <SPAN_EMPHASIS_OPEN_1>Web Zip<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SWING_JUMP", "source": "While holding [BTN_RT], press [BTN_A] to <SPAN_EMPHASIS_OPEN_0>jump<SPAN_CLOSE_2> and <SPAN_EMPHASIS_OPEN_1>gain speed<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_SWING_RELEASE", "source": "Release [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>detach<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_THROW", "source": "Hold [ACTION_WEB_YANK] to <SPAN_EMPHASIS_OPEN_0>throw<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_GEN_VIEWMAP", "source": "Press [BTN_SELECT] to view map.", "translation": "", "note": ""}
+{"key": "HELP_GROUNDSTRIKE_REQUIRED", "source": "This research station requires <SPAN_EMPHASIS_OPEN_0>Ground Strike<SPAN_CLOSE_1> which can be purchased from the skills page.", "translation": "", "note": ""}
+{"key": "HELP_JUMP_AND_SWING", "source": "Press [BTN_A] to <SPAN_EMPHASIS_OPEN_0>jump<SPAN_CLOSE_2>, then hold [BTN_R2] to <SPAN_EMPHASIS_OPEN_1>swing<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_LEAP_OFF", "source": "Press [BTN_X] then [BTN_A] near an enemy to perform a <SPAN_EMPHASIS_OPEN_0>Leap Off<SPAN_CLOSE_1> move.", "translation": "", "note": ""}
+{"key": "HELP_NYPD_HAR_02_NEWPERSPECTIVE", "source": "Note: You may need a different perspective to capture this code", "translation": "", "note": ""}
+{"key": "HELP_NYPD_HAR_02_WALLCRAWLTOSCAN", "source": "You can take pictures while wall crawling.", "translation": "", "note": ""}
+{"key": "HELP_OM_ACID_SCANFORPRESSURE", "source": "Get to the building and scan for pressure.", "translation": "", "note": ""}
+{"key": "HELP_OM_SMOG_AIMCAMERA", "source": "Aim Camera", "translation": "", "note": ""}
+{"key": "HELP_OM_SMOG_TAKEPIC", "source": "Take Picture", "translation": "", "note": ""}
+{"key": "HELP_PENTHOUSE_WALLCRAWL", "source": "Hold [STICK_LEFT] toward a wall to Wall Crawl.", "translation": "", "note": ""}
+{"key": "HELP_PENTHOUSE_WALLRUN", "source": "Hold [BTN_RT] to <SPAN_EMPHASIS_OPEN_0>Wall Run<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_PERCH_TD", "source": "Press [BTN_X] for <SPAN_EMPHASIS_OPEN_0>Perch Takedown<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_SAFE_PING", "source": "Press [STICK_RIGHT_PRESS] to show enemies that are <SPAN_EMPHASIS_OPEN_0>safe<SPAN_CLOSE_1> for Takedowns.", "translation": "", "note": ""}
+{"key": "HELP_SCORPION_WEBTUNNEL", "source": "Press [ACTION_ZIP_TO_POINT] to <SPAN_EMPHASIS_OPEN_0>Web Tunnel<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_SCORPION_WEBZIP_TO_WALL", "source": "Press [BTN_LT] + [ACTION_WEB_ZIP_OBJ2] to <SPAN_EMPHASIS_OPEN_0>zip<SPAN_CLOSE_1> to wall.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_AIM", "source": "Hold [BTN_LT] to <SPAN_EMPHASIS_OPEN_0>aim<SPAN_CLOSE_2> at the <SPAN_EMPHASIS_OPEN_1>junction box<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_AIMATJUNCTIONBOX", "source": "Use [STICK_RIGHT] to <SPAN_EMPHASIS_OPEN_0>aim<SPAN_CLOSE_2> at <SPAN_EMPHASIS_OPEN_1>junction box<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_ELECTRICWEB", "source": "[DPAD_UP] Electric Web", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_ELECTRICWEBSELECT", "source": "Hold [ACTION_WEAPON_WHEEL] to bring up the <SPAN_EMPHASIS_OPEN_0>Gadget Select<SPAN_CLOSE_2> and equip the <SPAN_EMPHASIS_OPEN_1>Electric Web<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_ELECTRICWEBSELECT_ALT", "source": "Hold [ACTION_WEAPON_WHEEL_ALT] to bring up the <SPAN_EMPHASIS_OPEN_0>Gadget Select<SPAN_CLOSE_2> and equip the <SPAN_EMPHASIS_OPEN_1>Electric Web<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_ELECTRICWEBSELECT_TOGGLE", "source": "Press [ACTION_WEAPON_WHEEL] to bring up the <SPAN_EMPHASIS_OPEN_0>Gadget Select<SPAN_CLOSE_2>, select the <SPAN_EMPHASIS_OPEN_1>Electric Web<SPAN_CLOSE_3>, then press [ACTION_WEAPON_WHEEL] to equip.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_FIREELECTRICWEB", "source": "Press [BTN_R1] to shoot the <SPAN_EMPHASIS_OPEN_0>Electric Web<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_SHIPYARD_SWITCHGADGETS", "source": "Use [DPAD_LEFT] to switch gadgets.", "translation": "", "note": ""}
+{"key": "HELP_SHOCKER_BREAKSHIELD", "source": "Throw objects to break Shocker's shield.", "translation": "", "note": ""}
+{"key": "HELP_SHOCKER_GROUNDWAVE", "source": "Avoid Shocker's ground shockwave by swinging.", "translation": "", "note": ""}
+{"key": "HELP_SNAP_PHOTO", "source": "Press [BTN_RB] when the viewfinder turns green to take a photo.", "translation": "", "note": ""}
+{"key": "HELP_SUIT_POWER", "source": "Press [ACTION_SUIT_POWER] to activate your <SPAN_EMPHASIS_OPEN_0>Suit Power<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_COMBAT_CHALLENGE", "source": "Defeat all enemies before the timer runs out.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_DISPOSEBOMBS", "source": "Hold [ACTION_WEB_YANK] to dispose of bombs when in range.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_DRONE_CHALLENGE", "source": "Collect spy cams while following the drone to earn a bonus.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_PERCHNEARCAMS", "source": "Hold [BTN_LT] to <SPAN_EMPHASIS_OPEN_0>aim<SPAN_CLOSE_2>, then [ACTION_WEB_ZIP_OBJ2] to <SPAN_EMPHASIS_OPEN_1>perch<SPAN_CLOSE_3> near spy cams.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_STEALTH_CHALLENGE", "source": "Take out all enemies without being sighted.", "translation": "", "note": ""}
+{"key": "HELP_TASKMASTER_WEBTHROWBOMBS", "source": "Tap [BTN_RB] <SPAN_EMPHASIS_OPEN_0>repeatedly<SPAN_CLOSE_2> to muffle thrown bombs for <SPAN_EMPHASIS_OPEN_1>bonus<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_TEXT_UNSUB_JJJ", "source": "Unsubscribe from Just the Facts with J. Jonah Jameson in the Settings Menu under Audio.", "translation": "", "note": ""}
+{"key": "HELP_TURNOFFLIGHTS", "source": "Use Electric Webs to turn off lights", "translation": "", "note": ""}
+{"key": "HELP_VENT_TD", "source": "Press [BTN_X] for <SPAN_EMPHASIS_OPEN_0>Vent Takedown<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_VN_TOMBSTONE_HAZARD_NOISE", "source": "Avoid walking into <SPAN_EMPHASIS_OPEN_0>boxes and broken glass<SPAN_CLOSE_1>. The sound they make will alert enemies.", "translation": "", "note": ""}
+{"key": "HELP_VN_TOMBSTONE_TOOLBOX_DISTRACT", "source": "Some objects can be pushed to the left or right to direct enemies.", "translation": "", "note": ""}
+{"key": "HELP_WALL_ATTACK", "source": "Dodge [BTN_B] onto a <SPAN_EMPHASIS_OPEN_0>wall<SPAN_CLOSE_2> and press [BTN_X] to perform an <SPAN_EMPHASIS_OPEN_1>Off The Wall Attack<SPAN_CLOSE_3>.", "translation": "", "note": ""}
+{"key": "HELP_WEBSHOOTER", "source": "Tap [BTN_RB] <SPAN_EMPHASIS_OPEN_0>repeatedly<SPAN_CLOSE_1> to web up enemies.", "translation": "", "note": ""}
+{"key": "HELP_WEBSTRIKE", "source": "Tap [BTN_Y] to <SPAN_EMPHASIS_OPEN_0>Web Strike<SPAN_CLOSE_1>.", "translation": "", "note": ""}
+{"key": "HELP_WEB_HEAVY", "source": "Tap [BTN_RB] <SPAN_EMPHASIS_OPEN_0>repeatedly<SPAN_CLOSE_1> to web up Brutes.", "translation": "", "note": ""}
+{"key": "HELP_WEB_TUNNEL", "source": "Press [ACTION_ZIP_TO_POINT] to perform the <SPAN_EMPHASIS_OPEN_0>Web Tunnel<SPAN_CLOSE_1> move.", "translation": "", "note": ""}
+{"key": "HELP_WS_ASBESTOS_NEUTRALIZE", "source": "Hold [ACTION_WEB_YANK] to neutralize the chemical.", "translation": "", "note": ""}
+{"key": "HELP_WS_ASBESTOS_THROWFROMAIR", "source": "Hold [ACTION_WEB_YANK] while in air to <SPAN_EMPHASIS_OPEN_0>throw<SPAN_CLOSE_1> concrete bags.", "translation": "", "note": ""}
+{"key": "HELP_WS_FREQUENCY_AVOIDBANDWITH", "source": "Avoid the bandwidth scan as you go to the next cell tower.", "translation": "", "note": ""}
+{"key": "HELP_WS_SEISMIC_BLUEPIPES", "source": "Follow the blue pipes to the pressure zones.", "translation": "", "note": ""}
+{"key": "HELP_WS_SEISMIC_IMPACTS", "source": "Intense impacts create shock-wave data the Oscorp satellite can use to find the problem areas.", "translation": "", "note": ""}
+{"key": "HELP_WS_UPLINK_2_GOTO_OSCORP", "source": "Get to the top of Oscorp Tower.", "translation": "", "note": ""}
+{"key": "HELP_WS_UPLINK_2_LINK_OSCORP", "source": "Link Oscorp with the Research Stations.", "translation": "", "note": ""}
+{"key": "HELP_ZIPTOSURFACE_REMINDER", "source": "Press [ACTION_WEB_ZIP_OBJ2] to <SPAN_EMPHASIS_OPEN_0>zip to a surface<SPAN_CLOSE_1> while aiming at the surface.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_001", "source": "<TSMARKER_0>Sure is. From the outside.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_002", "source": "<TSMARKER_0>They're gonna be real surprised.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_003", "source": "<TSMARKER_0>So like... <TSMARKER_1>the first day of school.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_004", "source": "<TSMARKER_0>So the Maggia's hiding all the other Dons in the same spot?", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_005", "source": "<TSMARKER_0>Why would they do that? <TSMARKER_1>It didn't work out well for them at the Sanitarium.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_006", "source": "<TSMARKER_0>Well. That's why we work for Hammerhead, huh?", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_007", "source": "<TSMARKER_0>He has really cool guns.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_008", "source": "<TSMARKER_0>Oh yeah. They feel real good.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_009", "source": "<TSMARKER_0>And those people are us.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_010", "source": "<TSMARKER_0>You see that?", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_011", "source": "<TSMARKER_0>Rats! ", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_012", "source": "<TSMARKER_0>Who do we even call about somethin' like that?", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_013", "source": "<TSMARKER_0>I don't know, man.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_014", "source": "<TSMARKER_0>Okay. I'm done. We are done for the day.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_015", "source": "<TSMARKER_0>Way ahead of ya. Make sure you lock the door behind you.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_016", "source": "<TSMARKER_0>There an eclectic box in here?", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_017", "source": "<TSMARKER_0>That's what I said.", "translation": "", "note": ""}
+{"key": "HHT0_CNTS_HH_BAR_018", "source": "<TSMARKER_0>I love those dogs.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_001", "source": "<TSMARKER_0>Keep an eye out. Spider-Man could still be here.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_003", "source": "<TSMARKER_0>What... <TSMARKER_1>Hey, <TSMARKER_2>waitwaitwaitwait. Hey... HELP!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_004", "source": "<TSMARKER_0>Keep him distracted! I'm almost to the exit!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_005", "source": "<TSMARKER_0>There's the exit! Just gotta get out.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_007", "source": "<TSMARKER_0>They give us any trouble, Boss says kill on sight.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_008", "source": "<TSMARKER_0>The Boss wants the Maria. He says we can keep anything else.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_009", "source": "<TSMARKER_0>The Maria's valuable to the boss. That's all that counts. <TSMARKER_1>Not sure how, but it's supposed to give us a leg up on the other families.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_010", "source": "<TSMARKER_0>Skip this and you better skip town. <TSMARKER_1>Boss said the Maria's the key to taking over the families.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_011", "source": "<TSMARKER_0>Eyes open. The signal we got means Spider-Man's around.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_012", "source": "<TSMARKER_0>You all know the plan. Be ready for anything.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_013", "source": "<TSMARKER_0>I don't see Spider-Man nowhere.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_014", "source": "<TSMARKER_0>Boss said you can grab what you want AFTER the Maria's secure. Not before. <TSMARKER_1>Don't ask me why all the Dons want it, but they do.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_015", "source": "<TSMARKER_0>Well, we got a job to do before they show up, so let's do it.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_016", "source": "<TSMARKER_0>Worry about your job. <TSMARKER_1>Let the other guys handle theirs.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_017", "source": "<TSMARKER_0>Too bad, loser! I'm home free!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_018", "source": "<TSMARKER_0>This one looks expensive-- <TSMARKER_1>I'm takin' it!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_019", "source": "<TSMARKER_0>This looks ugly, but also expensive.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC01_020", "source": "<TSMARKER_0>Aww, damnit, <TSMARKER_1>got it locked behind security glass. <TSMARKER_2>Hey! Tell Frank we're gonna need to break out the big guns!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_003", "source": "<name=&quot;CICE&quot;><TSMARKER_0>Spider-Man? <TSMARKER_1>He's workin' with the Cat-- get him!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_004", "source": "<TSMARKER_0>Did you get it?", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_005", "source": "<TSMARKER_0>What the hell, where's the drive?", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_006", "source": "<TSMARKER_0>Didn't I tell you to get the drive?", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_007", "source": "<TSMARKER_0>So, I tell you to do something, and you don't do it. <TSMARKER_1>Now.<TSMARKER_2>You know what happens next.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_008", "source": "<TSMARKER_0>KILL HIM!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_009", "source": "<name=&quot;HTG1&quot;><TSMARKER_0>Nobody steals from the Cicero family and lives!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_010", "source": "<name=&quot;HTG1&quot;><TSMARKER_0>The Cicero family ain't afraid of Hammerhead. ", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_011", "source": "<name=&quot;HTG1&quot;><TSMARKER_0>Tell Hammerhead, he messes with the Ciceros, we go to war.", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC02_012", "source": "<name=&quot;HTG1&quot;><TSMARKER_0>The Ciceros were right-- Spider-Man's working for Hammerhead!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC03_002", "source": "<TSMARKER_0>We need backup, now!", "translation": "", "note": ""}
+{"key": "HHT1_CNTS_BC03_003", "source": "<TSMARKER_0>Ain't enough! Call Andy's boys, get 'em down here!", "translation": "", "note": ""}
