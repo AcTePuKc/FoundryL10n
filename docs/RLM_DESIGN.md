@@ -71,7 +71,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 
 ### Outputs
 
-- **is_valid (bool)**: `true` when placeholder sequences match exactly.
+- **is_valid (bool)**: `true` when placeholder sequences match in order and multiplicity.
 - **mismatches (list[dict])**: Details for QA and UI.
   - Example: `{"index": 2, "expected": "<TSMARKER_2>", "actual": "<TSMARKER_3>"}`
 - **risk_flags (list[str])**: e.g. `"missing_tag"`, `"extra_tag"`, `"reordered_tags"`.
