@@ -27,8 +27,16 @@ class EditorPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QHBoxLayout(self)
+        self._main_layout = QHBoxLayout(self)
+        self._create_editor_container()
+        self._create_highlighters()
+        self._configure_shortcuts()
+        self._create_provider_side_panel()
+        self._wire_signals()
+        self._main_layout.addWidget(self.editor_container, 1)
+        self._main_layout.addWidget(self.provider_fields_panel)
 
+    def _create_editor_container(self) -> None:
         # 1. Widgets
         self.source_label = QLabel(I18N.t("ui_editor_source_label"))
         self.editor_container = QWidget()
@@ -36,7 +44,7 @@ class EditorPanel(QWidget):
         editor_layout.addWidget(self.source_label)
         self.source_edit = QTextEdit()
         self.source_edit.setReadOnly(True)
-        
+
         editor_layout.addWidget(self.source_edit)
 
         self.ai_draft_label = QLabel(I18N.t("ui_editor_ai_draft_label"))
@@ -114,7 +122,6 @@ class EditorPanel(QWidget):
         self.btn_invisibles = QPushButton(I18N.t("btn_show_invisibles"))
         self.btn_invisibles.setCheckable(True)
         self.btn_invisibles.setFixedWidth(60)
-        self.btn_invisibles.clicked.connect(self.toggle_invisibles)
         nav_layout.addWidget(self.btn_rollback)
         nav_layout.addWidget(self.btn_prev)
         nav_layout.addWidget(self.btn_next)
@@ -145,14 +152,17 @@ class EditorPanel(QWidget):
         self.btn_use_fuzzy.setVisible(False)
         editor_layout.addWidget(self.btn_use_fuzzy)
 
+    def _create_highlighters(self) -> None:
         # 2. Highlighting
         self.source_highlighter = TagHighlighter(self.source_edit.document())
         self.trans_highlighter = TagHighlighter(self.trans_edit.document())
 
+    def _configure_shortcuts(self) -> None:
         # 3. Shortcuts
         self.trans_edit.installEventFilter(self)
         self.set_tag_chips([])
 
+    def _create_provider_side_panel(self) -> None:
         self.provider_fields_panel = QWidget()
         provider_fields_layout = QVBoxLayout(self.provider_fields_panel)
         provider_fields_layout.setContentsMargins(8, 0, 0, 0)
@@ -167,9 +177,6 @@ class EditorPanel(QWidget):
             Qt.ToolButtonStyle.ToolButtonTextBesideIcon
         )
         self.provider_fields_toggle.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.provider_fields_toggle.toggled.connect(
-            self.toggle_provider_fields_panel
-        )
         provider_fields_layout.addWidget(self.provider_fields_toggle)
 
         self.provider_fields_body = QWidget()
@@ -188,8 +195,11 @@ class EditorPanel(QWidget):
         provider_fields_layout.addWidget(self.provider_fields_body)
         self.provider_fields_body.setVisible(False)
 
-        layout.addWidget(self.editor_container, 1)
-        layout.addWidget(self.provider_fields_panel)
+    def _wire_signals(self) -> None:
+        self.btn_invisibles.clicked.connect(self.toggle_invisibles)
+        self.provider_fields_toggle.toggled.connect(
+            self.toggle_provider_fields_panel
+        )
 
     def _extract_tags(self, text: str) -> list[str]:
         return extract_tags(text)
