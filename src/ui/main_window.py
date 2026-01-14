@@ -2288,7 +2288,7 @@ class FoundryGUI(QMainWindow):
             self,
             I18N.t("btn_import_tsv"),
             "",
-            I18N.t("filter_tsv"),
+            I18N.t("filter_tsv_json"),
         )
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         dialog.setModal(False)
@@ -2335,8 +2335,8 @@ class FoundryGUI(QMainWindow):
         self.table.blockSignals(True)
 
         try:
-            # 1. Parse the TSV
-            self.segments = self._tsv_parser.parse_tsv(self.input_path)
+            # 1. Parse the TSV/JSON
+            self.segments = self._tsv_parser.parse_path(self.input_path)
             self.table.setRowCount(len(self.segments))
 
             # 2. Get current project settings

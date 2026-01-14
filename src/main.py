@@ -146,7 +146,7 @@ def translate_file(
     project: str = typer.Option("default", "--project", "-p"),
     out: str | None = typer.Option(None, "--out", "-o"),
 ):
-    """Translate a TSV file via CLI."""
+    """Translate a TSV/JSON file via CLI."""
     parser = FoundryParser()
     
     llm_service = LLMService(model_name=model, timeout=timeout)
@@ -163,7 +163,7 @@ def translate_file(
         print(I18N.t("cli_file_missing_error").format(path=path))
         raise typer.Exit(code=1)
         
-    segments = parser.parse_tsv(input_path)
+    segments = parser.parse_path(input_path)
     
     print(I18N.t("cli_found_segments").format(count=len(segments), model=model))
     
