@@ -260,6 +260,7 @@ class FoundryGUI(QMainWindow):
         self.btn_run.clicked.connect(self.handle_run_clicked)
         self.btn_run.setMinimumHeight(40)
         self.btn_run.setStyleSheet("font-weight: bold;")
+        self._bulk_stopping = False
 
         self.lbl_stats = QLabel(
             self._format_stats_text(0, 0, 0, 0, 0, 0))
@@ -2021,10 +2022,17 @@ class FoundryGUI(QMainWindow):
         )
 
     def _update_run_button_text(self):
-        if hasattr(self, 'worker') and self.worker.isRunning():
+        if self._bulk_stopping:
+            self.btn_run.setText(I18N.t("ui_stopping_bulk"))
+            self.btn_run.setEnabled(False)
+            self.btn_run.setStyleSheet(
+                "background-color: #aa3333; font-weight: bold;"
+            )
+        elif hasattr(self, 'worker') and self.worker.isRunning():
             self.btn_run.setText(I18N.t("ui_stop_bulk"))
         else:
             self.btn_run.setText(I18N.t("ui_start_bulk"))
+            self.btn_run.setEnabled(True)
 
     def _update_translate_button_text(self):
         if hasattr(self, "single_worker") and self.single_worker.isRunning():
@@ -2174,13 +2182,18 @@ class FoundryGUI(QMainWindow):
     def handle_run_clicked(self):
         if hasattr(self, 'worker') and self.worker.isRunning():
             self.worker.stop()
-            self.btn_run.setText(I18N.t("ui_start_bulk"))
-            self.progress_bar.setValue(0)  # RESET BAR
+            self._bulk_stopping = True
+            self.btn_run.setEnabled(False)
+            self.btn_run.setText(I18N.t("ui_stopping_bulk"))
+            self.btn_run.setStyleSheet(
+                "background-color: #aa3333; font-weight: bold;"
+            )
         else:
             self.start_translation()
 
     def start_translation(self):
         settings = self.settings_tab.get_settings()
+        self._bulk_stopping = False
         self.btn_run.setText(I18N.t("ui_stop_bulk"))
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
@@ -2435,6 +2448,7 @@ class FoundryGUI(QMainWindow):
             self.table.setCurrentCell(val - 1, 1)
 
     def on_done(self, result):
+        self._bulk_stopping = False
         self.btn_run.setEnabled(True)
         self.btn_run.setText(I18N.t("ui_start_bulk"))
         self.btn_run.setStyleSheet("font-weight: bold;")
