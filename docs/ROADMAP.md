@@ -70,8 +70,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 **Focus:** Scaling the ecosystem.
 
-**Remaining unchecked items (next steps):**
-* **Advanced Mapping:** Define, render, and persist provider-defined custom fields in the editor panel (schema extension, UI adapter, data binding, and validation hints). See the detailed plan below.
+**Remaining unchecked items (next steps):** Advanced Mapping (see item below).
 
 * [x] **Multi-Provider Support:** Open documentation for other communities to write their own plugins.
   * Note: Completed. The community-facing [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md) is now available, complementing the existing [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md).
