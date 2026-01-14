@@ -146,7 +146,7 @@ def translate_file(
     project: str = typer.Option("default", "--project", "-p"),
     out: str | None = typer.Option(None, "--out", "-o"),
 ):
-    """Translate a TSV/JSON file via CLI."""
+    """Translate a TSV/JSON/JSONL file via CLI."""
     parser = FoundryParser()
     
     llm_service = LLMService(model_name=model, timeout=timeout)

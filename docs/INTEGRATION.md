@@ -396,7 +396,7 @@ POST /api/segments/{id}/suggestions
 
 * **Explicit Actions:** No background syncing. Users must manually click "Fetch" and "Submit Suggestions."
 * **TSV Fallback:** If a website does not have an API, the app provides a high-quality **TSV Import/Export** mode compatible with standard game translation formats.
-* **Optional JSON Import:** JSON can be imported alongside TSV. Minimal format is a list of objects (or `{ "segments": [...] }`) containing `key` and `source` fields; `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps are optional.
+* **Optional JSON/JSONL Import:** JSON and JSONL can be imported alongside TSV. JSON accepts a list of objects (or `{ "segments": [...] }`); JSONL expects one object per line. Minimal fields are `key` and `source`; `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps are optional.
 * **Remote-synced context awareness:** When segments originate from a remote provider, the LLM context includes the remote source + target text to preserve upstream intent, and drafting never triggers auto-sync; submissions stay manual via "Submit Suggestions."
 
 ```json
@@ -445,7 +445,7 @@ No Provider
         └─(Login/Auth)─> Provider Selected (Authenticated)
               └─(Select Project)─> Project Context Ready (No Data)
                     ├─(Fetch Segments)─> Project Context Active (Local Cache Updated)
-                    └─(Import TSV)─> Local Cache Updated (Offline)
+                    └─(Import)─> Local Cache Updated (Offline)
 Project Context Active
   ├─(Submit Suggestions)─> Remote Suggestion Sync (Manual)
   └─(Switch Provider/Project)─> Context Reset (Local data preserved)
@@ -455,7 +455,7 @@ Project Context Active
 
 * **Fetch Segments** (manual action) → pulls from remote into local cache.
 * **Submit Suggestions** (manual action) → sends local drafts as suggestions.
-* **Import/Export TSV** (manual action) → offline-first data exchange without remote calls.
+* **Import/Export** (manual action) → offline-first data exchange without remote calls.
 
 **Offline-first expectations:**
 

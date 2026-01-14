@@ -98,9 +98,8 @@ Tasks about validation and developer scripts.
 * [x] Note: Runtime package clean after mock server move (no mock server imports in src).
 * [x] Docs: Note README provider integration overview + config-driven communication in docs backlog.
 * [x] Docs: Add style guide for ORM/type-checking rules and link it from integration docs.
-* [ ] **Note:** Added optional JSON import format support and documentation alongside TSV.  
-      JSONL is currently not supported — we need to add JSONL to the supported import formats.  
-      Also renamed `Import TSV` to `Import` since multiple file formats are now allowed.
+* [x] **Note:** Added optional JSON/JSONL import format support and documentation alongside TSV.  
+      Renamed `Import TSV` to `Import` since multiple file formats are now allowed.
 
 * [ ] **Note:** Implement export based on the imported file format, with the option to export as `TSV` / `JSON` / `JSONL`.  
       Renamed `Export TSV` to `Export` for consistency with multi-format support.
