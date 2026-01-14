@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
-                               QPushButton, QHBoxLayout, QCheckBox, QListWidget)
+                               QPushButton, QHBoxLayout, QCheckBox,
+                               QListWidget, QToolButton)
 from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent
@@ -26,40 +27,42 @@ class EditorPanel(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
 
         # 1. Widgets
         self.source_label = QLabel(I18N.t("ui_editor_source_label"))
-        layout.addWidget(self.source_label)
+        self.editor_container = QWidget()
+        editor_layout = QVBoxLayout(self.editor_container)
+        editor_layout.addWidget(self.source_label)
         self.source_edit = QTextEdit()
         self.source_edit.setReadOnly(True)
         
-        layout.addWidget(self.source_edit)
+        editor_layout.addWidget(self.source_edit)
 
         self.ai_draft_label = QLabel(I18N.t("ui_editor_ai_draft_label"))
-        layout.addWidget(self.ai_draft_label)
+        editor_layout.addWidget(self.ai_draft_label)
         self.ai_draft_display = QTextEdit()
         self.ai_draft_display.setReadOnly(True)
         self.ai_draft_display.setMaximumHeight(60)
         self.ai_draft_display.setStyleSheet(
             "font-style: italic;"
         )
-        layout.addWidget(self.ai_draft_display)
+        editor_layout.addWidget(self.ai_draft_display)
 
         self.tag_helper_label = QLabel(I18N.t("ui_tag_helper_label"))
         self.tag_helper_label.setToolTip(I18N.t("ui_tag_helper_tooltip"))
-        layout.addWidget(self.tag_helper_label)
+        editor_layout.addWidget(self.tag_helper_label)
         self.tag_helper_container = QWidget()
         self.tag_helper_layout = QHBoxLayout(self.tag_helper_container)
         self.tag_helper_layout.setContentsMargins(0, 0, 0, 0)
         self.tag_helper_layout.setSpacing(4)
-        layout.addWidget(self.tag_helper_container)
+        editor_layout.addWidget(self.tag_helper_container)
         self._tag_buttons = []
 
         self.active_translation_label = QLabel(
             I18N.t("ui_editor_active_translation_label")
         )
-        layout.addWidget(self.active_translation_label)
+        editor_layout.addWidget(self.active_translation_label)
 
         self.remote_change_container = QWidget()
         remote_layout = QVBoxLayout(self.remote_change_container)
@@ -83,9 +86,9 @@ class EditorPanel(QWidget):
         )
         remote_layout.addWidget(self.remote_change_diff)
         self.remote_change_container.setVisible(False)
-        layout.addWidget(self.remote_change_container)
+        editor_layout.addWidget(self.remote_change_container)
         self.trans_edit = QTextEdit()
-        layout.addWidget(self.trans_edit)
+        editor_layout.addWidget(self.trans_edit)
 
         # Controls
         ctrl_layout = QHBoxLayout()
@@ -101,7 +104,7 @@ class EditorPanel(QWidget):
         ctrl_layout.addWidget(self.cb_verified)
         ctrl_layout.addWidget(self.btn_translate_now)
         ctrl_layout.addWidget(self.btn_save)
-        layout.addLayout(ctrl_layout)
+        editor_layout.addLayout(ctrl_layout)
 
         # Navigation
         nav_layout = QHBoxLayout()
@@ -116,31 +119,31 @@ class EditorPanel(QWidget):
         nav_layout.addWidget(self.btn_prev)
         nav_layout.addWidget(self.btn_next)
         nav_layout.addWidget(self.btn_invisibles)
-        layout.addLayout(nav_layout)
+        editor_layout.addLayout(nav_layout)
 
         self.history_label = QLabel(I18N.t("ui_history_label"))
-        layout.addWidget(self.history_label)
+        editor_layout.addWidget(self.history_label)
         self.history_list = QListWidget()
         self.history_list.setMaximumHeight(120)
-        layout.addWidget(self.history_list)
+        editor_layout.addWidget(self.history_list)
         self.btn_use_history = QPushButton(I18N.t("btn_use_history"))
         self.btn_use_history.setEnabled(False)
-        layout.addWidget(self.btn_use_history)
+        editor_layout.addWidget(self.btn_use_history)
 
         # 7. Fuzzy Match Suggestion
         self.fuzzy_label = QLabel(I18N.t("ui_fuzzy_label"))
-        layout.addWidget(self.fuzzy_label)
+        editor_layout.addWidget(self.fuzzy_label)
         self.fuzzy_display = QTextEdit()
         self.fuzzy_display.setReadOnly(True)
         self.fuzzy_display.setMaximumHeight(80)
         self.fuzzy_display.setStyleSheet(
             "background-color: #0d47a1; color: white; border-radius: 4px;"
         )
-        layout.addWidget(self.fuzzy_display)
+        editor_layout.addWidget(self.fuzzy_display)
 
         self.btn_use_fuzzy = QPushButton(I18N.t("btn_use_suggestion"))
         self.btn_use_fuzzy.setVisible(False)
-        layout.addWidget(self.btn_use_fuzzy)
+        editor_layout.addWidget(self.btn_use_fuzzy)
 
         # 2. Highlighting
         self.source_highlighter = TagHighlighter(self.source_edit.document())
@@ -149,6 +152,44 @@ class EditorPanel(QWidget):
         # 3. Shortcuts
         self.trans_edit.installEventFilter(self)
         self.set_tag_chips([])
+
+        self.provider_fields_panel = QWidget()
+        provider_fields_layout = QVBoxLayout(self.provider_fields_panel)
+        provider_fields_layout.setContentsMargins(8, 0, 0, 0)
+        provider_fields_layout.setSpacing(6)
+
+        self.provider_fields_toggle = QToolButton()
+        self.provider_fields_toggle.setText(I18N.t("ui_provider_fields"))
+        self.provider_fields_toggle.setCheckable(True)
+        self.provider_fields_toggle.setChecked(False)
+        self.provider_fields_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        self.provider_fields_toggle.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        )
+        self.provider_fields_toggle.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.provider_fields_toggle.toggled.connect(
+            self.toggle_provider_fields_panel
+        )
+        provider_fields_layout.addWidget(self.provider_fields_toggle)
+
+        self.provider_fields_body = QWidget()
+        provider_fields_body_layout = QVBoxLayout(self.provider_fields_body)
+        provider_fields_body_layout.setContentsMargins(4, 0, 0, 0)
+        provider_fields_body_layout.setSpacing(4)
+        self.provider_fields_placeholder = QLabel(
+            I18N.t("ui_provider_fields_empty")
+        )
+        self.provider_fields_placeholder.setStyleSheet(
+            "color: #90a4ae; font-style: italic;"
+        )
+        provider_fields_body_layout.addWidget(
+            self.provider_fields_placeholder
+        )
+        provider_fields_layout.addWidget(self.provider_fields_body)
+        self.provider_fields_body.setVisible(False)
+
+        layout.addWidget(self.editor_container, 1)
+        layout.addWidget(self.provider_fields_panel)
 
     def _extract_tags(self, text: str) -> list[str]:
         return extract_tags(text)
@@ -237,6 +278,12 @@ class EditorPanel(QWidget):
             self.remote_change_diff.clear()
             self.remote_change_container.setVisible(False)
 
+    def toggle_provider_fields_panel(self, is_open: bool) -> None:
+        self.provider_fields_body.setVisible(is_open)
+        self.provider_fields_toggle.setArrowType(
+            Qt.ArrowType.DownArrow if is_open else Qt.ArrowType.RightArrow
+        )
+
     def retranslate_ui(self):
         translatable_widgets = {
             self.source_label: "ui_editor_source_label",
@@ -254,6 +301,8 @@ class EditorPanel(QWidget):
             self.btn_use_history: "btn_use_history",
             self.fuzzy_label: "ui_fuzzy_label",
             self.btn_use_fuzzy: "btn_use_suggestion",
+            self.provider_fields_toggle: "ui_provider_fields",
+            self.provider_fields_placeholder: "ui_provider_fields_empty",
         }
         for widget, key in translatable_widgets.items():
             widget.setText(I18N.t(key))
