@@ -150,8 +150,9 @@ class TranslationEngine:
 
         if alerts:
             base = seg.thought or ""
-            seg.thought = "⚠️ " + \
-                " | ".join(alerts) + ((" | " + base) if base else "")
+            if base.startswith("⚠️ "):
+                base = base[len("⚠️ "):]
+            seg.thought = "⚠️ " + " | ".join(alerts) + ((" | " + base) if base else "")
             return True
 
         return False
@@ -319,6 +320,7 @@ class TranslationEngine:
         )
         success = validation.is_valid
         final_text = self.masker.unmask(candidate_text, tokens)
+        placeholder_warning = ""
 
         if not success and num_source_tags > 0:
             seg.repair_attempted = True
@@ -349,6 +351,8 @@ class TranslationEngine:
                 seg.repair_success = True
             else:
                 seg.repair_failed = True
+                if not strict:
+                    placeholder_warning = I18N.t("audit_placeholder_warning")
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text
@@ -365,6 +369,11 @@ class TranslationEngine:
 
         seg.translation = final_text
         seg.thought = " | ".join(thoughts)
+        if placeholder_warning:
+            if seg.thought:
+                seg.thought = f"⚠️ {placeholder_warning} | {seg.thought}"
+            else:
+                seg.thought = f"⚠️ {placeholder_warning}"
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text

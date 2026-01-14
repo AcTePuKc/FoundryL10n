@@ -127,8 +127,8 @@ Instruction: *Insert missing placeholders without altering translated words.*
   - Provide explicit list of required placeholders in order.
 - Re-run the validator after repair.
 - If still invalid:
-  - **Strict mode:** mark as blocking error; do not auto-accept.
-  - **Non-strict:** accept best effort with a warning marker.
+  - **Strict mode:** mark as blocking error; do not auto-accept; keep segment in draft/AI state with the existing placeholder error marker.
+  - **Non-strict:** accept best effort with a non-blocking warning marker (no placeholder error prefix).
 
 ### QA Integration
 

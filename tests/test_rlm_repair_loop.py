@@ -1,4 +1,5 @@
 from core.engine import TranslationEngine
+import core.engine as engine_module
 from core.parser import TranslationSegment
 
 
@@ -78,3 +79,72 @@ def test_repair_loop_failure_keeps_tag_error():
     assert seg.repair_attempted
     assert not seg.repair_success
     assert seg.repair_failed
+
+
+def test_repair_loop_failure_strict_blocks_auto_accept(monkeypatch):
+    llm = DummyLLM(
+        translate_responses=["Здравей <BR_1> ", "!"],
+        repair_response="Здравей!",
+    )
+    engine = TranslationEngine(llm)
+    seg = TranslationSegment("seg-3", "Hello {name}!")
+    saved = []
+
+    monkeypatch.setattr(engine_module, "get_cached_record", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        engine_module,
+        "save_translation",
+        lambda *args, **kwargs: saved.append((args, kwargs)),
+    )
+
+    engine.run_translation(
+        [seg],
+        target_lang="BG",
+        glossary="",
+        style="",
+        forbidden="",
+        temp=0.1,
+        strict=True,
+        prompt_template="",
+        glossary_dict=None,
+        project_name="default",
+    )
+
+    assert seg.translation.startswith("[TAG ERROR]")
+    assert seg.repair_failed
+    assert saved == []
+
+
+def test_repair_loop_failure_non_strict_allows_auto_accept(monkeypatch):
+    llm = DummyLLM(
+        translate_responses=["Здравей <BR_1> ", "!"],
+        repair_response="Здравей!",
+    )
+    engine = TranslationEngine(llm)
+    seg = TranslationSegment("seg-4", "Hello {name}!")
+    saved = []
+
+    monkeypatch.setattr(engine_module, "get_cached_record", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        engine_module,
+        "save_translation",
+        lambda *args, **kwargs: saved.append((args, kwargs)),
+    )
+
+    engine.run_translation(
+        [seg],
+        target_lang="BG",
+        glossary="",
+        style="",
+        forbidden="",
+        temp=0.1,
+        strict=False,
+        prompt_template="",
+        glossary_dict=None,
+        project_name="default",
+    )
+
+    assert "[TAG ERROR]" not in seg.translation
+    assert "⚠️" in (seg.thought or "")
+    assert seg.repair_failed
+    assert len(saved) == 1
