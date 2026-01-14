@@ -152,6 +152,8 @@ class FoundryParser:
                     ) from e
                 if isinstance(data, dict):
                     rows.append(data)
+                else:
+                    raise ValueError(f"Invalid JSONL at line {line_number} in file: {file_path} - expected a JSON object but found {type(data).__name__}.")
 
         return self._parse_rows(rows)
 
