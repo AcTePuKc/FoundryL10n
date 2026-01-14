@@ -147,7 +147,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
   - Risk: batch flows could spam warnings; keep summary counters and avoid modal errors.
 - **Human post-editing roundtrips**
   - Guardrail: always preserve placeholders in source/target panes; never auto-accept after repair.
-  - Risk: repair could overwrite translator edits; only trigger on machine outputs, not on confirmed human edits.
+- Risk: repair could overwrite translator edits; only trigger on machine outputs (e.g., segments in `draft` state), not on confirmed human edits (`verified` segments).
 
 ## Open Questions / Assumptions
 
