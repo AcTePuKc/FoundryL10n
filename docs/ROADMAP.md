@@ -75,7 +75,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Multi-Provider Support:** Open documentation for other communities to write their own plugins.
   * Note: Completed. The community-facing [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md) is now available, complementing the existing [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md).
 * [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
-  * Note: mapping is currently limited to `source_text`, `target_text`, and `segment_id` in the [schema](../src/plugins/schema.json), and only those paths are consumed by the provider HTTP client. The editor has a **collapsible provider fields panel shell** (`src/ui/editor_panel.py`), but there is **no** custom field metadata, rendering, or persistence yet.
+  * Note: mapping is currently limited to `source_text`, `target_text`, and `segment_id` in the [schema](../src/plugins/schema.json), and only those paths are consumed by the [provider HTTP client](../src/services/provider_http_client.py). The editor has a **collapsible provider fields panel shell** (`src/ui/editor_panel.py`), but there is **no** custom field metadata, rendering, or persistence yet.
   * Minimal plan (**next steps**):
     1. **Schema extension + parsing:** Add provider-defined custom field metadata (labels, types, optionality, defaults, validation hints) to the plugin schema and load it alongside existing mapping paths.
     2. **Schema-to-UI adapter:** Convert field metadata into editor widgets (reusing existing input types only) and render them inside the provider fields panel.
