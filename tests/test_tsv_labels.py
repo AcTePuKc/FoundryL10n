@@ -39,6 +39,6 @@ def test_import_tsv_labels_are_consistent(qapp, qsettings, monkeypatch):
     monkeypatch.setattr(LLMService, "get_models", lambda self: ["model-a"])
     window = FoundryGUI()
     try:
-        assert window.btn_open.text() == I18N.t("btn_import_tsv")
+        assert window.btn_open.text() == I18N.t("btn_import")
     finally:
         window.close()

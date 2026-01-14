@@ -152,14 +152,14 @@ class FoundryGUI(QMainWindow):
 
         # --- TOP CONTROL BAR ---
         top_bar = QHBoxLayout()
-        self.btn_open = QPushButton(I18N.t("btn_import_tsv"))
+        self.btn_open = QPushButton(I18N.t("btn_import"))
         self.btn_open.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_open.clicked.connect(self.request_tsv_import)
 
-        self.btn_export_tsv = QPushButton(I18N.t("btn_export_tsv"))
-        self.btn_export_tsv.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.btn_export_tsv.setEnabled(False)
-        self.btn_export_tsv.clicked.connect(self.request_tsv_export)
+        self.btn_export = QPushButton(I18N.t("btn_export"))
+        self.btn_export.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.btn_export.setEnabled(False)
+        self.btn_export.clicked.connect(self.request_tsv_export)
 
         self.file_label = QLabel(I18N.t("ui_no_file_selected"))
         self.file_label.setStyleSheet("color: #888; font-style: italic;")
@@ -187,7 +187,7 @@ class FoundryGUI(QMainWindow):
         top_bar.addWidget(self.btn_reverse_zen)
 
         top_bar.addWidget(self.btn_open)
-        top_bar.addWidget(self.btn_export_tsv)
+        top_bar.addWidget(self.btn_export)
         top_bar.addWidget(self.file_label, 1)  # Give it stretch
         self.search_label = QLabel(I18N.t("ui_search_label"))
         top_bar.addWidget(self.search_label)
@@ -2339,7 +2339,7 @@ class FoundryGUI(QMainWindow):
         self._capture_workflow_focus()
         dialog = QFileDialog(
             self,
-            I18N.t("btn_import_tsv"),
+            I18N.t("btn_import"),
             "",
             I18N.t("filter_tsv_json"),
         )
@@ -2358,7 +2358,7 @@ class FoundryGUI(QMainWindow):
         self._capture_workflow_focus()
         dialog = QFileDialog(
             self,
-            I18N.t("btn_export_tsv"),
+            I18N.t("btn_export"),
             "",
             I18N.t("filter_tsv"),
         )
@@ -2447,7 +2447,7 @@ class FoundryGUI(QMainWindow):
 
         # Final consistency audit for 🔵 markers
         self.audit_database_consistency()
-        self.btn_export_tsv.setEnabled(True)
+        self.btn_export.setEnabled(True)
         self._restore_workflow_focus()
 
     def export_tsv_path(self, path: Path) -> None:
@@ -2880,8 +2880,8 @@ class FoundryGUI(QMainWindow):
                 I18N.t("tab_metrics"),
             )
 
-        self.btn_open.setText(I18N.t("btn_import_tsv"))
-        self.btn_export_tsv.setText(I18N.t("btn_export_tsv"))
+        self.btn_open.setText(I18N.t("btn_import"))
+        self.btn_export.setText(I18N.t("btn_export"))
         if not self._file_loaded:
             self.file_label.setText(I18N.t("ui_no_file_selected"))
         self.search_label.setText(I18N.t("ui_search_label"))
