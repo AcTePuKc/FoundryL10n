@@ -4,6 +4,7 @@ import csv
 import json
 import difflib
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Any
 from urllib.error import HTTPError, URLError
@@ -45,6 +46,15 @@ METRICS_MONO_STYLE = "font-family: 'Consolas', 'Courier New';"
 METRICS_MONO_BOLD_STYLE = f"{METRICS_MONO_STYLE} font-weight: bold;"
 
 
+@dataclass
+class BatchMetrics:
+    started_at: float | None = None
+    processed_rows: int = 0
+    duration_seconds: float | None = None
+    avg_seconds: float | None = None
+    model_name: str | None = None
+
+
 class FoundryGUI(QMainWindow):
     def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
         super().__init__()
@@ -67,11 +77,7 @@ class FoundryGUI(QMainWindow):
         self._remote_change_map: dict[str, dict[str, str]] = {}
         self.llm_request_count = 0
         self.llm_failure_count = 0
-        self._batch_started_at: float | None = None
-        self._batch_processed_rows = 0
-        self._batch_duration_seconds: float | None = None
-        self._batch_avg_seconds: float | None = None
-        self._batch_model_name: str | None = None
+        self._batch_metrics = BatchMetrics()
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -2139,9 +2145,13 @@ class FoundryGUI(QMainWindow):
 
     def _update_llm_metrics_label(self) -> None:
         if hasattr(self, "metrics_llm_label"):
-            batch_duration = self._format_seconds(self._batch_duration_seconds)
-            avg_row = self._format_seconds(self._batch_avg_seconds)
-            model_name = self._batch_model_name or I18N.t("metrics_model_unknown")
+            batch_duration = self._format_seconds(
+                self._batch_metrics.duration_seconds
+            )
+            avg_row = self._format_seconds(self._batch_metrics.avg_seconds)
+            model_name = self._batch_metrics.model_name or I18N.t(
+                "metrics_model_unknown"
+            )
             self.metrics_llm_label.setText(
                 I18N.t("metrics_llm_template").format(
                     requests=self.llm_request_count,
@@ -2158,7 +2168,7 @@ class FoundryGUI(QMainWindow):
             return "—"
         if value >= 60:
             minutes = int(value // 60)
-            seconds = value - (minutes * 60)
+            seconds = value % 60
             return f"{minutes}m {seconds:.1f}s"
         return f"{value:.1f}s"
 
@@ -2374,11 +2384,11 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
         self.llm_request_count += self._count_llm_requests(self.segments)
-        self._batch_started_at = time.monotonic()
-        self._batch_processed_rows = 0
-        self._batch_duration_seconds = None
-        self._batch_avg_seconds = None
-        self._batch_model_name = settings.get("model")
+        self._batch_metrics.started_at = time.monotonic()
+        self._batch_metrics.processed_rows = 0
+        self._batch_metrics.duration_seconds = None
+        self._batch_metrics.avg_seconds = None
+        self._batch_metrics.model_name = settings.get("model")
         self._update_llm_metrics_label()
 
         svc = LLMService(
@@ -2625,7 +2635,10 @@ class FoundryGUI(QMainWindow):
 
     def update_row_ui(self, val):
         self.progress_bar.setValue(val)
-        self._batch_processed_rows = max(self._batch_processed_rows, val)
+        self._batch_metrics.processed_rows = max(
+            self._batch_metrics.processed_rows,
+            val,
+        )
         self.update_row_visuals(val - 1)
         self.update_stats()
         if self.cb_follow.isChecked():
@@ -2639,15 +2652,18 @@ class FoundryGUI(QMainWindow):
         self.save_ui_state()
         self.settings_tab.save_settings()
         self._tally_llm_failures(result)
-        if self._batch_started_at is not None:
-            self._batch_duration_seconds = time.monotonic() - self._batch_started_at
-            if self._batch_processed_rows > 0:
-                self._batch_avg_seconds = (
-                    self._batch_duration_seconds / self._batch_processed_rows
+        if self._batch_metrics.started_at is not None:
+            self._batch_metrics.duration_seconds = (
+                time.monotonic() - self._batch_metrics.started_at
+            )
+            if self._batch_metrics.processed_rows > 0:
+                self._batch_metrics.avg_seconds = (
+                    self._batch_metrics.duration_seconds
+                    / self._batch_metrics.processed_rows
                 )
             else:
-                self._batch_avg_seconds = None
-            self._batch_started_at = None
+                self._batch_metrics.avg_seconds = None
+            self._batch_metrics.started_at = None
             self._update_llm_metrics_label()
 
         parser = FoundryParser()
