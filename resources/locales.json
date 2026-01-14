@@ -118,6 +118,8 @@
     "log_plugin_sync_conflicts": "Provider sync needs review: {count} conflicts.",
     "log_plugin_sync_error": "Provider sync error: {error}",
     "log_llm_unavailable": "<b>[WARN]</b> Local LLM unavailable: {error}",
+    "ui_provider_fields": "Provider Fields",
+    "ui_provider_fields_empty": "No provider fields configured.",
     "label_username": "Username",
     "label_password": "Password",
     "label_api_token": "API Token",
