@@ -34,6 +34,7 @@ class EditorPanel(QWidget):
         self._create_highlighters()
         self._configure_shortcuts()
         self._create_provider_side_panel()
+        self._init_provider_field_builders()
         self._wire_signals()
         self._main_layout.addWidget(self.editor_container, 1)
         self._main_layout.addWidget(self.provider_fields_panel)
@@ -205,6 +206,16 @@ class EditorPanel(QWidget):
         self.provider_fields_body.setVisible(False)
         self.provider_field_widgets: dict[str, QWidget] = {}
 
+    def _init_provider_field_builders(self) -> None:
+        self._field_builders = {
+            "text": self._build_text_widget,
+            "textarea": self._build_textarea_widget,
+            "number": self._build_number_widget,
+            "boolean": self._build_boolean_widget,
+            "select": self._build_select_widget,
+            "date": self._build_date_widget,
+        }
+
     def _clear_provider_fields(self) -> None:
         while self.provider_fields_form.count():
             item = self.provider_fields_form.takeAt(0)
@@ -226,64 +237,79 @@ class EditorPanel(QWidget):
         validation: dict,
         value: object,
     ) -> QWidget | None:
-        normalized_type = field_type.lower()
-        widget: QWidget | None = None
-        if normalized_type == "text":
-            widget = QLineEdit()
-            if value is not None:
-                widget.setText(str(value))
-            if placeholder := validation.get("placeholder"):
-                widget.setPlaceholderText(str(placeholder))
-        elif normalized_type == "textarea":
-            widget = QTextEdit()
-            if value is not None:
-                widget.setPlainText(str(value))
-            if placeholder := validation.get("placeholder"):
-                widget.setPlaceholderText(str(placeholder))
-            widget.setMaximumHeight(120)
-        elif normalized_type == "number":
-            widget = QDoubleSpinBox()
-            widget.setDecimals(4)
-            widget.setMinimum(float(validation.get("min", -1e9)))
-            widget.setMaximum(float(validation.get("max", 1e9)))
-            if step := validation.get("step"):
-                widget.setSingleStep(float(step))
-            if value is not None:
-                try:
-                    widget.setValue(float(value))
-                except (TypeError, ValueError):
-                    pass
-        elif normalized_type == "boolean":
-            widget = QCheckBox()
-            if value is not None:
-                if isinstance(value, str):
-                    widget.setChecked(value.strip().lower() in {"1", "true", "yes", "y"})
-                else:
-                    widget.setChecked(bool(value))
-        elif normalized_type == "select":
-            widget = QComboBox()
-            options = validation.get("options", [])
-            if isinstance(options, list):
-                widget.addItems([str(opt) for opt in options])
-            if value is not None:
-                value_text = str(value)
-                if widget.findText(value_text) < 0:
-                    widget.addItem(value_text)
-                widget.setCurrentText(value_text)
-        elif normalized_type == "date":
-            widget = QDateEdit()
-            widget.setCalendarPopup(True)
-            if isinstance(value, QDate):
-                widget.setDate(value)
-            elif isinstance(value, str):
-                parsed = QDate.fromString(value, Qt.DateFormat.ISODate)
-                if parsed.isValid():
-                    widget.setDate(parsed)
-            widget.setDisplayFormat("yyyy-MM-dd")
+        builder = self._field_builders.get(field_type.lower())
+        if builder is None:
+            return None
+        widget = builder(validation, value)
         if widget is not None:
             widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
             if help_text := validation.get("help"):
                 widget.setToolTip(str(help_text))
+        return widget
+
+    def _build_text_widget(self, validation: dict, value: object) -> QLineEdit:
+        widget = QLineEdit()
+        if value is not None:
+            widget.setText(str(value))
+        if placeholder := validation.get("placeholder"):
+            widget.setPlaceholderText(str(placeholder))
+        return widget
+
+    def _build_textarea_widget(self, validation: dict, value: object) -> QTextEdit:
+        widget = QTextEdit()
+        if value is not None:
+            widget.setPlainText(str(value))
+        if placeholder := validation.get("placeholder"):
+            widget.setPlaceholderText(str(placeholder))
+        widget.setMaximumHeight(120)
+        return widget
+
+    def _build_number_widget(self, validation: dict, value: object) -> QDoubleSpinBox:
+        widget = QDoubleSpinBox()
+        step = validation.get("step")
+        widget.setDecimals(0 if isinstance(step, int) else 4)
+        widget.setMinimum(float(validation.get("min", -1e9)))
+        widget.setMaximum(float(validation.get("max", 1e9)))
+        if step is not None:
+            widget.setSingleStep(float(step))
+        if value is not None:
+            try:
+                widget.setValue(float(value))
+            except (TypeError, ValueError):
+                pass
+        return widget
+
+    def _build_boolean_widget(self, validation: dict, value: object) -> QCheckBox:
+        widget = QCheckBox()
+        if value is not None:
+            if isinstance(value, str):
+                widget.setChecked(value.strip().lower() in {"1", "true", "yes", "y"})
+            else:
+                widget.setChecked(bool(value))
+        return widget
+
+    def _build_select_widget(self, validation: dict, value: object) -> QComboBox:
+        widget = QComboBox()
+        options = validation.get("options", [])
+        if isinstance(options, list):
+            widget.addItems([str(opt) for opt in options])
+        if value is not None:
+            value_text = str(value)
+            if widget.findText(value_text) < 0:
+                widget.addItem(value_text)
+            widget.setCurrentText(value_text)
+        return widget
+
+    def _build_date_widget(self, validation: dict, value: object) -> QDateEdit:
+        widget = QDateEdit()
+        widget.setCalendarPopup(True)
+        if isinstance(value, QDate):
+            widget.setDate(value)
+        elif isinstance(value, str):
+            parsed = QDate.fromString(value, Qt.DateFormat.ISODate)
+            if parsed.isValid():
+                widget.setDate(parsed)
+        widget.setDisplayFormat("yyyy-MM-dd")
         return widget
 
     def set_provider_fields(
