@@ -92,6 +92,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
     * **Validation friction:** Do not block segment confirmation on optional fields; only block on required fields at explicit submission time.
 * [x] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
   * Remaining gaps: progress/QA counters exist in the [main window UI](../src/ui/main_window.py), but there is no dedicated LLM usage or accuracy metrics breakdown yet.
+  * Note: Metrics now surface batch duration, per-row average timing, and the active model name in the Metrics tab.
   * Next steps: instrument per-segment LLM usage (requests, tokens, latency), QA outcomes (tag errors, audit risks, verified rate), and surface a local-only summary in a dedicated Metrics tab.
 * [x] **Placeholder-Safe Recursive Translation Pipeline:** Guarantee that non-translatable tokens survive LLM translation unchanged, with strict validation and repair.
   * Design reference: see [RLM_DESIGN.md](RLM_DESIGN.md) for Phase A (segmenter + validator, no auto-fix) and Phase B (repair pass + QA integration).
