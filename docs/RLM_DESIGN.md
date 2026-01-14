@@ -153,6 +153,12 @@ Instruction: *Insert missing placeholders without altering translated words.*
   - Segmenter/validator must be shared by both single-line and batch workers.
   - Repair loop should be opt-in for batch (e.g. enabled in strict mode or config).
 
+### Audit Notes (Phase A)
+
+- `core.tag_utils` treats any content in `<...>`, `[...]`, `{...}`, and `%s/%d/%f` patterns as tags, and also recognizes `@@PLACEHOLDER_n@@` from masking; the regex is broad and conservative for bracketed tokens.
+- `core.masker` replaces detected tags with `@@PLACEHOLDER_n@@` and restores them via exact or whitespace-tolerant matching.
+- `services.llm_service.validate_placeholders` currently validates **count only**, not order; `LLMService` uses a tag/placeholder regex to pick the “best” line but does not enforce placeholder sequence.
+
 ## Risks & Guardrails (CAT Workflow)
 
 - **Placeholder/tag corruption**

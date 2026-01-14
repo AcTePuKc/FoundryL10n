@@ -1,63 +1,57 @@
-import pytest
-
-pytest.importorskip("ollama")
-
-from core.engine import TranslationEngine
-from core.masker import Masker
-from services.llm_service import validate_placeholders
+from core.rlm_segmenter import RLMSegmenter
+from core.rlm_validator import validate_segments
 
 
-class DummyLLM:
-    def __init__(self, response: str):
-        self.response = response
-
-    def translate_segment(self, **_kwargs):
-        return self.response, ""
+def _segment(line: str):
+    segmenter = RLMSegmenter()
+    return segmenter.segment(raw_line=line)
 
 
-class DummySegment:
-    def __init__(self, source_text: str):
-        self.source_text = source_text
-        self.translation = ""
-        self.is_verified = False
-        self.never_translate = False
-        self.ai_draft = ""
-        self.thought = ""
+def test_validator_accepts_preserved_tags():
+    source = "Use <TSMARKER_0> then [ACTION_SAVE] and <BR_1> {player_name} %d."
+    target = "Използвай <TSMARKER_0> после [ACTION_SAVE] и <BR_1> {player_name} %d."
 
-
-def test_placeholder_preservation():
-    masker = Masker()
-    source = "Hello {player_name}, you have %d gold in your <color=yellow>pouch</color>!"
-    masked, tokens = masker.mask(source)
-    translated = (
-        "Здрасти @@PLACEHOLDER_0@@, имаш @@PLACEHOLDER_1@@ злато в "
-        "@@PLACEHOLDER_2@@торбата@@PLACEHOLDER_3@@!"
+    source_result = _segment(source)
+    target_result = _segment(target)
+    validation = validate_segments(
+        source_segments=source_result.segments,
+        target_segments=target_result.segments,
+        source_tags=source_result.tags,
+        target_tags=target_result.tags,
     )
 
-    assert validate_placeholders(masked, translated)
-
-    unmasked = masker.unmask(translated, tokens)
-    assert "{player_name}" in unmasked
-    assert "%d" in unmasked
-    assert "<color=yellow>" in unmasked
-    assert "</color>" in unmasked
+    assert validation.is_valid
 
 
-def test_tag_error_when_placeholder_missing():
-    engine = TranslationEngine(DummyLLM("Здравей!"))
-    segment = DummySegment("Hello {player_name}!")
+def test_validator_flags_missing_tag():
+    source = "Click <TSMARKER_0> then [ACTION_SAVE] <BR_1>."
+    target = "Натисни <TSMARKER_0> после <BR_1>."
 
-    success = engine.translate_single_segment(
-        segment,
-        target_lang="BG",
-        project_name="default",
-        glossary="",
-        style="",
-        forbidden="",
-        temp=0.1,
-        strict=True,
-        prompt_template="{source}",
+    source_result = _segment(source)
+    target_result = _segment(target)
+    validation = validate_segments(
+        source_segments=source_result.segments,
+        target_segments=target_result.segments,
+        source_tags=source_result.tags,
+        target_tags=target_result.tags,
     )
 
-    assert success
-    assert segment.translation.startswith("[TAG ERROR]")
+    assert not validation.is_valid
+    assert "missing_tag" in validation.risk_flags
+
+
+def test_validator_flags_reordered_tags():
+    source = "Pick <SPAN_0> then <BR_1> and [ACTION_RUN]."
+    target = "Избери <BR_1> после <SPAN_0> и [ACTION_RUN]."
+
+    source_result = _segment(source)
+    target_result = _segment(target)
+    validation = validate_segments(
+        source_segments=source_result.segments,
+        target_segments=target_result.segments,
+        source_tags=source_result.tags,
+        target_tags=target_result.tags,
+    )
+
+    assert not validation.is_valid
+    assert "reordered_tags" in validation.risk_flags
