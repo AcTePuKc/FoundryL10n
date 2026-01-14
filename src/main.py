@@ -24,12 +24,12 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, MofNCo
 
 # Modular Imports
 from core.database import init_db
-from core.engine import TranslationEngine
 from core.i18n import I18N
 from core.parser import FoundryParser, TranslationSegment
 from services.resource_service import ResourceLoader
 from services.llm_service import LLMService
 from services.plugin_loader import PluginLoader
+from services.translation_service import run_batch_translation
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
@@ -145,8 +145,6 @@ def translate_file(
     parser = FoundryParser()
     
     llm_service = LLMService(model_name=model, timeout=timeout)
-    engine = TranslationEngine(llm_service)
-    
     (
         glossary_content,
         style_content,
@@ -175,18 +173,18 @@ def translate_file(
             I18N.t("cli_translating_to").format(lang=lang),
             total=len(segments),
         )
-        for seg in segments:
-            engine.run_translation(
-                [seg],
-                lang,
-                glossary=glossary_content,
-                style=style_content,
-                forbidden=forbidden_content,
-                temp=0.1,
-                prompt_template=prompt_template,
-                project_name=project_name,
-            )
-            progress.advance(task)
+        run_batch_translation(
+            segments,
+            lang,
+            llm_service,
+            glossary=glossary_content,
+            style=style_content,
+            forbidden=forbidden_content,
+            temp=0.1,
+            prompt_template=prompt_template,
+            project_name=project_name,
+            progress_callback=lambda _count: progress.advance(task),
+        )
 
     output_path = Path(out) if out else Path("out") / lang / input_path.name
     parser.save_tsv(segments, output_path)
@@ -209,8 +207,6 @@ def translate_text(
 ):
     """Quickly translate a single string via CLI."""
     llm_service = LLMService(model_name=model, timeout=timeout)
-    engine = TranslationEngine(llm_service)
-    
     (
         glossary_content,
         style_content,
@@ -220,9 +216,10 @@ def translate_text(
     ) = _load_cli_resources(glossary, style, forbidden, project)
     
     seg = TranslationSegment("CLI_TEST", content)
-    engine.run_translation(
+    run_batch_translation(
         [seg],
         lang,
+        llm_service,
         glossary=glossary_content,
         style=style_content,
         forbidden=forbidden_content,
