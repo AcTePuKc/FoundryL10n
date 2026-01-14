@@ -2823,8 +2823,6 @@ class FoundryGUI(QMainWindow):
         self.action_sync_plugins.setText(I18N.t("menu_sync_plugins"))
         if hasattr(self, "sync_menu"):
             self.sync_menu.setTitle(I18N.t("menu_sync"))
-        if hasattr(self, "sync_toolbar"):
-            self.sync_toolbar.setWindowTitle(I18N.t("menu_sync"))
         self.update_stats()
 
         if hasattr(self.settings_tab, "retranslate_ui"):
