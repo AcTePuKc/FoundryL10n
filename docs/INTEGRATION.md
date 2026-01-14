@@ -487,7 +487,7 @@ FoundryL10n integrates with the host OS keyring/secret storage (Keychain, Creden
 **New metrics needed (LLM usage, accuracy, failures)**
 
 * **LLM usage:** per-bulk-run and per-segment counts (requests, success/failure), model name, latency, and token usage (prompt + completion). Add a lightweight “last N runs” roll-up and session totals to the dashboard (local-only). 
-* **Accuracy / QA quality:** verified rate, AI draft acceptance rate, edit distance vs AI draft (proxy for accuracy), tag/placeholder error rate, audit risk rate (⚠️), glossary miss count, and conflict rate.
+* **Accuracy / QA quality:** verified rate, AI draft acceptance rates (e.g., zero-edit vs. edited), edit distance vs AI draft (proxy for accuracy), tag/placeholder error rate, audit risk rate (⚠️), glossary miss count, and conflict rate.
 * **Failures:** LLM timeouts/errors, placeholder validation failures, audit blockers (tag error), provider sync failures, and integrity scan conflicts.
 
 **Dashboard placement (UX recommendation)**
