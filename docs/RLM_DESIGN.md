@@ -49,7 +49,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
   - `Segment(kind="tag", value="{0}")`
 - **tags (list[str]):** Ordered list of tag/placeholder values extracted from the source.
 - **risk_flags (list[str]):** Potential safety indicators for QA/UI.
-  - Examples: `"nested_tag"`, `"unknown_bracketed"`, `"provider_override"`, `"unbalanced_delimiters"`.
+  - Examples: `"nested_tag"`, `"unknown_bracketed"`, `"provider_override"`, `"unbalanced_delimiters"`
 
 ### Error & Edge-Case Handling
 
@@ -67,14 +67,14 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 - **source_tags (list[str])**
 - **target_tags (list[str])**
 - **context (dict)**
-  - Example keys: `strict_mode`, `segment_id`, `provider_id`.
+  - Example keys: `strict_mode`, `segment_id`, `provider_id`
 
 ### Outputs
 
 - **is_valid (bool)**: `true` when placeholder sequences match in order and multiplicity.
 - **mismatches (list[dict])**: Details for QA and UI.
   - Example: `{"index": 2, "expected": "<TSMARKER_2>", "actual": "<TSMARKER_3>"}`
-- **risk_flags (list[str])**: e.g. `"missing_tag"`, `"extra_tag"`, `"reordered_tags"`.
+- **risk_flags (list[str])**: e.g. `"missing_tag"`, `"extra_tag"`, `"reordered_tags"`
 
 ### Edge Cases
 
@@ -102,8 +102,23 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 
 - **source_line** and **candidate_translation**
 - **source_tags** and **target_tags**
-- **QA signals** (from validator + QA pipeline): missing tags, extra tags, reorder.
-- **TM hints** (optional): if a prior verified translation exists, prefer its placeholder ordering.
+- **QA signals** (from validator + QA pipeline): missing tags, extra tags, reorder
+- **TM hints** (optional): if a prior verified translation exists, prefer its placeholder ordering
+
+### LLM Input Context (for Phase B)
+
+The repair prompt MUST include:
+- `source_line`: original string with placeholders
+- `candidate_translation`: model output before repair
+- `expected_placeholders`: ordered list of placeholders detected by the segmenter
+
+Example minimal input:
+
+Source: `Hello {name}!`  
+Candidate: `Здравей !`  
+Expected placeholders: `['{name}']`  
+
+Instruction: *Insert missing placeholders without altering translated words.*
 
 ### Repair Loop Behavior
 
@@ -118,7 +133,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 ### QA Integration
 
 - Expose repair attempts and outcomes in existing QA counters:
-  - `repair_attempted`, `repair_success`, `repair_failed`.
+  - `repair_attempted`, `repair_success`, `repair_failed`
 - UI should show a lightweight indicator (icon/badge), not a modal dialog.
 - Preserve segment state semantics (`draft`, `translated`, `verified`) and never auto-promote to `verified` when repairs were needed.
 
@@ -127,8 +142,9 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
 - **`masker`:**
   - Segmenter can run on `masked_line` when masking is already applied.
   - For strict matching, validator should compare **actual placeholder values** via masker metadata.
+  - Example: compare `{name}` against the unmasked value of `@@P0@@`, not the placeholder token itself.
 - **Tag utilities:**
-  - Reuse existing placeholder detection rules for `%s`, `{0}`, `<TSMARKER_n>`, `[BTN_*]`.
+  - Reuse existing placeholder detection rules for `%s`, `{0}`, `<TSMARKER_n>`, `[BTN_*]`
   - Segmenter should be the central source of truth for tag extraction.
 - **`LLMService`:**
   - Phase A: called on concatenated text segments only.
@@ -147,7 +163,7 @@ This document defines the design for the **RLM pipeline** (segmenter → validat
   - Risk: batch flows could spam warnings; keep summary counters and avoid modal errors.
 - **Human post-editing roundtrips**
   - Guardrail: always preserve placeholders in source/target panes; never auto-accept after repair.
-- Risk: repair could overwrite translator edits; only trigger on machine outputs (e.g., segments in `draft` state), not on confirmed human edits (`verified` segments).
+  - Risk: repair could overwrite translator edits; only trigger on machine outputs (e.g., segments in `draft` state), not on confirmed human edits (`verified` segments).
 
 ## Open Questions / Assumptions
 
