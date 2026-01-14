@@ -30,6 +30,7 @@ from services.llm_service import LLMService
 from services.provider_http_client import ProviderHttpClient
 from services.token_storage import TokenStorage
 from services.plugin_sync_service import GitHubPluginSyncService
+from core.field_utils import is_custom_field_missing
 from core.i18n import I18N
 from core.tag_utils import extract_tags, strip_tags
 from core.database import (save_translation, get_cached_record,
@@ -777,22 +778,9 @@ class FoundryGUI(QMainWindow):
             label = str(field.get("label") or field_id)
             default_value = field.get("default")
             value = values.get(field_id, default_value)
-            if self._is_custom_field_missing(field_type, value):
+            if is_custom_field_missing(field_type, value):
                 missing.append(label)
         return missing
-
-    def _is_custom_field_missing(self, field_type: str, value: object) -> bool:
-        if value is None:
-            return True
-        if field_type in {"text", "textarea", "select", "date"} and isinstance(value, str):
-            return not value.strip()
-        if field_type == "boolean":
-            return False
-        if field_type == "number":
-            return False
-        if isinstance(value, (list, dict, tuple, set)):
-            return len(value) == 0
-        return False
 
     def _store_provider_fields_for_segment(self, seg: TranslationSegment) -> None:
         if not hasattr(self.editor, "get_provider_field_values"):

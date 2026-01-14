@@ -8,6 +8,7 @@ from PySide6.QtGui import (QSyntaxHighlighter, QTextCharFormat, QColor, QFont,
                            QTextDocument, QTextOption)
 from PySide6.QtCore import Qt, Signal, QEvent, QDate
 from core.i18n import I18N
+from core.field_utils import is_custom_field_missing
 from core.tag_utils import extract_tags, tag_regex
 
 
@@ -248,8 +249,6 @@ class EditorPanel(QWidget):
         widget = builder(validation, value)
         if widget is not None:
             widget.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
-            if help_text := validation.get("help"):
-                widget.setToolTip(str(help_text))
         return widget
 
     def _build_provider_field_container(
@@ -368,8 +367,6 @@ class EditorPanel(QWidget):
             if widget is None:
                 continue
             label = QLabel(label_text)
-            if help_text := validation.get("help"):
-                label.setToolTip(str(help_text))
             container = self._build_provider_field_container(
                 field_id,
                 widget,
@@ -454,7 +451,7 @@ class EditorPanel(QWidget):
         field_type = str(spec.get("type", "text"))
         validation = spec.get("validation", {})
         messages: list[str] = []
-        if spec.get("required") and self._provider_field_missing_value(
+        if spec.get("required") and is_custom_field_missing(
             field_type, value
         ):
             messages.append(I18N.t("ui_provider_field_required"))
@@ -467,20 +464,6 @@ class EditorPanel(QWidget):
         else:
             warning_label.clear()
             warning_label.setVisible(False)
-
-    def _provider_field_missing_value(self, field_type: str, value: object) -> bool:
-        if value is None:
-            return True
-        if field_type in {"text", "textarea", "select", "date"}:
-            if isinstance(value, str):
-                return not value.strip()
-        if field_type in {"number"}:
-            return False
-        if field_type in {"boolean"}:
-            return False
-        if isinstance(value, (list, dict, tuple, set)):
-            return len(value) == 0
-        return False
 
     def _provider_field_validation_messages(
         self,
