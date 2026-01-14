@@ -97,7 +97,10 @@ class SettingsTab(QWidget):
         gen.addRow(self.project_label, self.project_name)
         gen.addRow(self.profile_label, profile_row)
 
-        layout.addWidget(self.general_group)
+        self.general_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred
+        )
 
         # =====================================================
         # TRANSLATION
@@ -173,7 +176,10 @@ class SettingsTab(QWidget):
         translation_layout.addRow(self.llm_timeout_label, self.llm_timeout_spin)
         translation_layout.addRow(self.strict_mode)
 
-        layout.addWidget(self.translation_group)
+        self.translation_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred
+        )
 
         # =====================================================
         # APPEARANCE
@@ -211,7 +217,10 @@ class SettingsTab(QWidget):
         appearance_layout.addRow(self.theme_label, self.theme_combo)
         appearance_layout.addRow(self.ui_lang_label, self.ui_lang_combo)
 
-        layout.addWidget(self.appearance_group)
+        self.appearance_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred
+        )
 
         # =====================================================
         # RESOURCES
@@ -269,7 +278,22 @@ class SettingsTab(QWidget):
 
             res.addRow(label_widget, h)
 
-        layout.addWidget(self.res_group)
+        self.res_group.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred
+        )
+
+        top_row = QHBoxLayout()
+        top_row.setSpacing(12)
+        top_row.addWidget(self.general_group, 1)
+        top_row.addWidget(self.appearance_group, 1)
+        layout.addLayout(top_row)
+
+        second_row = QHBoxLayout()
+        second_row.setSpacing(12)
+        second_row.addWidget(self.translation_group, 1)
+        second_row.addWidget(self.res_group, 1)
+        layout.addLayout(second_row)
         # =====================================================
         # PROMPT (dominant)
         # =====================================================
