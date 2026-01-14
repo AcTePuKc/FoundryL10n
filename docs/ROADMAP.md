@@ -90,3 +90,54 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
     * **Validation friction:** Do not block segment confirmation on optional fields; only block on required fields at explicit submission time.
 * [ ] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
   * Remaining gaps: progress/QA counters exist in the [main window UI](../src/ui/main_window.py), but there is no dedicated LLM usage or accuracy metrics breakdown yet.
+* [ ] **Placeholder-Safe Recursive Translation Pipeline:** Guarantee that non-translatable tokens survive LLM translation unchanged, with strict validation and repair.
+  * Scope:
+    * Treat **any content wrapped in `<>` or `[]` as non-translatable by default**, unless a provider explicitly marks it as translatable.
+    * Preserve existing placeholder patterns (`<TSMARKER_n>`, `<BR_n>`, `[BTN_*]`, `%s`, `{0}`, etc.) exactly, including order and multiplicity.
+    * Apply the same rules in both GUI and CLI entry points via a shared core service layer.
+  * Minimal plan (no implementation yet; next steps):
+    1. **Segmenter layer (parser):**
+       * Introduce a small, provider-agnostic segmenter that splits a source string into a sequence of typed segments, e.g.:
+         * `Segment(kind="tag", value="<TSMARKER_0>")`
+         * `Segment(kind="tag", value="[BTN_OK]")`
+         * `Segment(kind="text", value="plain text here")`
+       * Tag detection rules:
+         * Anything that matches `^<.*>$` (single-segment) or known placeholder patterns is `kind="tag"` and must not be translated.
+         * Anything that matches `^\[.*\]$` (single-segment) is `kind="tag"` by default and must not be translated.
+         * Everything else is `kind="text"`.
+       * Keep the segmenter in a reusable module (e.g. `core/translation/segments.py`) so both GUI and background workers share the same logic.
+    2. **LLM-facing translation wrapper:**
+       * Replace the “translate whole string” call with a wrapper that:
+         * Runs the segmenter.
+         * Sends **only `kind="text"` segments** to the LLM for translation.
+         * Re-assembles the final string by interleaving translated text segments with original tag segments *without modification*.
+       * Ensure fuzzy suggestions, translation memory lookups, and provider calls work at the segment/text level without ever touching tag segments.
+    3. **Placeholder validation + recursive repair:**
+       * Implement a validator that compares the placeholder sequence between source and candidate translation:
+         * Extract all tag segments and simple placeholders (`%s`, `{0}`, etc.) from both source and translation.
+         * Validation succeeds only if the sequence (length, order, and exact values) matches.
+       * On failure, run a **second-pass “repair” step**:
+         * Provide the LLM with both source and broken translation and instruct it to **only fix tag/placeholder placement** without altering wording.
+         * Re-validate after repair.
+       * If repair still fails in strict mode:
+         * Mark the segment as “placeholder error” and do not auto-accept; surface this state to the QA/progress system.
+       * In non-strict mode:
+         * Accept the best-effort repair but flag the segment with a non-blocking warning for the user.
+    4. **Config and escape hatches:**
+       * Add a provider-level configuration hook for **override rules**, e.g.:
+         * Allow specific tag patterns like `<b>…</b>` or `[color=red]…[/color]` where the *inner text* is translatable but the tag shell is not.
+         * Allow future providers to mark specific bracketed patterns as translatable or partially translatable.
+       * Keep the default behavior conservative: “anything fully wrapped in `<>` or `[]` is non-translatable” unless configuration explicitly relaxes it.
+    5. **Integration with strict/non-strict and QA:**
+       * Wire placeholder validation results into the existing strict-mode toggle and QA counters:
+         * Strict mode: a failed placeholder check (after repair attempts) counts as a blocking error for that segment.
+         * Non-strict mode: show a subtle warning icon/badge instead of blocking, and let the user decide.
+       * Ensure batch translation workers and single-line translation flows both use the same validation + repair pipeline so behavior is consistent everywhere.
+  * Expected behavior:
+    * LLM output can no longer “eat” or re-order `<TSMARKER_*>`, `[BTN_*]`, `%s`, `{0}`, etc.; these are treated as immutable structure.
+    * Any content that arrives inside `<>` or `[]` is preserved as-is by default, unless the active provider explicitly overrides the rule.
+    * Users see clear, minimal QA feedback when a line cannot be auto-repaired, without modal dialogs interrupting typing or navigation.
+  * Risks / guardrails:
+    * **Regression in fuzzy suggestions / TM:** Make sure fuzzy/TM suggestions are generated and displayed using the same segment model so tags stay untouched there as well.
+    * **Overly aggressive protection:** Default “protect everything in `<>` / `[]`” is conservative; override rules must be easy to add for markup-heavy providers.
+    * **Performance:** Segmenting + validating every line adds overhead; keep the parser simple and avoid complex nested parsing unless a provider truly needs it.
