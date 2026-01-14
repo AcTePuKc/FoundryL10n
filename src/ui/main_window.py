@@ -37,6 +37,12 @@ from core.database import (save_translation, get_cached_record,
 from core.parser import TranslationSegment
 from services.plugin_loader import PluginRegistry
 
+TAG_ERROR_PREFIX = "[TAG ERROR]"
+TAG_ERROR_PREFIX_WITH_SPACE = f"{TAG_ERROR_PREFIX} "
+METRICS_SECTION_STYLE = "font-weight: bold; margin-top: 8px;"
+METRICS_MONO_STYLE = "font-family: 'Consolas', 'Courier New';"
+METRICS_MONO_BOLD_STYLE = f"{METRICS_MONO_STYLE} font-weight: bold;"
+
 
 class FoundryGUI(QMainWindow):
     def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
@@ -58,6 +64,8 @@ class FoundryGUI(QMainWindow):
         self._login_dialog: LoginDialog | None = None
         self._remote_change_ready = False
         self._remote_change_map: dict[str, dict[str, str]] = {}
+        self.llm_request_count = 0
+        self.llm_failure_count = 0
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -116,6 +124,8 @@ class FoundryGUI(QMainWindow):
         self.tabs.addTab(self.integrity_tab, I18N.t("tab_integrity"))
         self.integrity_tab.btn_auto_normalize.clicked.connect(
             self.run_auto_normalize)
+        self.init_metrics_tab()
+        self.tabs.addTab(self.metrics_tab, I18N.t("tab_metrics"))
 
         # Load states
         self.load_ui_state()
@@ -273,6 +283,46 @@ class FoundryGUI(QMainWindow):
 
         self.tabs.addTab(self.translate_tab, I18N.t("ui_workstation"))
         self.table.itemChanged.connect(self.on_table_cell_edited)
+
+    def init_metrics_tab(self):
+        self.metrics_tab = QWidget()
+        layout = QVBoxLayout(self.metrics_tab)
+        layout.setContentsMargins(16, 16, 16, 16)
+
+        self.metrics_header_label = QLabel(I18N.t("metrics_title"))
+        self.metrics_header_label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        layout.addWidget(self.metrics_header_label)
+
+        self.metrics_intro_label = QLabel(I18N.t("metrics_intro"))
+        self.metrics_intro_label.setWordWrap(True)
+        layout.addWidget(self.metrics_intro_label)
+
+        self.metrics_stats_title = QLabel(I18N.t("metrics_qa_title"))
+        self.metrics_stats_title.setStyleSheet(METRICS_SECTION_STYLE)
+        layout.addWidget(self.metrics_stats_title)
+
+        self.metrics_stats_label = QLabel()
+        self.metrics_stats_label.setStyleSheet(METRICS_MONO_BOLD_STYLE)
+        layout.addWidget(self.metrics_stats_label)
+
+        self.metrics_llm_title = QLabel(I18N.t("metrics_llm_title"))
+        self.metrics_llm_title.setStyleSheet(METRICS_SECTION_STYLE)
+        layout.addWidget(self.metrics_llm_title)
+
+        self.metrics_llm_label = QLabel()
+        self.metrics_llm_label.setStyleSheet(METRICS_MONO_STYLE)
+        layout.addWidget(self.metrics_llm_label)
+
+        self.metrics_accuracy_title = QLabel(I18N.t("metrics_accuracy_title"))
+        self.metrics_accuracy_title.setStyleSheet(METRICS_SECTION_STYLE)
+        layout.addWidget(self.metrics_accuracy_title)
+
+        self.metrics_accuracy_label = QLabel()
+        self.metrics_accuracy_label.setWordWrap(True)
+        layout.addWidget(self.metrics_accuracy_label)
+
+        layout.addStretch()
+        self._update_metrics_labels(0, 0, 0, 0, 0, 0)
 
     def _init_actions(self):
         self.action_verify_rows = QAction(self)
@@ -866,7 +916,7 @@ class FoundryGUI(QMainWindow):
         if self.current_row == row:
             self.editor.trans_edit.blockSignals(True)
             self.editor.trans_edit.setPlainText(
-                new_text.replace("[TAG ERROR] ", ""))
+                new_text.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""))
             self.editor.trans_edit.blockSignals(False)
 
     def on_use_fuzzy_clicked(self):
@@ -887,7 +937,7 @@ class FoundryGUI(QMainWindow):
         for i in range(start, self.table.rowCount()):
             seg = self.segments[i]
             # Jump if it's an error OR if it's empty
-            if "[TAG ERROR]" in seg.translation or not seg.translation or not seg.is_verified:
+            if TAG_ERROR_PREFIX in seg.translation or not seg.translation or not seg.is_verified:
                 self.table.setCurrentCell(i, 1)
                 return
         self.thought_log.append(I18N.t("log_end_of_file"))
@@ -1069,7 +1119,7 @@ class FoundryGUI(QMainWindow):
             trans = self.segments[i].translation.lower()
 
             match_search = search_text in key or search_text in src or search_text in trans
-            match_error = "[TAG ERROR]" in trans.upper(
+            match_error = TAG_ERROR_PREFIX in trans.upper(
             ) if only_errors else True
 
             self.table.setRowHidden(i, not (match_search and match_error))
@@ -1094,6 +1144,8 @@ class FoundryGUI(QMainWindow):
 
         # Enter the "thinking" mode.
         self.editor.btn_translate_now.setText(I18N.t("btn_stop_thinking"))
+        self.llm_request_count += 1
+        self._update_llm_metrics_label()
         
 
         project_name = settings.get("project_name", "default")
@@ -1125,8 +1177,11 @@ class FoundryGUI(QMainWindow):
         # Update visuals and editor content
         self.update_row_visuals(self.current_row)
         seg = self.segments[self.current_row]
+        if (seg.translation or "").startswith(TAG_ERROR_PREFIX):
+            self.llm_failure_count += 1
+            self._update_llm_metrics_label()
         self.editor.trans_edit.setPlainText(
-            seg.translation.replace("[TAG ERROR] ", ""))
+            seg.translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""))
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
         self.update_stats()
 
@@ -1214,7 +1269,7 @@ class FoundryGUI(QMainWindow):
             self.editor.trans_edit.setPlainText(skeleton)
         else:
             self.editor.trans_edit.setPlainText(
-                raw_translation.replace("[TAG ERROR] ", "")
+                raw_translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, "")
             )
 
         # Unblock after loading is finished
@@ -1296,12 +1351,12 @@ class FoundryGUI(QMainWindow):
         self.thought_log.append(I18N.t("log_history_restored"))
 
     def _segment_needs_fuzzy(self, seg) -> bool:
-        has_tag_error = "[TAG ERROR]" in (seg.translation or "")
+        has_tag_error = TAG_ERROR_PREFIX in (seg.translation or "")
         has_risk = bool(getattr(seg, "has_risk", False)) or "⚠️" in (seg.thought or "")
         return has_tag_error or has_risk
 
     def _normalize_suggestion_text(self, suggestion: str, source_text: str) -> str:
-        cleaned = (suggestion or "").replace("[TAG ERROR] ", "").strip()
+        cleaned = (suggestion or "").replace(TAG_ERROR_PREFIX_WITH_SPACE, "").strip()
         source_tags = extract_tags(source_text or "")
         if not source_tags:
             return cleaned
@@ -1345,7 +1400,7 @@ class FoundryGUI(QMainWindow):
                     ) if direction > 0 else range(start, -1, -1)
 
         for i in rng:
-            if "[TAG ERROR]" in self.segments[i].translation:
+            if TAG_ERROR_PREFIX in self.segments[i].translation:
                 self.table.setCurrentCell(i, 1)
                 break
 
@@ -1607,7 +1662,7 @@ class FoundryGUI(QMainWindow):
         translation = seg.translation or ""
         thought = seg.thought or ""
 
-        has_tag_error = "[TAG ERROR]" in translation
+        has_tag_error = TAG_ERROR_PREFIX in translation
         has_risk = "⚠️" in thought
 
         # --- PRIORITY RESOLUTION (single source of truth) ---
@@ -1790,7 +1845,7 @@ class FoundryGUI(QMainWindow):
         for i, seg in enumerate(self.segments):
             # 1. PRESERVE TRANSIENT STATE
             # Store current session info before we look at the DB
-            current_is_error = "[TAG ERROR]" in seg.translation
+            current_is_error = TAG_ERROR_PREFIX in seg.translation
             current_thought = seg.thought or ""
             has_warning = "⚠️" in current_thought
 
@@ -2020,6 +2075,42 @@ class FoundryGUI(QMainWindow):
                 pending=I18N.t("stats_tooltip_pending"),
             )
         )
+        self._update_metrics_labels(v, qa, risk, err, conflict, pend)
+
+    def _update_llm_metrics_label(self) -> None:
+        if hasattr(self, "metrics_llm_label"):
+            self.metrics_llm_label.setText(
+                I18N.t("metrics_llm_template").format(
+                    requests=self.llm_request_count,
+                    failures=self.llm_failure_count,
+                )
+            )
+
+    def _update_metrics_labels(
+        self,
+        verified: int,
+        draft: int,
+        risk: int,
+        error: int,
+        conflict: int,
+        pending: int,
+    ) -> None:
+        if not hasattr(self, "metrics_stats_label"):
+            return
+        total = verified + draft + risk + error + conflict + pending
+        verified_rate = f"{(verified / total * 100):.1f}%" if total else "0%"
+        self.metrics_stats_label.setText(
+            self._format_stats_text(verified, draft, risk, error, conflict, pending)
+        )
+        self._update_llm_metrics_label()
+        self.metrics_accuracy_label.setText(
+            I18N.t("metrics_accuracy_template").format(
+                verified_rate=verified_rate,
+                placeholder_errors=error,
+                audit_warnings=risk,
+                conflicts=conflict,
+            )
+        )
 
     def _update_run_button_text(self):
         if self._bulk_stopping:
@@ -2137,7 +2228,7 @@ class FoundryGUI(QMainWindow):
                     seg.thought = I18N.t("thought_restored_from_memory")
 
                     # Run audit immediately so 🔶 appears on rows already in DB
-                    if seg.translation and "[TAG ERROR]" not in seg.translation:
+                    if seg.translation and TAG_ERROR_PREFIX not in seg.translation:
                         engine_helper.audit_segment(seg, glossary_dict)
 
                 # 5. Populate Table Row
@@ -2195,6 +2286,8 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setText(I18N.t("ui_stop_bulk"))
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
+        self.llm_request_count += self._count_llm_requests(self.segments)
+        self._update_llm_metrics_label()
 
         svc = LLMService(
             model_name=settings['model'],
@@ -2452,6 +2545,7 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setStyleSheet("font-weight: bold;")
         self.save_ui_state()
         self.settings_tab.save_settings()
+        self._tally_llm_failures(result)
 
         parser = FoundryParser()
         settings = self.settings_tab.get_settings()
@@ -2460,6 +2554,24 @@ class FoundryGUI(QMainWindow):
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=out)
         )
+
+    @staticmethod
+    def _count_llm_requests(segments) -> int:
+        return sum(
+            1
+            for seg in segments
+            if getattr(seg, "source_text", "").strip()
+        )
+
+    def _tally_llm_failures(self, segments) -> None:
+        failures = sum(
+            1
+            for seg in segments
+            if (getattr(seg, "translation", "") or "").startswith(TAG_ERROR_PREFIX)
+        )
+        if failures:
+            self.llm_failure_count += failures
+            self._update_llm_metrics_label()
 
     def save_ui_state(self):
         """Saves window geometry, splitter, table header, and current tab."""
@@ -2546,6 +2658,11 @@ class FoundryGUI(QMainWindow):
                 self.tabs.indexOf(self.integrity_tab),
                 I18N.t("tab_integrity"),
             )
+        if hasattr(self, "metrics_tab"):
+            self.tabs.setTabText(
+                self.tabs.indexOf(self.metrics_tab),
+                I18N.t("tab_metrics"),
+            )
 
         self.btn_open.setText(I18N.t("btn_import_tsv"))
         self.btn_export_tsv.setText(I18N.t("btn_export_tsv"))
@@ -2558,6 +2675,12 @@ class FoundryGUI(QMainWindow):
         self.btn_zen.setText(I18N.t("btn_zen_mode"))
         self.btn_reverse_zen.setText(I18N.t("btn_reverse_zen_mode"))
         self.cb_follow.setText(I18N.t("ui_follow"))
+        if hasattr(self, "metrics_tab"):
+            self.metrics_header_label.setText(I18N.t("metrics_title"))
+            self.metrics_intro_label.setText(I18N.t("metrics_intro"))
+            self.metrics_stats_title.setText(I18N.t("metrics_qa_title"))
+            self.metrics_llm_title.setText(I18N.t("metrics_llm_title"))
+            self.metrics_accuracy_title.setText(I18N.t("metrics_accuracy_title"))
 
         self.table.setHorizontalHeaderLabels(
             [
@@ -2591,6 +2714,8 @@ class FoundryGUI(QMainWindow):
             self.integrity_tab, "retranslate_ui"
         ):
             self.integrity_tab.retranslate_ui()
+        if hasattr(self, "metrics_tab"):
+            self._update_llm_metrics_label()
 
     def closeEvent(self, event):
         """Stops all threads and saves settings before exiting."""

@@ -88,7 +88,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
     * **Keyboard flow regression:** Avoid adding fields to the default tab order; keep segment navigation shortcuts unchanged.
     * **Layout jitter:** Use fixed-height containers or collapse when empty to prevent editor resizing mid-typing.
     * **Validation friction:** Do not block segment confirmation on optional fields; only block on required fields at explicit submission time.
-* [ ] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
+* [x] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
   * Remaining gaps: progress/QA counters exist in the [main window UI](../src/ui/main_window.py), but there is no dedicated LLM usage or accuracy metrics breakdown yet.
   * Next steps: instrument per-segment LLM usage (requests, tokens, latency), QA outcomes (tag errors, audit risks, verified rate), and surface a local-only summary in a dedicated Metrics tab.
 * [ ] **Placeholder-Safe Recursive Translation Pipeline:** Guarantee that non-translatable tokens survive LLM translation unchanged, with strict validation and repair.
