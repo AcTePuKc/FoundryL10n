@@ -101,9 +101,7 @@ Tasks about validation and developer scripts.
 * [x] **Note:** Added optional JSON/JSONL import format support and documentation alongside TSV.  
       Renamed `Import TSV` to `Import` since multiple file formats are now allowed.
 
-* [ ] **Note:** Implement export based on the imported file format, with the option to export as `TSV` / `JSON` / `JSONL`.  
+* [x] **Note:** Implement export based on the imported file format, with the option to export as `TSV` / `JSON` / `JSONL`.  
       Renamed `Export TSV` to `Export` for consistency with multi-format support.
 
-> Currently we only support exporting to `TSV/CSV`, which is inconsistent since we now allow importing JSON as well.  
-> The CSV option may simply be a Windows association quirk rather than intentional behavior.  
-> We should revisit the export format logic and ensure proper `TSV/JSON/JSONL` round-tripping.
+> Export now tracks the imported format by default and offers a picker for TSV/JSON/JSONL overrides.

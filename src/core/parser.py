@@ -220,6 +220,10 @@ class FoundryParser:
         # If we lost headers during manual edit, reconstruct them purely from the row keys
         if not self.headers:
             self.headers = list(segments[0].original_row.keys())
+        if not self.text_col:
+            self.text_col = "source"
+        if not self.target_col:
+            self.target_col = "translation"
         if any(
             self._custom_fields_col in seg.original_row for seg in segments
         ) and self._custom_fields_col not in self.headers:
@@ -245,3 +249,47 @@ class FoundryParser:
                         clean_row.get(self._custom_fields_col)
                     )
                 writer.writerow(clean_row)
+
+    def _build_export_row(self, segment: TranslationSegment) -> Dict:
+        row = segment.original_row.copy() if segment.original_row else {}
+        text_col = self.text_col or "source"
+        target_col = self.target_col or "translation"
+        if not row:
+            row = {"key": segment.key}
+        row.setdefault("key", segment.key)
+        row[text_col] = segment.source_text
+        row[target_col] = segment.translation
+        if self._custom_fields_col in row:
+            row[self._custom_fields_col] = self.parse_custom_fields(
+                row.get(self._custom_fields_col)
+            )
+        return row
+
+    def save_json(self, segments: List[TranslationSegment], output_path: Path) -> None:
+        if not segments:
+            return
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        rows = [self._build_export_row(seg) for seg in segments]
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(rows, f, ensure_ascii=False, indent=2)
+
+    def save_jsonl(self, segments: List[TranslationSegment], output_path: Path) -> None:
+        if not segments:
+            return
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            for seg in segments:
+                row = self._build_export_row(seg)
+                f.write(json.dumps(row, ensure_ascii=False))
+                f.write("\n")
+
+    def save_path(self, segments: List[TranslationSegment], output_path: Path, export_format: str) -> None:
+        format_key = (export_format or "tsv").lower()
+        export_map = {
+            "tsv": self.save_tsv,
+            "csv": self.save_tsv,
+            "json": self.save_json,
+            "jsonl": self.save_jsonl,
+        }
+        exporter = export_map.get(format_key, self.save_tsv)
+        exporter(segments, output_path)

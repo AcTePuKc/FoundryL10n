@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                                QTableWidgetItem, QHeaderView, QProgressBar,
                                QLabel, QTabWidget, QTextEdit, QCheckBox,
                                QSplitter, QLineEdit, QMenu, QInputDialog, QMessageBox,
-                               QScrollArea, QApplication)
+                               QScrollArea, QApplication, QComboBox)
 from PySide6.QtGui import QAction, QColor, QCursor, QFont, QFontDatabase, QIcon
 from PySide6.QtCore import Qt, QSettings, QTimer
 from sqlmodel import select, col
@@ -79,6 +79,7 @@ class FoundryGUI(QMainWindow):
         self.llm_request_count = 0
         self.llm_failure_count = 0
         self._batch_metrics = BatchMetrics()
+        self._import_format = "tsv"
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -161,6 +162,13 @@ class FoundryGUI(QMainWindow):
         self.btn_export.setEnabled(False)
         self.btn_export.clicked.connect(self.request_tsv_export)
 
+        self.export_format_label = QLabel(I18N.t("ui_export_format"))
+        self.export_format_picker = QComboBox()
+        self.export_format_picker.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.export_format_picker.addItem("TSV", "tsv")
+        self.export_format_picker.addItem("JSON", "json")
+        self.export_format_picker.addItem("JSONL", "jsonl")
+
         self.file_label = QLabel(I18N.t("ui_no_file_selected"))
         self.file_label.setStyleSheet("color: #888; font-style: italic;")
 
@@ -188,6 +196,8 @@ class FoundryGUI(QMainWindow):
 
         top_bar.addWidget(self.btn_open)
         top_bar.addWidget(self.btn_export)
+        top_bar.addWidget(self.export_format_label)
+        top_bar.addWidget(self.export_format_picker)
         top_bar.addWidget(self.file_label, 1)  # Give it stretch
         self.search_label = QLabel(I18N.t("ui_search_label"))
         top_bar.addWidget(self.search_label)
@@ -2352,23 +2362,55 @@ class FoundryGUI(QMainWindow):
         dialog.open()
         self._tsv_dialog = dialog
 
+    def _infer_export_format(self, path: Path) -> str:
+        suffix = path.suffix.lower()
+        if suffix == ".jsonl":
+            return "jsonl"
+        if suffix == ".json":
+            return "json"
+        return "tsv"
+
+    def _set_export_format(self, export_format: str) -> None:
+        index = self.export_format_picker.findData(export_format)
+        if index != -1:
+            self.export_format_picker.setCurrentIndex(index)
+
+    def _get_selected_export_format(self) -> str:
+        return self.export_format_picker.currentData() or "tsv"
+
+    def _export_extension(self, export_format: str) -> str:
+        return "jsonl" if export_format == "jsonl" else "json" if export_format == "json" else "tsv"
+
+    def _export_name_filter(self, export_format: str) -> str:
+        if export_format == "json":
+            return I18N.t("filter_json")
+        if export_format == "jsonl":
+            return I18N.t("filter_jsonl")
+        return I18N.t("filter_tsv")
+
+    def _default_export_name(self, export_format: str) -> str:
+        base_name = self.input_path.stem if self.input_path else "export"
+        extension = self._export_extension(export_format)
+        return f"{base_name}.{extension}"
+
     def request_tsv_export(self) -> None:
         if not self.segments:
             return
         self._capture_workflow_focus()
+        export_format = self._get_selected_export_format()
         dialog = QFileDialog(
             self,
             I18N.t("btn_export"),
             "",
-            I18N.t("filter_tsv"),
+            self._export_name_filter(export_format),
         )
         dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
-        dialog.setDefaultSuffix("tsv")
+        dialog.setDefaultSuffix(self._export_extension(export_format))
         dialog.setModal(False)
-        default_name = self.input_path.name if self.input_path else "export.tsv"
+        default_name = self._default_export_name(export_format)
         dialog.selectFile(default_name)
         dialog.fileSelected.connect(
-            lambda path: self.export_tsv_path(Path(path))
+            lambda path, fmt=export_format: self.export_path(Path(path), fmt)
         )
         dialog.rejected.connect(self._restore_workflow_focus)
         dialog.open()
@@ -2380,6 +2422,8 @@ class FoundryGUI(QMainWindow):
             return
         self._reset_remote_change_state()
         self.input_path = Path(path)
+        self._import_format = self._infer_export_format(self.input_path)
+        self._set_export_format(self._import_format)
         self.file_label.setText(str(self.input_path))
         self._file_loaded = True
 
@@ -2450,13 +2494,15 @@ class FoundryGUI(QMainWindow):
         self.btn_export.setEnabled(True)
         self._restore_workflow_focus()
 
-    def export_tsv_path(self, path: Path) -> None:
+    def export_path(self, path: Path, export_format: str) -> None:
         if not path or not self.segments:
             self._restore_workflow_focus()
             return
         if self.current_row >= 0:
             self._store_provider_fields_for_segment(self.segments[self.current_row])
-        self._tsv_parser.save_tsv(self.segments, path)
+        if not path.suffix:
+            path = path.with_suffix(f".{self._export_extension(export_format)}")
+        self._tsv_parser.save_path(self.segments, path, export_format)
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=path)
         )
@@ -2763,10 +2809,10 @@ class FoundryGUI(QMainWindow):
             self._batch_metrics.started_at = None
             self._update_llm_metrics_label()
 
-        parser = FoundryParser()
         settings = self.settings_tab.get_settings()
-        out = Path("out") / settings['lang'] / self.input_path.name
-        parser.save_tsv(result, out)
+        export_format = self._get_selected_export_format()
+        out = Path("out") / settings['lang'] / self._default_export_name(export_format)
+        self._tsv_parser.save_path(result, out, export_format)
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=out)
         )
@@ -2882,6 +2928,7 @@ class FoundryGUI(QMainWindow):
 
         self.btn_open.setText(I18N.t("btn_import"))
         self.btn_export.setText(I18N.t("btn_export"))
+        self.export_format_label.setText(I18N.t("ui_export_format"))
         if not self._file_loaded:
             self.file_label.setText(I18N.t("ui_no_file_selected"))
         self.search_label.setText(I18N.t("ui_search_label"))
