@@ -732,6 +732,27 @@ class FoundryGUI(QMainWindow):
         diff_text = "\n\n".join(sections).strip()
         self.editor.set_remote_change(diff_text if diff_text else None)
 
+    def _update_provider_fields_panel(self, seg: TranslationSegment) -> None:
+        if not hasattr(self.editor, "set_provider_fields"):
+            return
+        provider_id = (
+            getattr(seg, "provider_id", None)
+            or getattr(seg, "original_row", {}).get("provider_id")
+            or self._active_provider_id
+        )
+        provider = None
+        if provider_id and self.plugin_registry:
+            provider = self.plugin_registry.providers.get(provider_id)
+        custom_fields = []
+        if isinstance(provider, dict):
+            custom_fields = provider.get("custom_fields", [])
+        if not isinstance(custom_fields, list):
+            custom_fields = []
+        field_values = getattr(seg, "original_row", {}) or {}
+        if not isinstance(field_values, dict):
+            field_values = {}
+        self.editor.set_provider_fields(custom_fields, field_values)
+
     def _build_segments_from_provider(
         self,
         items: list[dict[str, object]],
@@ -1349,6 +1370,7 @@ class FoundryGUI(QMainWindow):
             self.editor.btn_use_fuzzy.setVisible(False)
 
         self._update_remote_change_panel(seg)
+        self._update_provider_fields_panel(seg)
 
     def search_fuzzy_matches(self, text):
         """Looks for similar lines and updates the editor panel."""
