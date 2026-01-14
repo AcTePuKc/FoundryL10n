@@ -70,6 +70,8 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 **Focus:** Scaling the ecosystem.
 
+**Remaining unchecked items (next steps):** Advanced Mapping (see item below).
+
 * [x] **Multi-Provider Support:** Open documentation for other communities to write their own plugins.
   * Note: Completed. The community-facing [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md) is now available, complementing the existing [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md).
 * [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
