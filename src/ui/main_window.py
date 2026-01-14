@@ -2030,6 +2030,7 @@ class FoundryGUI(QMainWindow):
             )
         elif hasattr(self, 'worker') and self.worker.isRunning():
             self.btn_run.setText(I18N.t("ui_stop_bulk"))
+            self.btn_run.setEnabled(True)
         else:
             self.btn_run.setText(I18N.t("ui_start_bulk"))
             self.btn_run.setEnabled(True)
@@ -2183,11 +2184,8 @@ class FoundryGUI(QMainWindow):
         if hasattr(self, 'worker') and self.worker.isRunning():
             self.worker.stop()
             self._bulk_stopping = True
-            self.btn_run.setEnabled(False)
-            self.btn_run.setText(I18N.t("ui_stopping_bulk"))
-            self.btn_run.setStyleSheet(
-                "background-color: #aa3333; font-weight: bold;"
-            )
+            self._update_run_button_text()
+            self.progress_bar.setValue(0)  # RESET BAR
         else:
             self.start_translation()
 
