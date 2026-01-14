@@ -37,6 +37,12 @@ from core.database import (save_translation, get_cached_record,
 from core.parser import TranslationSegment
 from services.plugin_loader import PluginRegistry
 
+TAG_ERROR_PREFIX = "[TAG ERROR]"
+TAG_ERROR_PREFIX_WITH_SPACE = f"{TAG_ERROR_PREFIX} "
+METRICS_SECTION_STYLE = "font-weight: bold; margin-top: 8px;"
+METRICS_MONO_STYLE = "font-family: 'Consolas', 'Courier New';"
+METRICS_MONO_BOLD_STYLE = f"{METRICS_MONO_STYLE} font-weight: bold;"
+
 
 class FoundryGUI(QMainWindow):
     def __init__(self, plugin_registry: Optional['PluginRegistry'] = None):
@@ -292,31 +298,23 @@ class FoundryGUI(QMainWindow):
         layout.addWidget(self.metrics_intro_label)
 
         self.metrics_stats_title = QLabel(I18N.t("metrics_qa_title"))
-        self.metrics_stats_title.setStyleSheet("font-weight: bold; margin-top: 8px;")
+        self.metrics_stats_title.setStyleSheet(METRICS_SECTION_STYLE)
         layout.addWidget(self.metrics_stats_title)
 
-        self.metrics_stats_label = QLabel(
-            self._format_stats_text(0, 0, 0, 0, 0, 0)
-        )
-        self.metrics_stats_label.setStyleSheet(
-            "font-family: 'Consolas', 'Courier New'; font-weight: bold;"
-        )
+        self.metrics_stats_label = QLabel()
+        self.metrics_stats_label.setStyleSheet(METRICS_MONO_BOLD_STYLE)
         layout.addWidget(self.metrics_stats_label)
 
         self.metrics_llm_title = QLabel(I18N.t("metrics_llm_title"))
-        self.metrics_llm_title.setStyleSheet("font-weight: bold; margin-top: 8px;")
+        self.metrics_llm_title.setStyleSheet(METRICS_SECTION_STYLE)
         layout.addWidget(self.metrics_llm_title)
 
         self.metrics_llm_label = QLabel()
-        self.metrics_llm_label.setStyleSheet(
-            "font-family: 'Consolas', 'Courier New';"
-        )
+        self.metrics_llm_label.setStyleSheet(METRICS_MONO_STYLE)
         layout.addWidget(self.metrics_llm_label)
 
         self.metrics_accuracy_title = QLabel(I18N.t("metrics_accuracy_title"))
-        self.metrics_accuracy_title.setStyleSheet(
-            "font-weight: bold; margin-top: 8px;"
-        )
+        self.metrics_accuracy_title.setStyleSheet(METRICS_SECTION_STYLE)
         layout.addWidget(self.metrics_accuracy_title)
 
         self.metrics_accuracy_label = QLabel()
@@ -918,7 +916,7 @@ class FoundryGUI(QMainWindow):
         if self.current_row == row:
             self.editor.trans_edit.blockSignals(True)
             self.editor.trans_edit.setPlainText(
-                new_text.replace("[TAG ERROR] ", ""))
+                new_text.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""))
             self.editor.trans_edit.blockSignals(False)
 
     def on_use_fuzzy_clicked(self):
@@ -939,7 +937,7 @@ class FoundryGUI(QMainWindow):
         for i in range(start, self.table.rowCount()):
             seg = self.segments[i]
             # Jump if it's an error OR if it's empty
-            if "[TAG ERROR]" in seg.translation or not seg.translation or not seg.is_verified:
+            if TAG_ERROR_PREFIX in seg.translation or not seg.translation or not seg.is_verified:
                 self.table.setCurrentCell(i, 1)
                 return
         self.thought_log.append(I18N.t("log_end_of_file"))
@@ -1121,7 +1119,7 @@ class FoundryGUI(QMainWindow):
             trans = self.segments[i].translation.lower()
 
             match_search = search_text in key or search_text in src or search_text in trans
-            match_error = "[TAG ERROR]" in trans.upper(
+            match_error = TAG_ERROR_PREFIX in trans.upper(
             ) if only_errors else True
 
             self.table.setRowHidden(i, not (match_search and match_error))
@@ -1179,11 +1177,11 @@ class FoundryGUI(QMainWindow):
         # Update visuals and editor content
         self.update_row_visuals(self.current_row)
         seg = self.segments[self.current_row]
-        if (seg.translation or "").startswith("[TAG ERROR]"):
+        if (seg.translation or "").startswith(TAG_ERROR_PREFIX):
             self.llm_failure_count += 1
             self._update_llm_metrics_label()
         self.editor.trans_edit.setPlainText(
-            seg.translation.replace("[TAG ERROR] ", ""))
+            seg.translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""))
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
         self.update_stats()
 
@@ -1271,7 +1269,7 @@ class FoundryGUI(QMainWindow):
             self.editor.trans_edit.setPlainText(skeleton)
         else:
             self.editor.trans_edit.setPlainText(
-                raw_translation.replace("[TAG ERROR] ", "")
+                raw_translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, "")
             )
 
         # Unblock after loading is finished
@@ -1353,12 +1351,12 @@ class FoundryGUI(QMainWindow):
         self.thought_log.append(I18N.t("log_history_restored"))
 
     def _segment_needs_fuzzy(self, seg) -> bool:
-        has_tag_error = "[TAG ERROR]" in (seg.translation or "")
+        has_tag_error = TAG_ERROR_PREFIX in (seg.translation or "")
         has_risk = bool(getattr(seg, "has_risk", False)) or "⚠️" in (seg.thought or "")
         return has_tag_error or has_risk
 
     def _normalize_suggestion_text(self, suggestion: str, source_text: str) -> str:
-        cleaned = (suggestion or "").replace("[TAG ERROR] ", "").strip()
+        cleaned = (suggestion or "").replace(TAG_ERROR_PREFIX_WITH_SPACE, "").strip()
         source_tags = extract_tags(source_text or "")
         if not source_tags:
             return cleaned
@@ -1402,7 +1400,7 @@ class FoundryGUI(QMainWindow):
                     ) if direction > 0 else range(start, -1, -1)
 
         for i in rng:
-            if "[TAG ERROR]" in self.segments[i].translation:
+            if TAG_ERROR_PREFIX in self.segments[i].translation:
                 self.table.setCurrentCell(i, 1)
                 break
 
@@ -1664,7 +1662,7 @@ class FoundryGUI(QMainWindow):
         translation = seg.translation or ""
         thought = seg.thought or ""
 
-        has_tag_error = "[TAG ERROR]" in translation
+        has_tag_error = TAG_ERROR_PREFIX in translation
         has_risk = "⚠️" in thought
 
         # --- PRIORITY RESOLUTION (single source of truth) ---
@@ -1847,7 +1845,7 @@ class FoundryGUI(QMainWindow):
         for i, seg in enumerate(self.segments):
             # 1. PRESERVE TRANSIENT STATE
             # Store current session info before we look at the DB
-            current_is_error = "[TAG ERROR]" in seg.translation
+            current_is_error = TAG_ERROR_PREFIX in seg.translation
             current_thought = seg.thought or ""
             has_warning = "⚠️" in current_thought
 
@@ -2230,7 +2228,7 @@ class FoundryGUI(QMainWindow):
                     seg.thought = I18N.t("thought_restored_from_memory")
 
                     # Run audit immediately so 🔶 appears on rows already in DB
-                    if seg.translation and "[TAG ERROR]" not in seg.translation:
+                    if seg.translation and TAG_ERROR_PREFIX not in seg.translation:
                         engine_helper.audit_segment(seg, glossary_dict)
 
                 # 5. Populate Table Row
@@ -2569,7 +2567,7 @@ class FoundryGUI(QMainWindow):
         failures = sum(
             1
             for seg in segments
-            if (getattr(seg, "translation", "") or "").startswith("[TAG ERROR]")
+            if (getattr(seg, "translation", "") or "").startswith(TAG_ERROR_PREFIX)
         )
         if failures:
             self.llm_failure_count += failures
