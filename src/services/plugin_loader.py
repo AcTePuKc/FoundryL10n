@@ -75,6 +75,26 @@ class PluginLoader:
             errors.append(f"{path}: {location}: {error.message}")
         return errors
 
+    def _normalize_custom_fields(self, data: dict) -> list[dict]:
+        raw_fields = data.get("custom_fields", [])
+        if not isinstance(raw_fields, list):
+            return []
+        normalized: list[dict] = []
+        for raw in raw_fields:
+            if not isinstance(raw, dict):
+                continue
+            normalized.append(
+                {
+                    "id": raw.get("id"),
+                    "label": raw.get("label"),
+                    "type": raw.get("type"),
+                    "required": bool(raw.get("required", False)),
+                    "default": raw.get("default"),
+                    "validation": raw.get("validation", {}) if isinstance(raw.get("validation"), dict) else {},
+                }
+            )
+        return normalized
+
     def load_registry(self) -> PluginRegistry:
         warnings: list[str] = []
         providers: dict[str, dict] = {}
@@ -103,11 +123,15 @@ class PluginLoader:
                     f"{plugin_file}: metadata.id '{metadata_id}' duplicates another plugin."
                 )
 
+            plugin_data = data if not errors else None
+            if plugin_data is not None:
+                plugin_data = {**plugin_data, "custom_fields": self._normalize_custom_fields(plugin_data)}
+
             entry = PluginEntry(
                 path=plugin_file,
                 name=display_name,
                 metadata_id=metadata_id,
-                data=data if not errors else None,
+                data=plugin_data,
                 errors=tuple(errors),
             )
             entries.append(entry)

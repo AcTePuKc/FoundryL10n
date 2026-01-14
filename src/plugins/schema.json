@@ -53,6 +53,10 @@
         "segment_id": { "type": "string", "default": "segment_id" }
       }
     },
+    "custom_fields": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/custom_field" }
+    },
     "tsv": {
       "type": "object",
       "properties": {
@@ -77,6 +81,35 @@
         "body": { "type": "object" }
       },
       "required": ["method", "path"]
+    },
+    "custom_field": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "type": "string" },
+        "required": { "type": "boolean", "default": false },
+        "default": { "type": ["string", "number", "integer", "boolean", "object", "array", "null"] },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "min_length": { "type": "integer", "minimum": 0 },
+            "max_length": { "type": "integer", "minimum": 0 },
+            "pattern": { "type": "string" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" },
+            "options": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "placeholder": { "type": "string" },
+            "help": { "type": "string" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "required": ["id", "label", "type"]
     }
   }
 }
