@@ -370,13 +370,10 @@ class TranslationEngine:
         seg.translation = final_text
         seg.thought = " | ".join(thoughts)
         if placeholder_warning:
+            thought_parts = [f"⚠️ {placeholder_warning}"]
             if seg.thought:
-                seg.thought = f"⚠️ {placeholder_warning} | {seg.thought}"
-            else:
-                seg.thought = f"⚠️ {placeholder_warning}"
-
-        if not getattr(seg, "ai_draft", ""):
-            seg.ai_draft = final_text
+                thought_parts.append(seg.thought)
+            seg.thought = " | ".join(thought_parts)
 
         return True
 
