@@ -74,13 +74,13 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 * [x] **Multi-Provider Support:** Open documentation for other communities to write their own plugins.
   * Note: Completed. The community-facing [PLUGIN_GUIDE.md](PLUGIN_GUIDE.md) is now available, complementing the existing [plugin system](../src/plugins/schema.json) and [integration docs](INTEGRATION.md).
-* [ ] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
-  * Note: mapping is currently limited to `source_text`, `target_text`, and `segment_id` in the [schema](../src/plugins/schema.json), and only those paths are consumed by the [provider HTTP client](../src/services/provider_http_client.py). The editor has a **collapsible provider fields panel shell** (`src/ui/editor_panel.py`), but there is **no** custom field metadata, rendering, or persistence yet.
+* [x] **Advanced Mapping:** Allow plugins to define custom UI fields (e.g., "Character Gender" or "Max Length").
+  * Note: Custom fields now support schema-defined metadata, UI rendering, persistence, and lightweight validation in the provider fields panel (`src/ui/editor_panel.py`) and submission flow (`src/ui/main_window.py`).
   * Minimal plan (**next steps**):
     1. **Schema extension + parsing (Phase A):** ✅ Completed. Provider-defined custom field metadata (labels, types, optionality, defaults, validation hints) now lives in the schema and is loaded alongside existing mapping paths.
     2. **Schema-to-UI adapter (Phase B):** ✅ Completed. Convert field metadata into editor widgets (reusing existing input types only) and render them inside the provider fields panel.
     3. **Data binding + persistence:** ✅ Completed. Store per-segment custom field values (e.g., `custom_fields` JSON keyed by field IDs) and include them in provider submission payloads when the provider mapping declares the field.
-    4. **Validation + hints:** Surface provider constraints as non-blocking hints and lightweight warnings without interrupting typing flow.
+    4. **Validation + hints:** ✅ Completed. Surface provider constraints as non-blocking hints and lightweight warnings without interrupting typing flow.
   * Expected UX behavior:
     * Custom fields appear per-segment only when the active provider defines them; no fields show for providers without definitions.
     * If the panel is collapsed, show a subtle inline indicator (e.g., a small “fields” badge in the segment header row) only when custom fields exist for that segment to keep discoverability without adding extra global menu chrome.
