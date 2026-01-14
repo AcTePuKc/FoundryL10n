@@ -15,6 +15,8 @@ except ModuleNotFoundError:
 
 from services.plugin_loader import PluginLoader
 
+_MISSING = object()
+
 
 def write_schema(path: Path) -> None:
     schema = {
@@ -45,14 +47,21 @@ def write_schema(path: Path) -> None:
                 },
                 "required": ["fetch_segments", "submit_suggestion"],
             },
+            "custom_fields": {},
         },
         "required": ["metadata", "auth", "endpoints"],
     }
     path.write_text(json.dumps(schema), encoding="utf-8")
 
 
-def write_plugin(path: Path, *, metadata_id: str, name: str = "Provider") -> None:
-    plugin = {
+def write_plugin(
+    path: Path,
+    *,
+    metadata_id: str,
+    name: str = "Provider",
+    custom_fields: object = _MISSING,
+) -> None:
+    plugin: dict[str, object] = {
         "metadata": {
             "name": name,
             "id": metadata_id,
@@ -64,6 +73,8 @@ def write_plugin(path: Path, *, metadata_id: str, name: str = "Provider") -> Non
             "submit_suggestion": "/submit",
         },
     }
+    if custom_fields is not _MISSING:
+        plugin["custom_fields"] = custom_fields
     path.write_text(json.dumps(plugin), encoding="utf-8")
 
 
@@ -121,3 +132,138 @@ def test_deterministic_ordering(tmp_path: Path) -> None:
 
     paths = [entry.path.name for entry in registry.entries]
     assert paths == ["alpha.json", "zeta.json"]
+
+
+def test_custom_fields_missing_defaults_to_empty_list(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(plugin_dir / "alpha.json", metadata_id="alpha")
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == []
+
+
+def test_custom_fields_null_or_not_list_are_dropped(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(plugin_dir / "alpha.json", metadata_id="alpha", custom_fields=None)
+    write_plugin(plugin_dir / "beta.json", metadata_id="beta", custom_fields="nope")
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == []
+    assert registry.providers["beta"]["custom_fields"] == []
+
+
+def test_custom_fields_skips_non_dict_items(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(
+        plugin_dir / "alpha.json",
+        metadata_id="alpha",
+        custom_fields=["nope", {"id": "tone", "label": "Tone", "type": "text"}],
+    )
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == [
+        {"id": "tone", "label": "Tone", "type": "text", "required": False, "default": None, "validation": {}}
+    ]
+
+
+def test_custom_fields_optional_keys_default(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(
+        plugin_dir / "alpha.json",
+        metadata_id="alpha",
+        custom_fields=[{"id": "gender", "label": "Gender", "type": "select"}],
+    )
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == [
+        {
+            "id": "gender",
+            "label": "Gender",
+            "type": "select",
+            "required": False,
+            "default": None,
+            "validation": {},
+        }
+    ]
+
+
+def test_custom_fields_validation_non_dict(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(
+        plugin_dir / "alpha.json",
+        metadata_id="alpha",
+        custom_fields=[
+            {
+                "id": "length",
+                "label": "Max Length",
+                "type": "number",
+                "validation": "invalid",
+            }
+        ],
+    )
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == [
+        {
+            "id": "length",
+            "label": "Max Length",
+            "type": "number",
+            "required": False,
+            "default": None,
+            "validation": {},
+        }
+    ]
+
+
+def test_custom_fields_valid_structure(tmp_path: Path) -> None:
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    schema_path = tmp_path / "schema.json"
+    write_schema(schema_path)
+    write_plugin(
+        plugin_dir / "alpha.json",
+        metadata_id="alpha",
+        custom_fields=[
+            {
+                "id": "tone",
+                "label": "Tone",
+                "type": "text",
+                "required": True,
+                "default": "neutral",
+                "validation": {"max_length": 12},
+            }
+        ],
+    )
+
+    registry = PluginLoader(plugin_dir=plugin_dir, schema_path=schema_path).load_registry()
+
+    assert registry.providers["alpha"]["custom_fields"] == [
+        {
+            "id": "tone",
+            "label": "Tone",
+            "type": "text",
+            "required": True,
+            "default": "neutral",
+            "validation": {"max_length": 12},
+        }
+    ]

@@ -87,7 +87,10 @@
       "properties": {
         "id": { "type": "string" },
         "label": { "type": "string" },
-        "type": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["text", "textarea", "number", "boolean", "select", "date"]
+        },
         "required": { "type": "boolean", "default": false },
         "default": { "type": ["string", "number", "integer", "boolean", "object", "array", "null"] },
         "validation": {

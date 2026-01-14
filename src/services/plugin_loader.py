@@ -90,7 +90,9 @@ class PluginLoader:
                     "type": raw.get("type"),
                     "required": bool(raw.get("required", False)),
                     "default": raw.get("default"),
-                    "validation": raw.get("validation", {}) if isinstance(raw.get("validation"), dict) else {},
+                    "validation": validation
+                    if isinstance((validation := raw.get("validation")), dict)
+                    else {},
                 }
             )
         return normalized
@@ -125,7 +127,7 @@ class PluginLoader:
 
             plugin_data = data if not errors else None
             if plugin_data is not None:
-                plugin_data = {**plugin_data, "custom_fields": self._normalize_custom_fields(plugin_data)}
+                plugin_data["custom_fields"] = self._normalize_custom_fields(plugin_data)
 
             entry = PluginEntry(
                 path=plugin_file,
