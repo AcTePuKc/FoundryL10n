@@ -151,6 +151,7 @@ class EditorPanel(QWidget):
         self.btn_use_fuzzy = QPushButton(I18N.t("btn_use_suggestion"))
         self.btn_use_fuzzy.setVisible(False)
         editor_layout.addWidget(self.btn_use_fuzzy)
+        self.set_tag_chips([])
 
     def _create_highlighters(self) -> None:
         # 2. Highlighting
@@ -160,7 +161,6 @@ class EditorPanel(QWidget):
     def _configure_shortcuts(self) -> None:
         # 3. Shortcuts
         self.trans_edit.installEventFilter(self)
-        self.set_tag_chips([])
 
     def _create_provider_side_panel(self) -> None:
         self.provider_fields_panel = QWidget()
