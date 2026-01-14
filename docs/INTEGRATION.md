@@ -64,7 +64,7 @@ Remote API (segments + suggestions endpoints; source of truth)
 
 **Where the actions live**
 
-* **Fetch** and **Submit Suggestions** live in the main toolbar next to the Provider selector, and are duplicated in the **Provider** menu for discoverability.
+* **Fetch** and **Submit Suggestions** live in the **Sync** menu for discoverability and keyboard access.
 * Actions are visually grouped with provider state (selector + login) so users understand they are remote operations, not local editing tools.
 
 **When the actions are enabled**
