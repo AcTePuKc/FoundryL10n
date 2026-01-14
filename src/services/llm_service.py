@@ -194,13 +194,23 @@ class LLMService:
         except Exception as e:
             return f"[TAG ERROR] {I18N.t('llm_error').format(error=str(e))}", ""
 
+    @staticmethod
+    def _postprocess_repair_output(raw: str) -> str:
+        cleaned = raw.strip()
+        if "\n" in cleaned:
+            cleaned = [line.strip() for line in cleaned.split("\n") if line.strip()][-1]
+        for junk in POLITE_JUNK:
+            if cleaned.lower().startswith(junk.lower()):
+                candidate = cleaned[len(junk):].strip().lstrip(":! ")
+                if candidate:
+                    cleaned = candidate
+        return cleaned
+
     def repair_placeholders(
         self,
         source_line: str,
         candidate_translation: str,
         expected_placeholders: list[str],
-        target_lang: str,
-        context_extra: str = "",
     ) -> tuple[str | None, str]:
         expected_text = ", ".join(expected_placeholders)
         prompt = REPAIR_PROMPT.format(
@@ -208,9 +218,6 @@ class LLMService:
             candidate_translation=candidate_translation,
             expected_placeholders=expected_text or "[]",
         )
-        if context_extra:
-            prompt = CONTEXT_PREFIX.format(context=context_extra) + prompt
-
         try:
             response = self.client.generate(
                 model=self.model,
@@ -221,7 +228,7 @@ class LLMService:
                 },
             )
             raw = response["response"].strip()
-            return self._postprocess_output(raw, source_line, target_lang)
+            return self._postprocess_repair_output(raw), ""
         except (httpx.TimeoutException, TimeoutError) as e:
             if self.timeout is not None:
                 warning = I18N.t("log_llm_timeout").format(seconds=self.timeout)

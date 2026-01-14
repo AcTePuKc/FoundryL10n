@@ -326,8 +326,6 @@ class TranslationEngine:
                 source_line=seg.source_text,
                 candidate_translation=final_text,
                 expected_placeholders=tokens,
-                target_lang=target_lang,
-                context_extra=context_extra,
             )
             if repaired_text:
                 repaired_masked, _ = self.masker.mask(repaired_text)

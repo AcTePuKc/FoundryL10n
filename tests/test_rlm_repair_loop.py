@@ -18,8 +18,6 @@ class DummyLLM:
         source_line: str,
         candidate_translation: str,
         expected_placeholders: list[str],
-        target_lang: str,
-        context_extra: str = "",
     ):
         self.repair_calls.append(
             (source_line, candidate_translation, list(expected_placeholders))
