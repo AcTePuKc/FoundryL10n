@@ -165,13 +165,13 @@ class FoundryParser:
             segments.append(
                 TranslationSegment(
                     key=normalized.get('key') or normalized.get('id') or 'no_key',
-                    source_text=normalized.get(self.text_col, "") or "",
+                    source_text=normalized.get(self.text_col, ""),
                     context=normalized.get('note', normalized.get('context', "")),
-                    translation=normalized.get(self.target_col, "") or "",
+                    translation=normalized.get(self.target_col, ""),
                     ai_draft=normalized.get('ai_draft', ""),
                     original_row=normalized,
-                    provider_id=normalized.get("provider_id") or None,
-                    remote_id=normalized.get("remote_id") or None,
+                    provider_id=normalized.get("provider_id"),
+                    remote_id=normalized.get("remote_id"),
                     last_sync=TranslationSegment.resolve_sync_timestamp(normalized),
                 )
             )
