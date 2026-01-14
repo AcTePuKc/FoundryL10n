@@ -30,6 +30,9 @@ class TranslationSegment:
         self.has_conflict = False
         self.is_verified = False
         self.never_translate = False
+        self.repair_attempted = False
+        self.repair_success = False
+        self.repair_failed = False
 
     @staticmethod
     def resolve_sync_timestamp(row: Dict) -> str | None:

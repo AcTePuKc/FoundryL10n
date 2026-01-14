@@ -91,11 +91,11 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 * [x] **Quality Dashboard:** UI for tracking progress, LLM usage stats, and accuracy.
   * Remaining gaps: progress/QA counters exist in the [main window UI](../src/ui/main_window.py), but there is no dedicated LLM usage or accuracy metrics breakdown yet.
   * Next steps: instrument per-segment LLM usage (requests, tokens, latency), QA outcomes (tag errors, audit risks, verified rate), and surface a local-only summary in a dedicated Metrics tab.
-* [ ] **Placeholder-Safe Recursive Translation Pipeline:** Guarantee that non-translatable tokens survive LLM translation unchanged, with strict validation and repair.
+* [x] **Placeholder-Safe Recursive Translation Pipeline:** Guarantee that non-translatable tokens survive LLM translation unchanged, with strict validation and repair.
   * Design reference: see [RLM_DESIGN.md](RLM_DESIGN.md) for Phase A (segmenter + validator, no auto-fix) and Phase B (repair pass + QA integration).
   * Scope:
     * Treat **any content wrapped in `<>` or `[]` as non-translatable by default**, unless a provider explicitly marks it as translatable.
     * Preserve existing placeholder patterns (`<TSMARKER_n>`, `<BR_n>`, `[BTN_*]`, `%s`, `{0}`, etc.) exactly, including order and multiplicity.
     * Apply the same rules in both GUI and CLI entry points via a shared core service layer.
-  * Phase A (segmenter + validator): **in progress**. See [RLM_DESIGN.md](RLM_DESIGN.md).
-  * Phase B (repair pass + QA integration): not started.
+  * Phase A (segmenter + validator): **completed**. See [RLM_DESIGN.md](RLM_DESIGN.md).
+  * Phase B (repair pass + QA integration): **completed**.

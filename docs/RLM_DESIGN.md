@@ -137,6 +137,8 @@ Instruction: *Insert missing placeholders without altering translated words.*
 - UI should show a lightweight indicator (icon/badge), not a modal dialog.
 - Preserve segment state semantics (`draft`, `translated`, `verified`) and never auto-promote to `verified` when repairs were needed.
 
+**Status:** Implemented in the shared translation engine with LLM repair prompts, re-validation, and QA counters surfaced in GUI and CLI flows.
+
 ## Interaction with Existing Components
 
 - **`masker`:**
