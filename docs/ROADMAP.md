@@ -96,6 +96,7 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
   * Scope:
     * Treat **any content wrapped in `<>` or `[]` as non-translatable by default**, unless a provider explicitly marks it as translatable.
     * Preserve existing placeholder patterns (`<TSMARKER_n>`, `<BR_n>`, `[BTN_*]`, `%s`, `{0}`, etc.) exactly, including order and multiplicity.
-    * Apply the same rules in both GUI and CLI entry points via a shared core service layer.
+  * Apply the same rules in both GUI and CLI entry points via a shared core service layer.
   * Phase A (segmenter + validator): **completed**. See [RLM_DESIGN.md](RLM_DESIGN.md).
   * Phase B (repair pass + QA integration): **completed**.
+  * Strict vs non-strict placeholder failure behavior: **implemented** (blocking error vs warning).
