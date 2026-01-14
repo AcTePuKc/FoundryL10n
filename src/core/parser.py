@@ -127,7 +127,10 @@ class FoundryParser:
     def parse_json(self, file_path: Path) -> List[TranslationSegment]:
         segments: List[TranslationSegment] = []
         with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in file: {file_path}") from e
 
         rows = data.get("segments") if isinstance(data, dict) else data
         if not isinstance(rows, list):
