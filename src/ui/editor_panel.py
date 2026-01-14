@@ -1,3 +1,4 @@
+import re
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
                                QPushButton, QHBoxLayout, QCheckBox,
                                QListWidget, QToolButton, QLineEdit,
@@ -205,6 +206,8 @@ class EditorPanel(QWidget):
         provider_fields_layout.addWidget(self.provider_fields_body)
         self.provider_fields_body.setVisible(False)
         self.provider_field_widgets: dict[str, QWidget] = {}
+        self._provider_field_specs: dict[str, dict] = {}
+        self._provider_field_warning_labels: dict[str, QLabel] = {}
 
     def _init_provider_field_builders(self) -> None:
         self._field_builders = {
@@ -230,6 +233,8 @@ class EditorPanel(QWidget):
                     if child_widget is not None:
                         child_widget.deleteLater()
         self.provider_field_widgets.clear()
+        self._provider_field_specs.clear()
+        self._provider_field_warning_labels.clear()
 
     def _build_provider_field_widget(
         self,
@@ -246,6 +251,32 @@ class EditorPanel(QWidget):
             if help_text := validation.get("help"):
                 widget.setToolTip(str(help_text))
         return widget
+
+    def _build_provider_field_container(
+        self,
+        field_id: str,
+        widget: QWidget,
+        help_text: str | None,
+    ) -> QWidget:
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        layout.addWidget(widget)
+        if help_text:
+            hint_label = QLabel(str(help_text))
+            hint_label.setStyleSheet("color: #90a4ae; font-size: 11px;")
+            hint_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+            hint_label.setWordWrap(True)
+            layout.addWidget(hint_label)
+        warning_label = QLabel()
+        warning_label.setStyleSheet("color: #ffb74d; font-size: 11px;")
+        warning_label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        warning_label.setWordWrap(True)
+        warning_label.setVisible(False)
+        layout.addWidget(warning_label)
+        self._provider_field_warning_labels[field_id] = warning_label
+        return container
 
     def _build_text_widget(self, validation: dict, value: object) -> QLineEdit:
         widget = QLineEdit()
@@ -327,7 +358,8 @@ class EditorPanel(QWidget):
             if not field_id:
                 continue
             label_text = str(field.get("label") or field_id)
-            if field.get("required"):
+            is_required = bool(field.get("required"))
+            if is_required:
                 label_text = f"{label_text} *"
             field_type = str(field.get("type", "text"))
             validation = field.get("validation") if isinstance(field.get("validation"), dict) else {}
@@ -338,28 +370,169 @@ class EditorPanel(QWidget):
             label = QLabel(label_text)
             if help_text := validation.get("help"):
                 label.setToolTip(str(help_text))
-            self.provider_fields_form.addRow(label, widget)
+            container = self._build_provider_field_container(
+                field_id,
+                widget,
+                validation.get("help"),
+            )
+            self.provider_fields_form.addRow(label, container)
             self.provider_field_widgets[field_id] = widget
+            self._provider_field_specs[field_id] = {
+                "required": is_required,
+                "validation": validation,
+                "type": field_type,
+                "label": str(field.get("label") or field_id),
+            }
+            self._connect_provider_field_validation(field_id, widget)
             has_fields = True
         self.provider_fields_placeholder.setVisible(not has_fields)
         self.provider_fields_content.setVisible(has_fields)
+        self._refresh_provider_field_warnings()
 
     def get_provider_field_values(self) -> dict[str, object]:
         values: dict[str, object] = {}
         for field_id, widget in self.provider_field_widgets.items():
-            if isinstance(widget, QLineEdit):
-                values[field_id] = widget.text()
-            elif isinstance(widget, QTextEdit):
-                values[field_id] = widget.toPlainText()
-            elif isinstance(widget, QDoubleSpinBox):
-                values[field_id] = widget.value()
-            elif isinstance(widget, QCheckBox):
-                values[field_id] = widget.isChecked()
-            elif isinstance(widget, QComboBox):
-                values[field_id] = widget.currentText()
-            elif isinstance(widget, QDateEdit):
-                values[field_id] = widget.date().toString(Qt.DateFormat.ISODate)
+            values[field_id] = self._provider_field_value(widget)
         return values
+
+    def _provider_field_value(self, widget: QWidget) -> object:
+        if isinstance(widget, QLineEdit):
+            return widget.text()
+        if isinstance(widget, QTextEdit):
+            return widget.toPlainText()
+        if isinstance(widget, QDoubleSpinBox):
+            return widget.value()
+        if isinstance(widget, QCheckBox):
+            return widget.isChecked()
+        if isinstance(widget, QComboBox):
+            return widget.currentText()
+        if isinstance(widget, QDateEdit):
+            return widget.date().toString(Qt.DateFormat.ISODate)
+        return None
+
+    def _connect_provider_field_validation(
+        self,
+        field_id: str,
+        widget: QWidget,
+    ) -> None:
+        if isinstance(widget, QLineEdit):
+            widget.textChanged.connect(
+                lambda _text: self._update_provider_field_warning(field_id)
+            )
+        elif isinstance(widget, QTextEdit):
+            widget.textChanged.connect(
+                lambda: self._update_provider_field_warning(field_id)
+            )
+        elif isinstance(widget, QDoubleSpinBox):
+            widget.valueChanged.connect(
+                lambda _value: self._update_provider_field_warning(field_id)
+            )
+        elif isinstance(widget, QCheckBox):
+            widget.toggled.connect(
+                lambda _checked: self._update_provider_field_warning(field_id)
+            )
+        elif isinstance(widget, QComboBox):
+            widget.currentTextChanged.connect(
+                lambda _text: self._update_provider_field_warning(field_id)
+            )
+        elif isinstance(widget, QDateEdit):
+            widget.dateChanged.connect(
+                lambda _date: self._update_provider_field_warning(field_id)
+            )
+
+    def _refresh_provider_field_warnings(self) -> None:
+        for field_id in self.provider_field_widgets:
+            self._update_provider_field_warning(field_id)
+
+    def _update_provider_field_warning(self, field_id: str) -> None:
+        widget = self.provider_field_widgets.get(field_id)
+        warning_label = self._provider_field_warning_labels.get(field_id)
+        spec = self._provider_field_specs.get(field_id)
+        if widget is None or warning_label is None or spec is None:
+            return
+        value = self._provider_field_value(widget)
+        field_type = str(spec.get("type", "text"))
+        validation = spec.get("validation", {})
+        messages: list[str] = []
+        if spec.get("required") and self._provider_field_missing_value(
+            field_type, value
+        ):
+            messages.append(I18N.t("ui_provider_field_required"))
+        messages.extend(self._provider_field_validation_messages(
+            field_type, value, validation
+        ))
+        if messages:
+            warning_label.setText(" ".join(messages))
+            warning_label.setVisible(True)
+        else:
+            warning_label.clear()
+            warning_label.setVisible(False)
+
+    def _provider_field_missing_value(self, field_type: str, value: object) -> bool:
+        if value is None:
+            return True
+        if field_type in {"text", "textarea", "select", "date"}:
+            if isinstance(value, str):
+                return not value.strip()
+        if field_type in {"number"}:
+            return False
+        if field_type in {"boolean"}:
+            return False
+        if isinstance(value, (list, dict, tuple, set)):
+            return len(value) == 0
+        return False
+
+    def _provider_field_validation_messages(
+        self,
+        field_type: str,
+        value: object,
+        validation: dict,
+    ) -> list[str]:
+        messages: list[str] = []
+        if field_type in {"text", "textarea", "select", "date"} and isinstance(value, str):
+            stripped = value.strip()
+            min_length = validation.get("min_length")
+            max_length = validation.get("max_length")
+            if isinstance(min_length, int) and len(stripped) < min_length:
+                messages.append(
+                    I18N.t("ui_provider_field_min_length").format(min=min_length)
+                )
+            if isinstance(max_length, int) and len(stripped) > max_length:
+                messages.append(
+                    I18N.t("ui_provider_field_max_length").format(max=max_length)
+                )
+            pattern = validation.get("pattern")
+            if pattern and stripped:
+                try:
+                    if re.search(pattern, stripped) is None:
+                        messages.append(I18N.t("ui_provider_field_pattern"))
+                except re.error:
+                    pass
+            options = validation.get("options")
+            if field_type == "select" and isinstance(options, list) and stripped:
+                option_values = [str(opt) for opt in options]
+                if stripped not in option_values:
+                    messages.append(I18N.t("ui_provider_field_invalid_option"))
+        if field_type == "number" and isinstance(value, (int, float)):
+            min_value = validation.get("min")
+            max_value = validation.get("max")
+            if min_value is not None:
+                try:
+                    if float(value) < float(min_value):
+                        messages.append(
+                            I18N.t("ui_provider_field_min_value").format(min=min_value)
+                        )
+                except (TypeError, ValueError):
+                    pass
+            if max_value is not None:
+                try:
+                    if float(value) > float(max_value):
+                        messages.append(
+                            I18N.t("ui_provider_field_max_value").format(max=max_value)
+                        )
+                except (TypeError, ValueError):
+                    pass
+        return messages
 
     def _wire_signals(self) -> None:
         self.btn_invisibles.clicked.connect(self.toggle_invisibles)

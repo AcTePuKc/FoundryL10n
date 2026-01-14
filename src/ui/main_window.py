@@ -743,17 +743,56 @@ class FoundryGUI(QMainWindow):
         provider = None
         if provider_id and self.plugin_registry:
             provider = self.plugin_registry.providers.get(provider_id)
-        custom_fields = []
-        if isinstance(provider, dict):
-            custom_fields = provider.get("custom_fields", [])
-        if not isinstance(custom_fields, list):
-            custom_fields = []
+        custom_fields = self._provider_custom_fields(provider)
         field_values = self._segment_custom_field_values(seg)
         self.editor.set_provider_fields(custom_fields, field_values)
 
     def _segment_custom_field_values(self, seg: TranslationSegment) -> dict:
         custom_fields = seg.original_row.get("custom_fields")
         return self._tsv_parser.parse_custom_fields(custom_fields)
+
+    def _provider_custom_fields(self, provider: dict | None) -> list[dict]:
+        custom_fields = []
+        if isinstance(provider, dict):
+            custom_fields = provider.get("custom_fields", [])
+        if not isinstance(custom_fields, list):
+            custom_fields = []
+        return custom_fields
+
+    def _missing_required_custom_fields(
+        self,
+        custom_fields: list[dict],
+        values: dict,
+    ) -> list[str]:
+        missing: list[str] = []
+        for field in custom_fields:
+            if not isinstance(field, dict):
+                continue
+            if not field.get("required"):
+                continue
+            field_id = str(field.get("id", "")).strip()
+            if not field_id:
+                continue
+            field_type = str(field.get("type", "text"))
+            label = str(field.get("label") or field_id)
+            default_value = field.get("default")
+            value = values.get(field_id, default_value)
+            if self._is_custom_field_missing(field_type, value):
+                missing.append(label)
+        return missing
+
+    def _is_custom_field_missing(self, field_type: str, value: object) -> bool:
+        if value is None:
+            return True
+        if field_type in {"text", "textarea", "select", "date"} and isinstance(value, str):
+            return not value.strip()
+        if field_type == "boolean":
+            return False
+        if field_type == "number":
+            return False
+        if isinstance(value, (list, dict, tuple, set)):
+            return len(value) == 0
+        return False
 
     def _store_provider_fields_for_segment(self, seg: TranslationSegment) -> None:
         if not hasattr(self.editor, "get_provider_field_values"):
@@ -861,6 +900,17 @@ class FoundryGUI(QMainWindow):
             return
         seg = self.segments[self.current_row]
         self._store_provider_fields_for_segment(seg)
+        required_missing = self._missing_required_custom_fields(
+            self._provider_custom_fields(provider),
+            self._segment_custom_field_values(seg),
+        )
+        if required_missing:
+            self.thought_log.append(
+                I18N.t("log_sync_submit_missing_fields").format(
+                    fields=", ".join(required_missing)
+                )
+            )
+            return
         segment_id = self._resolve_segment_id(seg)
         if not segment_id:
             self.thought_log.append(I18N.t("log_sync_missing_segment_id"))
@@ -898,10 +948,19 @@ class FoundryGUI(QMainWindow):
         client = ProviderHttpClient(provider)
         submitted = 0
         skipped = 0
+        skipped_required = 0
+        custom_fields_def = self._provider_custom_fields(provider)
         for seg in verified_segments:
             segment_id = self._resolve_segment_id(seg)
             if not segment_id:
                 skipped += 1
+                continue
+            required_missing = self._missing_required_custom_fields(
+                custom_fields_def,
+                self._segment_custom_field_values(seg),
+            )
+            if required_missing:
+                skipped_required += 1
                 continue
             suggestion_text = seg.translation or ""
             custom_fields = self._segment_custom_field_values(seg)
@@ -917,6 +976,12 @@ class FoundryGUI(QMainWindow):
                 self.thought_log.append(
                     I18N.t("log_sync_submit_failed").format(error=f"Segment '{seg.key}': {exc}")
                 )
+        if skipped_required:
+            self.thought_log.append(
+                I18N.t("log_sync_submit_missing_fields_bulk").format(
+                    count=skipped_required
+                )
+            )
         self.thought_log.append(
             I18N.t("log_sync_submit_all_success").format(
                 count=submitted, skipped=skipped
