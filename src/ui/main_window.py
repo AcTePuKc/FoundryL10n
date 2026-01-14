@@ -58,6 +58,8 @@ class FoundryGUI(QMainWindow):
         self._login_dialog: LoginDialog | None = None
         self._remote_change_ready = False
         self._remote_change_map: dict[str, dict[str, str]] = {}
+        self.llm_request_count = 0
+        self.llm_failure_count = 0
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -116,6 +118,8 @@ class FoundryGUI(QMainWindow):
         self.tabs.addTab(self.integrity_tab, I18N.t("tab_integrity"))
         self.integrity_tab.btn_auto_normalize.clicked.connect(
             self.run_auto_normalize)
+        self.init_metrics_tab()
+        self.tabs.addTab(self.metrics_tab, I18N.t("tab_metrics"))
 
         # Load states
         self.load_ui_state()
@@ -273,6 +277,54 @@ class FoundryGUI(QMainWindow):
 
         self.tabs.addTab(self.translate_tab, I18N.t("ui_workstation"))
         self.table.itemChanged.connect(self.on_table_cell_edited)
+
+    def init_metrics_tab(self):
+        self.metrics_tab = QWidget()
+        layout = QVBoxLayout(self.metrics_tab)
+        layout.setContentsMargins(16, 16, 16, 16)
+
+        self.metrics_header_label = QLabel(I18N.t("metrics_title"))
+        self.metrics_header_label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        layout.addWidget(self.metrics_header_label)
+
+        self.metrics_intro_label = QLabel(I18N.t("metrics_intro"))
+        self.metrics_intro_label.setWordWrap(True)
+        layout.addWidget(self.metrics_intro_label)
+
+        self.metrics_stats_title = QLabel(I18N.t("metrics_qa_title"))
+        self.metrics_stats_title.setStyleSheet("font-weight: bold; margin-top: 8px;")
+        layout.addWidget(self.metrics_stats_title)
+
+        self.metrics_stats_label = QLabel(
+            self._format_stats_text(0, 0, 0, 0, 0, 0)
+        )
+        self.metrics_stats_label.setStyleSheet(
+            "font-family: 'Consolas', 'Courier New'; font-weight: bold;"
+        )
+        layout.addWidget(self.metrics_stats_label)
+
+        self.metrics_llm_title = QLabel(I18N.t("metrics_llm_title"))
+        self.metrics_llm_title.setStyleSheet("font-weight: bold; margin-top: 8px;")
+        layout.addWidget(self.metrics_llm_title)
+
+        self.metrics_llm_label = QLabel()
+        self.metrics_llm_label.setStyleSheet(
+            "font-family: 'Consolas', 'Courier New';"
+        )
+        layout.addWidget(self.metrics_llm_label)
+
+        self.metrics_accuracy_title = QLabel(I18N.t("metrics_accuracy_title"))
+        self.metrics_accuracy_title.setStyleSheet(
+            "font-weight: bold; margin-top: 8px;"
+        )
+        layout.addWidget(self.metrics_accuracy_title)
+
+        self.metrics_accuracy_label = QLabel()
+        self.metrics_accuracy_label.setWordWrap(True)
+        layout.addWidget(self.metrics_accuracy_label)
+
+        layout.addStretch()
+        self._update_metrics_labels(0, 0, 0, 0, 0, 0)
 
     def _init_actions(self):
         self.action_verify_rows = QAction(self)
@@ -1094,6 +1146,8 @@ class FoundryGUI(QMainWindow):
 
         # Enter the "thinking" mode.
         self.editor.btn_translate_now.setText(I18N.t("btn_stop_thinking"))
+        self.llm_request_count += 1
+        self._update_llm_metrics_label()
         
 
         project_name = settings.get("project_name", "default")
@@ -1125,6 +1179,9 @@ class FoundryGUI(QMainWindow):
         # Update visuals and editor content
         self.update_row_visuals(self.current_row)
         seg = self.segments[self.current_row]
+        if (seg.translation or "").startswith("[TAG ERROR]"):
+            self.llm_failure_count += 1
+            self._update_llm_metrics_label()
         self.editor.trans_edit.setPlainText(
             seg.translation.replace("[TAG ERROR] ", ""))
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
@@ -2020,6 +2077,42 @@ class FoundryGUI(QMainWindow):
                 pending=I18N.t("stats_tooltip_pending"),
             )
         )
+        self._update_metrics_labels(v, qa, risk, err, conflict, pend)
+
+    def _update_llm_metrics_label(self) -> None:
+        if hasattr(self, "metrics_llm_label"):
+            self.metrics_llm_label.setText(
+                I18N.t("metrics_llm_template").format(
+                    requests=self.llm_request_count,
+                    failures=self.llm_failure_count,
+                )
+            )
+
+    def _update_metrics_labels(
+        self,
+        verified: int,
+        draft: int,
+        risk: int,
+        error: int,
+        conflict: int,
+        pending: int,
+    ) -> None:
+        if not hasattr(self, "metrics_stats_label"):
+            return
+        total = verified + draft + risk + error + conflict + pending
+        verified_rate = f"{(verified / total * 100):.1f}%" if total else "0%"
+        self.metrics_stats_label.setText(
+            self._format_stats_text(verified, draft, risk, error, conflict, pending)
+        )
+        self._update_llm_metrics_label()
+        self.metrics_accuracy_label.setText(
+            I18N.t("metrics_accuracy_template").format(
+                verified_rate=verified_rate,
+                placeholder_errors=error,
+                audit_warnings=risk,
+                conflicts=conflict,
+            )
+        )
 
     def _update_run_button_text(self):
         if self._bulk_stopping:
@@ -2195,6 +2288,8 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setText(I18N.t("ui_stop_bulk"))
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
+        self.llm_request_count += self._count_llm_requests(self.segments)
+        self._update_llm_metrics_label()
 
         svc = LLMService(
             model_name=settings['model'],
@@ -2452,6 +2547,7 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setStyleSheet("font-weight: bold;")
         self.save_ui_state()
         self.settings_tab.save_settings()
+        self._tally_llm_failures(result)
 
         parser = FoundryParser()
         settings = self.settings_tab.get_settings()
@@ -2460,6 +2556,24 @@ class FoundryGUI(QMainWindow):
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=out)
         )
+
+    @staticmethod
+    def _count_llm_requests(segments) -> int:
+        return sum(
+            1
+            for seg in segments
+            if getattr(seg, "source_text", "").strip()
+        )
+
+    def _tally_llm_failures(self, segments) -> None:
+        failures = sum(
+            1
+            for seg in segments
+            if (getattr(seg, "translation", "") or "").startswith("[TAG ERROR]")
+        )
+        if failures:
+            self.llm_failure_count += failures
+            self._update_llm_metrics_label()
 
     def save_ui_state(self):
         """Saves window geometry, splitter, table header, and current tab."""
@@ -2546,6 +2660,11 @@ class FoundryGUI(QMainWindow):
                 self.tabs.indexOf(self.integrity_tab),
                 I18N.t("tab_integrity"),
             )
+        if hasattr(self, "metrics_tab"):
+            self.tabs.setTabText(
+                self.tabs.indexOf(self.metrics_tab),
+                I18N.t("tab_metrics"),
+            )
 
         self.btn_open.setText(I18N.t("btn_import_tsv"))
         self.btn_export_tsv.setText(I18N.t("btn_export_tsv"))
@@ -2558,6 +2677,12 @@ class FoundryGUI(QMainWindow):
         self.btn_zen.setText(I18N.t("btn_zen_mode"))
         self.btn_reverse_zen.setText(I18N.t("btn_reverse_zen_mode"))
         self.cb_follow.setText(I18N.t("ui_follow"))
+        if hasattr(self, "metrics_tab"):
+            self.metrics_header_label.setText(I18N.t("metrics_title"))
+            self.metrics_intro_label.setText(I18N.t("metrics_intro"))
+            self.metrics_stats_title.setText(I18N.t("metrics_qa_title"))
+            self.metrics_llm_title.setText(I18N.t("metrics_llm_title"))
+            self.metrics_accuracy_title.setText(I18N.t("metrics_accuracy_title"))
 
         self.table.setHorizontalHeaderLabels(
             [
@@ -2591,6 +2716,8 @@ class FoundryGUI(QMainWindow):
             self.integrity_tab, "retranslate_ui"
         ):
             self.integrity_tab.retranslate_ui()
+        if hasattr(self, "metrics_tab"):
+            self._update_llm_metrics_label()
 
     def closeEvent(self, event):
         """Stops all threads and saves settings before exiting."""
