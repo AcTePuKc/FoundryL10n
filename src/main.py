@@ -101,6 +101,11 @@ def _load_cli_resources(
         prompt_template,
     )
 
+def _count_repair_outcomes(segments: list[TranslationSegment]) -> tuple[int, int]:
+    success = sum(1 for seg in segments if getattr(seg, "repair_success", False))
+    failed = sum(1 for seg in segments if getattr(seg, "repair_failed", False))
+    return success, failed
+
 @app.callback()
 def main():
     """Ensure the database is initialized before any command runs."""
@@ -189,6 +194,8 @@ def translate_file(
     output_path = Path(out) if out else Path("out") / lang / input_path.name
     parser.save_tsv(segments, output_path)
     print(I18N.t("cli_done_results").format(output_path=output_path))
+    success, failed = _count_repair_outcomes(segments)
+    print(I18N.t("cli_repair_summary").format(success=success, failed=failed))
 
 @app.command(name="text", help=I18N.t("cli_text_help"))
 def translate_text(
@@ -229,6 +236,8 @@ def translate_text(
     
     print(I18N.t("cli_original_label").format(content=content))
     print(I18N.t("cli_result_label").format(result=seg.translation))
+    success, failed = _count_repair_outcomes([seg])
+    print(I18N.t("cli_repair_summary").format(success=success, failed=failed))
 
 
 main.__doc__ = I18N.t("cli_main_doc")

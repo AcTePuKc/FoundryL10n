@@ -322,7 +322,7 @@ class FoundryGUI(QMainWindow):
         layout.addWidget(self.metrics_accuracy_label)
 
         layout.addStretch()
-        self._update_metrics_labels(0, 0, 0, 0, 0, 0)
+        self._update_metrics_labels(0, 0, 0, 0, 0, 0, 0, 0)
 
     def _init_actions(self):
         self.action_verify_rows = QAction(self)
@@ -1185,7 +1185,17 @@ class FoundryGUI(QMainWindow):
         self.editor.ai_draft_display.setPlainText(seg.ai_draft)
         self.update_stats()
 
-    def _format_stats_text(self, verified, draft, risk, error, conflict, pending):
+    def _format_stats_text(
+        self,
+        verified,
+        draft,
+        risk,
+        error,
+        conflict,
+        pending,
+        repair_success=0,
+        repair_failed=0,
+    ):
         return I18N.t("stats_template").format(
             verified=verified,
             draft=draft,
@@ -1193,6 +1203,8 @@ class FoundryGUI(QMainWindow):
             error=error,
             conflict=conflict,
             pending=pending,
+            repair_success=repair_success,
+            repair_failed=repair_failed,
         )
 
     def update_selection_info(self):
@@ -1202,6 +1214,7 @@ class FoundryGUI(QMainWindow):
 
         # 1. Start with fresh stats
         v, qa, risk, err, pend, conflict = 0, 0, 0, 0, 0, 0
+        repair_success = repair_failed = 0
         for i in range(self.table.rowCount()):
             item = self.table.item(i, 0)
             if item:
@@ -1219,8 +1232,23 @@ class FoundryGUI(QMainWindow):
                     conflict += 1
                 else:
                     pend += 1
+            if i < len(self.segments):
+                seg = self.segments[i]
+                if getattr(seg, "repair_success", False):
+                    repair_success += 1
+                if getattr(seg, "repair_failed", False):
+                    repair_failed += 1
 
-        stats_text = self._format_stats_text(v, qa, risk, err, conflict, pend)
+        stats_text = self._format_stats_text(
+            v,
+            qa,
+            risk,
+            err,
+            conflict,
+            pend,
+            repair_success,
+            repair_failed,
+        )
 
         # 2. Add selection info ONLY if more than 1 is selected
         # We set the text CLEANly here to prevent the "selected: 4 selected: 3" loop
@@ -2030,6 +2058,7 @@ class FoundryGUI(QMainWindow):
     def update_stats(self):
         """Calculates and updates the bottom bar dashboard counters."""
         v = qa = risk = err = pend = conflict = 0
+        repair_success = repair_failed = 0
 
         for i in range(self.table.rowCount()):
             item = self.table.item(i, 0)
@@ -2049,10 +2078,25 @@ class FoundryGUI(QMainWindow):
                 conflict += 1
             else:
                 pend += 1
+            if i < len(self.segments):
+                seg = self.segments[i]
+                if getattr(seg, "repair_success", False):
+                    repair_success += 1
+                if getattr(seg, "repair_failed", False):
+                    repair_failed += 1
 
         # 1. Update the text with clear separators
         self.lbl_stats.setText(
-            self._format_stats_text(v, qa, risk, err, conflict, pend)
+            self._format_stats_text(
+                v,
+                qa,
+                risk,
+                err,
+                conflict,
+                pend,
+                repair_success,
+                repair_failed,
+            )
         )
         self.lbl_stats.setStyleSheet("""
             QLabel { 
@@ -2073,9 +2117,19 @@ class FoundryGUI(QMainWindow):
                 error=I18N.t("stats_tooltip_error"),
                 conflict=I18N.t("stats_tooltip_conflict"),
                 pending=I18N.t("stats_tooltip_pending"),
+                repair=I18N.t("stats_tooltip_repair"),
             )
         )
-        self._update_metrics_labels(v, qa, risk, err, conflict, pend)
+        self._update_metrics_labels(
+            v,
+            qa,
+            risk,
+            err,
+            conflict,
+            pend,
+            repair_success,
+            repair_failed,
+        )
 
     def _update_llm_metrics_label(self) -> None:
         if hasattr(self, "metrics_llm_label"):
@@ -2094,13 +2148,24 @@ class FoundryGUI(QMainWindow):
         error: int,
         conflict: int,
         pending: int,
+        repair_success: int,
+        repair_failed: int,
     ) -> None:
         if not hasattr(self, "metrics_stats_label"):
             return
         total = verified + draft + risk + error + conflict + pending
         verified_rate = f"{(verified / total * 100):.1f}%" if total else "0%"
         self.metrics_stats_label.setText(
-            self._format_stats_text(verified, draft, risk, error, conflict, pending)
+            self._format_stats_text(
+                verified,
+                draft,
+                risk,
+                error,
+                conflict,
+                pending,
+                repair_success,
+                repair_failed,
+            )
         )
         self._update_llm_metrics_label()
         self.metrics_accuracy_label.setText(

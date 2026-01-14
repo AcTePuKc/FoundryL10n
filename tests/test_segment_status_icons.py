@@ -87,6 +87,8 @@ def test_stats_counts_with_sync_icons_and_selection(qapp, qsettings, monkeypatch
         error=0,
         conflict=0,
         pending=0,
+        repair_success=0,
+        repair_failed=0,
     )
     assert window.lbl_stats.text() == expected_stats
 
@@ -120,6 +122,8 @@ def test_stats_counts_with_sync_icons_and_selection(qapp, qsettings, monkeypatch
         error=0,
         conflict=0,
         pending=0,
+        repair_success=0,
+        repair_failed=0,
     )
     assert window.lbl_stats.text() == expected_after
     window.close()

@@ -233,6 +233,10 @@ class TranslationEngine:
         if getattr(seg, "is_verified", False):
             return False
 
+        seg.repair_attempted = False
+        seg.repair_success = False
+        seg.repair_failed = False
+
         if not seg.source_text or not seg.source_text.strip():
             seg.translation = ""
             return False
@@ -315,6 +319,38 @@ class TranslationEngine:
         )
         success = validation.is_valid
         final_text = self.masker.unmask(candidate_text, tokens)
+
+        if not success and num_source_tags > 0:
+            seg.repair_attempted = True
+            repaired_text, repair_thought = self.llm.repair_placeholders(
+                source_line=seg.source_text,
+                candidate_translation=final_text,
+                expected_placeholders=tokens,
+                target_lang=target_lang,
+                context_extra=context_extra,
+            )
+            if repaired_text:
+                repaired_masked, _ = self.masker.mask(repaired_text)
+                repaired_target_result = self.segmenter.segment(
+                    raw_line=repaired_masked,
+                    masked_line=repaired_masked,
+                    context={"segment_id": getattr(seg, "key", None)},
+                )
+                repaired_validation = validate_segments(
+                    source_segments=source_segment_result.segments,
+                    target_segments=repaired_target_result.segments,
+                    source_tags=source_segment_result.tags,
+                    target_tags=repaired_target_result.tags,
+                    context={"segment_id": getattr(seg, "key", None)},
+                )
+                success = repaired_validation.is_valid
+                final_text = repaired_text
+                if repair_thought:
+                    thoughts.append(repair_thought)
+            if success:
+                seg.repair_success = True
+            else:
+                seg.repair_failed = True
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text
