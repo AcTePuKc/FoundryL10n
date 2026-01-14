@@ -204,11 +204,13 @@ class FoundryParser:
         return segments
 
     def parse_path(self, file_path: Path) -> List[TranslationSegment]:
-        if file_path.suffix.lower() == ".json":
-            return self.parse_json(file_path)
-        if file_path.suffix.lower() == ".jsonl":
-            return self.parse_jsonl(file_path)
-        return self.parse_tsv(file_path)
+        suffix = file_path.suffix.lower()
+        parser_map = {
+            ".json": self.parse_json,
+            ".jsonl": self.parse_jsonl,
+        }
+        parser_func = parser_map.get(suffix, self.parse_tsv)
+        return parser_func(file_path)
 
     def save_tsv(self, segments: List[TranslationSegment], output_path: Path):
         if not segments: 
