@@ -1,0 +1,86 @@
+[
+  {
+    "key": "HARDYLOOT_DISCOVERED_HEADER",
+    "source": "STOLEN ART DISCOVERED",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARO_Q_FINDCORRUPTED_001",
+    "source": "<TSMARKER_0>Th-thank you. <TSMARKER_1>I knew what we were doing was insane, but I didn't care. <TSMARKER_2>All I knew was, those people were evil...and they had to die.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARO_Q_FINDCORRUPTED_002",
+    "source": "<TSMARKER_0>Just a voice, <TSMARKER_1>telling us to kill the people we hate, before they kill us. <TSMARKER_2>Oh, and a <TSMARKER_3>feeling...<TSMARKER_4>that there's another group, even bigger than ours.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARO_Q_FINDCORRUPTED_003",
+    "source": "<TSMARKER_0>Th-thank you. <TSMARKER_1>I knew what we're doing was wrong, but I couldn't stop myself.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_M_A3_NORMANAPT_R_001",
+    "source": "<TSMARKER_0>Hey dad. <TSMARKER_1>On my way to Dr. Michael's for one last shot before the, umm,<TSMARKER_2>the big trip.<TSMARKER_3>Hey, if you're gonna meet me there, could you grab my journal from my room?<TSMARKER_4>I just wanted to record some thoughts on the big bon voyage day.<TSMARKER_5>Anyway...<TSMARKER_6>Listen, I know I don't say this enough but,<TSMARKER_7>thank you, dad.<TSMARKER_8>You know, for doing this.<TSMARKER_9>I love you.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_M_A3_NORMANAPT_R_002",
+    "source": "<TSMARKER_0>Hey it's Harry - <TSMARKER_1>leave a message!",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_M_A3_NORMANAPT_R_003",
+    "source": "<TSMARKER_0>You've reached Harry Osborn. <TSMARKER_1>Please leave a detailed message and I'll call you back!",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_001",
+    "source": "<TSMARKER_0>Pete, hey I need a favor. <TSMARKER_1>My mom's pet project was research stations that could benefit the public. <TSMARKER_2>Now, I launched 'em, but now that I'm...<TSMARKER_3>away...Oscorp's gonna shut them down unless they prove their value.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_002",
+    "source": "<TSMARKER_0>Hey, Pete. <TSMARKER_1>So this station monitors water pressure, down to the individual building.<TSMARKER_2>Structures above four stories use water towers to augment the city's system. <TSMARKER_3>The idea is to identify problems before they spread, y'know?",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_003",
+    "source": "<TSMARKER_0>This station's simple, but really important. <TSMARKER_1>It measures toxins in the air...way more sensitive than anything the city has. Bad air hits <TSMARKER_2>children and the elderly first. <TSMARKER_3>This was a big one for my mom.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_004",
+    "source": "<TSMARKER_0>I've got a couple stations measuring air pollution. <TSMARKER_1>The idea's to catch the... oh, what's the word... contaminants before they reach toxic levels. <TSMARKER_2>Between you and me, <TSMARKER_3>I think Oscorp wants this to fail because it might show they're polluting.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_007",
+    "source": "<TSMARKER_0>OK Pete, this lab has feeders to lure in birds and analyze their droppings. <TSMARKER_1>Yeah, that's right - <TSMARKER_2>I got an MBA to test bird poop. Haha. Seriously, though, you probably know that birds carry <TSMARKER_3>diseases that affect people and we need to make sure they're healthy. <TSMARKER_4>You know, I really wish I was there to hear your finest toilet humor on this one.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_008",
+    "source": "<TSMARKER_0>Hey Pete, <TSMARKER_1>this lab monitors the health of marine life. <TSMARKER_2>We've got a bunch of medicine on site if you need it. <TSMARKER_3>The effects these diseases have, they're just... <TSMARKER_4>they are not something any living creature should go through.",
+    "translation": "",
+    "note": ""
+  },
+  {
+    "key": "HARY_WORLD_RESEARCH_009",
+    "source": "<TSMARKER_0>So, we installed energy-saving LED billboards all around this area. <TSMARKER_1>This station monitors how they're performing. <TSMARKER_2>I'm just hoping it saves enough money that Oscorp keeps this program going.",
+    "translation": "",
+    "note": ""
+  }
+]
