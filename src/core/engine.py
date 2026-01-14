@@ -1,10 +1,12 @@
 import re
 import difflib
 from core.masker import Masker
+from core.rlm_segmenter import RLMSegmenter
+from core.rlm_validator import validate_segments
 from core.database import (get_cached_record, save_translation, engine,
                            TranslationRecord)
 from core.i18n import I18N
-from services.llm_service import LLMService, validate_placeholders
+from services.llm_service import LLMService
 from sqlmodel import Session, select, col
 
 
@@ -12,6 +14,7 @@ class TranslationEngine:
     def __init__(self, llm_service: LLMService | None):
         self.llm = llm_service
         self.masker = Masker()
+        self.segmenter = RLMSegmenter()
 
     def _segment_is_remote(self, seg) -> bool:
         row = getattr(seg, "original_row", {}) or {}
@@ -33,9 +36,13 @@ class TranslationEngine:
             strict=True,
             prompt_template="",
             glossary_dict=None,
-            project_name="default"
+            project_name="default",
+            progress_callback=None,
+            should_stop=None,
     ):
         for i, seg in enumerate(segments):
+            if should_stop is not None and should_stop():
+                break
             
             is_verified = getattr(seg, 'is_verified', False)
             is_skip = getattr(seg, 'never_translate', False)
@@ -104,6 +111,8 @@ class TranslationEngine:
                     skip=seg.never_translate,
                     ai_draft=seg.ai_draft,
                 )
+            if progress_callback is not None:
+                progress_callback(i + 1)
     
     def run_pseudo_localization(self, segments):
         """Turns all untranslated rows into expanded 'Fake' text for font testing."""
@@ -231,8 +240,13 @@ class TranslationEngine:
         masked_text, tokens = self.masker.mask(seg.source_text)
         num_source_tags = len(tokens)
 
-        text_without_tags = re.sub(r"@@\s*PLACEHOLDER_\d+\s*@@", "", masked_text).strip()
-        if not text_without_tags:
+        source_segment_result = self.segmenter.segment(
+            raw_line=seg.source_text,
+            masked_line=masked_text,
+            context={"segment_id": getattr(seg, "key", None)},
+        )
+        text_segments = [segment for segment in source_segment_result.segments if segment.kind == "text"]
+        if not text_segments:
             seg.translation = self.masker.unmask(masked_text, tokens)
             return True
 
@@ -256,21 +270,51 @@ class TranslationEngine:
                     else remote_context
                 )
 
-        raw_translation, thought = self.llm.translate_segment(
-            text=masked_text,
-            target_lang=target_lang,
-            project_name=project_name,
-            glossary=glossary,
-            style=style,
-            forbidden=forbidden,
-            temp=temp,
-            prompt_template=prompt_template,
-            current_translation=clean_context,
-            context_extra=context_extra,
-        )
+        translated_texts: list[str] = []
+        thoughts: list[str] = []
+        for segment in text_segments:
+            if not segment.value.strip():
+                translated_texts.append(segment.value)
+                continue
+            raw_translation, thought = self.llm.translate_segment(
+                text=segment.value,
+                target_lang=target_lang,
+                project_name=project_name,
+                glossary=glossary,
+                style=style,
+                forbidden=forbidden,
+                temp=temp,
+                prompt_template=prompt_template,
+                current_translation=clean_context,
+                context_extra=context_extra,
+            )
+            translated_texts.append(raw_translation)
+            if thought:
+                thoughts.append(thought)
 
-        success = validate_placeholders(masked_text, raw_translation)
-        final_text = self.masker.unmask(raw_translation, tokens)
+        translated_iter = iter(translated_texts)
+        candidate_segments = []
+        for segment in source_segment_result.segments:
+            if segment.kind == "text":
+                candidate_segments.append(next(translated_iter, ""))
+            else:
+                candidate_segments.append(segment.value)
+        candidate_text = "".join(candidate_segments)
+
+        target_segment_result = self.segmenter.segment(
+            raw_line=candidate_text,
+            masked_line=candidate_text,
+            context={"segment_id": getattr(seg, "key", None)},
+        )
+        validation = validate_segments(
+            source_segments=source_segment_result.segments,
+            target_segments=target_segment_result.segments,
+            source_tags=source_segment_result.tags,
+            target_tags=target_segment_result.tags,
+            context={"segment_id": getattr(seg, "key", None)},
+        )
+        success = validation.is_valid
+        final_text = self.masker.unmask(candidate_text, tokens)
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text
@@ -286,7 +330,7 @@ class TranslationEngine:
             final_text = final_text.upper()
 
         seg.translation = final_text
-        seg.thought = thought
+        seg.thought = " | ".join(thoughts)
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text

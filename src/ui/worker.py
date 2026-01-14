@@ -1,6 +1,6 @@
 from PySide6.QtCore import QThread, Signal
-from core.engine import TranslationEngine
 from services.resource_service import ResourceLoader
+from services.translation_service import run_batch_translation
 
 
 class TranslationWorker(QThread):
@@ -40,7 +40,6 @@ class TranslationWorker(QThread):
         self._is_running = False
 
     def run(self):
-        engine = TranslationEngine(self.llm_service)
         loader = ResourceLoader()
 
         # 1. Load resources (String versions for LLM)
@@ -51,29 +50,23 @@ class TranslationWorker(QThread):
         # 2. Load Dictionary version for the local Audit
         glossary_dict = loader.load_glossary_dict(self.glossary_path)
 
-        for i, seg in enumerate(self.segments):
-            if not self._is_running:
-                break
+        def should_stop() -> bool:
+            return not self._is_running
 
-            if seg.source_text and seg.source_text.strip():
-                engine.run_translation(
-                    [seg],
-                    self.target_lang,
-                    glossary=glossary_text,
-                    style=style_content,
-                    forbidden=forbidden_content,
-                    temp=self.temp,
-                    strict=self.strict,
-                    prompt_template=self.prompt_template,
-                    glossary_dict=glossary_dict,
-                    project_name=self.project_name,
-                )
-            else:
-                seg.translation = ""
-
-
-            if not self._is_running:
-                break
-            self.progress_signal.emit(i + 1)
+        run_batch_translation(
+            self.segments,
+            self.target_lang,
+            self.llm_service,
+            glossary=glossary_text,
+            style=style_content,
+            forbidden=forbidden_content,
+            temp=self.temp,
+            strict=self.strict,
+            prompt_template=self.prompt_template,
+            glossary_dict=glossary_dict,
+            project_name=self.project_name,
+            progress_callback=self.progress_signal.emit,
+            should_stop=should_stop,
+        )
 
         self.finished_signal.emit(self.segments)
