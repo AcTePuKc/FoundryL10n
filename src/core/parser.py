@@ -125,7 +125,6 @@ class FoundryParser:
         return segments
 
     def parse_json(self, file_path: Path) -> List[TranslationSegment]:
-        segments: List[TranslationSegment] = []
         with open(file_path, 'r', encoding='utf-8') as f:
             try:
                 data = json.load(f)
@@ -136,6 +135,30 @@ class FoundryParser:
         if not isinstance(rows, list):
             raise ValueError("JSON must be a list or an object with a segments list.")
 
+        return self._parse_rows(rows)
+
+    def parse_jsonl(self, file_path: Path) -> List[TranslationSegment]:
+        rows: List[Dict] = []
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line_number, line in enumerate(f, start=1):
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                try:
+                    data = json.loads(stripped)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        f"Invalid JSONL at line {line_number} in file: {file_path}"
+                    ) from e
+                if isinstance(data, dict):
+                    rows.append(data)
+                else:
+                    raise ValueError(f"Invalid JSONL at line {line_number} in file: {file_path} - expected a JSON object but found {type(data).__name__}.")
+
+        return self._parse_rows(rows)
+
+    def _parse_rows(self, rows: List[Dict]) -> List[TranslationSegment]:
+        segments: List[TranslationSegment] = []
         self.headers = []
         for row in rows:
             if isinstance(row, dict):
@@ -181,9 +204,13 @@ class FoundryParser:
         return segments
 
     def parse_path(self, file_path: Path) -> List[TranslationSegment]:
-        if file_path.suffix.lower() == ".json":
-            return self.parse_json(file_path)
-        return self.parse_tsv(file_path)
+        suffix = file_path.suffix.lower()
+        parser_map = {
+            ".json": self.parse_json,
+            ".jsonl": self.parse_jsonl,
+        }
+        parser_func = parser_map.get(suffix, self.parse_tsv)
+        return parser_func(file_path)
 
     def save_tsv(self, segments: List[TranslationSegment], output_path: Path):
         if not segments: 
