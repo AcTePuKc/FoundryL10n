@@ -118,4 +118,9 @@ Roadmap updates must not supersede or contradict already implemented features, a
 * [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
 * [x] **Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
 * [ ] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
-* [ ] **(planned) UI non-blocking streaming translation integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
+* [x] **(planned) UI non-blocking streaming translation integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
+
+**Unplanned (completed)**
+* [x] **Shared per-segment translation pipeline helper:** centralized cache restore, context stitching, audit, and save logic in `TranslationEngine` to reduce duplicate workflows across batch and JSONL processing.
+* [x] **Batch metrics helpers:** consolidated batch metrics init/finalize logic for bulk and pipeline runs to keep UI reporting consistent.
+* [x] **Worker shutdown consolidation:** unified background worker shutdown handling in the main window close flow.

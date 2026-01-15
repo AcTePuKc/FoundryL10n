@@ -43,76 +43,106 @@ class TranslationEngine:
         for i, seg in enumerate(segments):
             if should_stop is not None and should_stop():
                 break
-            
-            is_verified = getattr(seg, 'is_verified', False)
-            is_skip = getattr(seg, 'never_translate', False)
 
-            if is_verified or is_skip:
-                continue
-            # 1. Restore from DB for THIS project (optional but useful)
-            record = get_cached_record(
-                seg.source_text,
-                target_lang,
-                project_name,
-                segment_key=seg.key,
+            self.process_segment(
+                segments=segments,
+                index=i,
+                target_lang=target_lang,
+                glossary=glossary,
+                style=style,
+                forbidden=forbidden,
+                temp=temp,
+                strict=strict,
+                prompt_template=prompt_template,
+                glossary_dict=glossary_dict,
+                project_name=project_name,
             )
-            if record:
-                seg.translation = record.translation
-                seg.is_verified = record.is_verified 
-                seg.never_translate = record.never_translate
-                seg.ai_draft = record.ai_draft
-                seg.thought = I18N.t("thought_restored_from_memory")
-
-            # 2. IMPROVED CONTEXT: Previous + Next Line
-            prev_text = segments[i-1].source_text if i > 0 else ""
-            next_text = segments[i+1].source_text if i < len(segments)-1 else ""
-            
-            context_bits = []
-            if prev_text: 
-                context_bits.append(f"PREVIOUS: {prev_text}")
-            if next_text: 
-                context_bits.append(f"NEXT: {next_text}")
-            
-            context_snippet = "\n".join(context_bits)
-
-            # 3. Translate
-            processed = self.translate_single_segment(
-                seg,
-                target_lang,
-                project_name,
-                glossary,
-                style,
-                forbidden,
-                temp,
-                strict,
-                prompt_template,
-                context_extra=context_snippet
-            )
-
-            success = False
-            if processed and seg.translation:
-                success = "[TAG ERROR]" not in seg.translation
-
-            has_risk = False
-            if processed and seg.translation:
-                has_risk = self.audit_segment(seg, glossary_dict)
-
-            if processed:
-                setattr(seg, "has_risk", has_risk)
-
-            if processed and success:
-                save_translation(
-                    seg.source_text,
-                    target_lang,
-                    seg.translation,
-                    project_name=project_name,
-                    segment_key=seg.key,
-                    verified=seg.is_verified,
-                    skip=seg.never_translate,
-                    ai_draft=seg.ai_draft,
-                )
             if progress_callback is not None:
                 progress_callback(i + 1)
+
+    def process_segment(
+        self,
+        *,
+        segments,
+        index: int,
+        target_lang,
+        glossary="",
+        style="",
+        forbidden="",
+        temp=0.1,
+        strict=True,
+        prompt_template="",
+        glossary_dict=None,
+        project_name="default",
+    ) -> bool:
+        seg = segments[index]
+
+        is_verified = getattr(seg, "is_verified", False)
+        is_skip = getattr(seg, "never_translate", False)
+
+        if is_verified or is_skip:
+            return False
+
+        record = get_cached_record(
+            seg.source_text,
+            target_lang,
+            project_name,
+            segment_key=seg.key,
+        )
+        if record:
+            seg.translation = record.translation
+            seg.is_verified = record.is_verified
+            seg.never_translate = record.never_translate
+            seg.ai_draft = record.ai_draft
+            seg.thought = I18N.t("thought_restored_from_memory")
+
+        prev_text = segments[index - 1].source_text if index > 0 else ""
+        next_text = segments[index + 1].source_text if index < len(segments) - 1 else ""
+
+        context_bits = []
+        if prev_text:
+            context_bits.append(f"PREVIOUS: {prev_text}")
+        if next_text:
+            context_bits.append(f"NEXT: {next_text}")
+
+        context_snippet = "\n".join(context_bits)
+
+        processed = self.translate_single_segment(
+            seg,
+            target_lang,
+            project_name,
+            glossary,
+            style,
+            forbidden,
+            temp,
+            strict,
+            prompt_template,
+            context_extra=context_snippet,
+        )
+
+        success = False
+        if processed and seg.translation:
+            success = "[TAG ERROR]" not in seg.translation
+
+        has_risk = False
+        if processed and seg.translation:
+            has_risk = self.audit_segment(seg, glossary_dict)
+
+        if processed:
+            setattr(seg, "has_risk", has_risk)
+
+        if processed and success:
+            save_translation(
+                seg.source_text,
+                target_lang,
+                seg.translation,
+                project_name=project_name,
+                segment_key=seg.key,
+                verified=seg.is_verified,
+                skip=seg.never_translate,
+                ai_draft=seg.ai_draft,
+            )
+        return processed
     
     def run_pseudo_localization(self, segments):
         """Turns all untranslated rows into expanded 'Fake' text for font testing."""
