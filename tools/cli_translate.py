@@ -38,9 +38,9 @@ def _parse_args() -> argparse.Namespace:
             "Run the CLI translation pipeline using a dummy LLM for local testing."
         )
     )
-    parser.add_argument("--in", dest="input_path", required=True)
+    parser.add_argument("--input", dest="input_path", required=True)
     parser.add_argument("--in-format", dest="input_format", choices=["tsv", "json", "jsonl"])
-    parser.add_argument("--out", dest="output_path", required=True)
+    parser.add_argument("--output", dest="output_path", required=True)
     parser.add_argument("--out-format", dest="output_format", choices=["tsv", "json", "jsonl"])
     parser.add_argument("--chunk-size", dest="chunk_size", type=int, default=25)
     parser.add_argument("--workers", dest="workers", type=int, default=1)
