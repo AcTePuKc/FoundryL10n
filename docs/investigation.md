@@ -98,4 +98,36 @@ Focused on the LLM translation pipeline for:
 - **Optional JSON/JSONL Import:** JSON and JSONL can be imported alongside TSV. JSON accepts a list of objects (or `{ "segments": [...] }`); JSONL expects one object per line. Minimal fields are `key` and `source`; `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps are optional.【F:docs/INTEGRATION.md†L399-L400】
 - **Remote-synced context awareness:** when segments originate from a remote provider, the LLM context includes the remote source + target text, and drafting remains manual (no auto-sync).【F:docs/INTEGRATION.md†L399-L400】
 
+## Integration with repo structure
+- **`src/core/`:** streaming translation pipeline, segmentation/validation, and data normalization helpers (e.g., `core/translation_pipeline.py`, `core/segment_validator.py`, `core/jsonl_persistence.py`).
+- **`src/services/`:** provider-facing integrations, LLM streaming client, remote sync adapters (e.g., `services/llm_client_streaming.py`, `services/provider_gateway.py`).
+- **`src/ui/`:** UI-facing orchestration and worker wiring for batch/streaming translation (e.g., `ui/translation_worker.py`, `ui/streaming_controller.py`).
+- **`tools/`:** one-off scripts and profiling helpers for pipeline experiments (e.g., `tools/streaming_bench.py`, `tools/jsonl_replay.py`).
+
+Suggested module layout (non-binding, aligns with existing responsibilities):
+- `core/translation_pipeline.py`: `translate_file(...)` orchestration, per-segment streaming, and JSONL persistence entry points.
+- `core/segment_validator.py`: placeholder/tag validation utilities shared by CLI + UI.
+- `services/llm_client_streaming.py`: streaming client abstraction for providers that support incremental tokens.
+
+High-level UI-facing API (conceptual):
+```python
+# Required imports:
+# from pathlib import Path
+# from typing import Callable
+# from some_module import CancelToken, TranslationRunResult
+def translate_file(
+    *,
+    input_path: Path,
+    output_path: Path,
+    source_lang: str,
+    target_lang: str,
+    provider_id: str,
+    project_id: str | None = None,
+    chunk_size: int = 20,
+    strict_mode: bool = True,
+    progress_cb: Callable[[int, int], None] | None = None,
+    cancel_token: CancelToken | None = None,
+) -> TranslationRunResult: ...
+```
+
 Note: This summary is mirrored in README.md.
