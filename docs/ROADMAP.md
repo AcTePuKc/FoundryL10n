@@ -112,9 +112,9 @@ Roadmap updates must not supersede or contradict already implemented features, a
 * [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
 
 **Pending**
-* [ ] **JSONL streaming + resume logic:** Append-only JSONL persistence and resume-by-skip (scan output to skip translated keys) remain in investigation-only docs and still need implementation.
-* [ ] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, and per-chunk/per-file progress reporting for the CLI translation pipeline.
+* [ ] **JSONL append-only persistence + resume-by-skip:** Append-only JSONL persistence and resume-by-skip (scan output to skip translated keys) remain in investigation-only docs and still need implementation.
+* [ ] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, per-chunk progress (segments completed/total), and per-file summary reporting for the CLI translation pipeline.
 * [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
 * [ ] **(planned) Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
 * [ ] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
-* [ ] **(planned) UI non-blocking streaming integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
+* [ ] **(planned) UI non-blocking streaming translation integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
