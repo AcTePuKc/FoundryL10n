@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -92,7 +91,6 @@ def append_jsonl_entries(output_path: Path, entries: Iterable[JSONLPipelineEntry
             handle.write(entry.to_jsonl())
             handle.write("\n")
             handle.flush()
-            os.fsync(handle.fileno())
 
 
 def run_ordered_jsonl_pipeline(
@@ -119,11 +117,11 @@ def run_ordered_jsonl_pipeline(
             continue
         processed = process_chunk(filtered) if process_chunk else filtered
         order_by_key = {
-            str(entry.payload.get("key")): entry.order for entry in filtered
+            str(entry.payload.get("key") or ""): entry.order for entry in filtered
         }
         normalized: list[JSONLPipelineEntry] = []
         for entry in processed:
-            key = str(entry.payload.get("key"))
+            key = str(entry.payload.get("key") or "")
             expected_order = order_by_key.get(key, entry.order)
             if entry.order != expected_order:
                 entry = JSONLPipelineEntry(order=expected_order, payload=entry.payload)
