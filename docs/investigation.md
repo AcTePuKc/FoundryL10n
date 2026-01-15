@@ -16,6 +16,15 @@ New stubs should be appended as short subsections under this heading, following 
 - **Prefix** the subsection with the date and a brief title.
 - **Include** links to any related files or issues for follow-up.
 
+### 2026-01-15 — Placeholder validation + failure handling
+- **Placeholder validation requirements:** enforce ordering and parity for tag/placeholder types, including:
+  - `TSMARKER` sequence must remain ordered and complete across source/target (no reordering or loss).
+  - `%s` tokens must match count and order.
+  - `{0}`-style positional tokens must match count and order.
+  - `[BTN_*]` tags must be preserved verbatim and in sequence.
+- **Never commit on failure:** any placeholder validation failure blocks committing the segment.
+- **Candidate failure handling:** on validation failure, attempt a retry; if still failing, skip and log the segment for later review; escalate to manual review when placeholders cannot be reconciled.
+
 ## Scope
 Focused only on:
 - `src/core/database.py` TM query and global replace usage of `__table__`.
