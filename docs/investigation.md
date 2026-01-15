@@ -1,7 +1,10 @@
 # Audit Note — Database TM/Replace + Consistency Status Filter
 
+*Last updated: 2026-01-15. This document is maintained incrementally as the investigation progresses.*
+
 ## Findings / Stubs
-This document (`docs/investigation.md`) is the canonical location for future inspection findings.
+This document ('docs/investigation.md') is the canonical location for future inspection findings.
+
 
 New stubs should be appended as short subsections under this heading, following this convention:
 - **Prefix** the subsection with the date and a brief title.
