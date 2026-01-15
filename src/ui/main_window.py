@@ -2363,12 +2363,11 @@ class FoundryGUI(QMainWindow):
         self._tsv_dialog = dialog
 
     def _infer_export_format(self, path: Path) -> str:
-        suffix = path.suffix.lower()
-        if suffix == ".jsonl":
-            return "jsonl"
-        if suffix == ".json":
-            return "json"
-        return "tsv"
+        suffix_map = {
+            ".json": "json",
+            ".jsonl": "jsonl",
+        }
+        return suffix_map.get(path.suffix.lower(), "tsv")
 
     def _set_export_format(self, export_format: str) -> None:
         index = self.export_format_picker.findData(export_format)
