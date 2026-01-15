@@ -1,5 +1,12 @@
 # Audit Note — Database TM/Replace + Consistency Status Filter
 
+## Findings / Stubs
+This document (`docs/investigation.md`) is the canonical location for future inspection findings.
+
+New stubs should be appended as short subsections under this heading, following this convention:
+- **Prefix** the subsection with the date and a brief title.
+- **Include** links to any related files or issues for follow-up.
+
 ## Scope
 Focused only on:
 - `src/core/database.py` TM query and global replace usage of `__table__`.
