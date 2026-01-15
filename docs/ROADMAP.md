@@ -112,3 +112,8 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
 
 **Pending**
 * [ ] **JSONL streaming + resume logic:** Append-only JSONL persistence and resume-by-skip (scan output to skip translated keys) remain in investigation-only docs and still need implementation.
+* [ ] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, and per-chunk/per-file progress reporting for the CLI translation pipeline.
+* [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
+* [ ] **(planned) Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
+* [ ] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
+* [ ] **(planned) UI non-blocking streaming integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
