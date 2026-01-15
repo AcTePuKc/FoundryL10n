@@ -69,6 +69,13 @@ Focused on the LLM translation pipeline for:
 
 # JSONL Streaming Translation Investigation — Roadmap + Integration Notes
 
+## Goals
+- **JSONL internal format:** define the canonical per-line object schema used by the streaming pipeline (required fields, optional metadata, and placeholder/tag representation) so translators and tools can reason about segment payloads consistently.
+- **Mapping from TSV/JSON:** document how TSV rows and JSON segment objects normalize into the JSONL schema (field mapping, default values, and preservation of `key`, `source`, `translation`, and notes/context).
+- **Round-trip expectations:** clarify what data must survive TSV/JSON → JSONL → TSV/JSON exports without loss, and what fields are best-effort or may be recomputed.
+- **Segment definition options:** outline whether segments are defined per row, per sentence, or by a custom segmentation strategy, and how those choices affect keys, ordering, and QA.
+- **`chunk_size` tradeoffs:** capture guidance on chunking by token count vs. segment count, expected latency/throughput impacts, and how chunk size affects placeholder/tag correctness.
+
 ## Roadmap touchpoints
 - **Batch Processing (0.5 QA & Translation Memory):** roadmap calls out the ability to “Submit All Verified” segments on a page in one click, which frames batch-oriented workflows alongside streaming translation behavior.【F:docs/ROADMAP.md†L53-L59】
 
