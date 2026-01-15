@@ -44,11 +44,17 @@ New stubs should be appended as short subsections under this heading, following 
   - Optional prototype (CLI translation runner + JSONL append-only writer).
   - Constraints checklist (LLM contract, placeholder integrity, no schema drift, deterministic ordering, resume safety).
 - **Open questions:**
-  - `chunk_size` default (confirm `20` or set a new baseline).
-  - Expected speedup vs current batch flow (target latency/throughput).
-  - Parallelism model (async tasks vs multi-process workers; ordering guarantees).
-  - Large-file progress storage (append-only JSONL vs separate checkpoint file).
-  - UI non-blocking integration (worker threading + progress callbacks without blocking segment editing).
+  - `chunk_size` default: TBD (tentative baseline remains `20` until perf targets are defined).
+  - Expected speedup vs current batch flow: TBD (define target latency/throughput).
+  - Parallelism model: TBD (evaluate async tasks vs multi-process; must preserve ordering).
+  - Large-file progress storage: Tentative decision = append-only JSONL; checkpoint file only if JSONL scan is too slow.
+  - UI non-blocking integration: Tentative decision = worker thread + progress callbacks; confirm thread model with UI responsiveness tests.
+
+#### Open Decisions (confirm before implementation)
+- Confirm `chunk_size` default and performance targets (latency/throughput).
+- Choose parallelism model and ordering guarantees.
+- Validate JSONL resume scan performance; decide if a separate checkpoint index is required.
+- Confirm UI worker threading model and progress callback behavior under active editing.
 
 ## Scope
 Focused only on:
