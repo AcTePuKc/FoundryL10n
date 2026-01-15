@@ -48,12 +48,25 @@ def iter_jsonl_chunks(
     segments: Iterable[TranslationSegment],
     chunk_size: int,
 ) -> Iterator[list[JSONLPipelineEntry]]:
+    index = 0
+    for chunk in iter_segment_chunks(segments, chunk_size):
+        entries: list[JSONLPipelineEntry] = []
+        for segment in chunk:
+            entries.append(segment_to_jsonl_entry(segment, index))
+            index += 1
+        yield entries
+
+
+def iter_segment_chunks(
+    segments: Iterable[TranslationSegment],
+    chunk_size: int,
+) -> Iterator[list[TranslationSegment]]:
     if chunk_size <= 0:
         raise ValueError("chunk_size must be a positive integer")
 
-    chunk: list[JSONLPipelineEntry] = []
-    for index, segment in enumerate(segments):
-        chunk.append(segment_to_jsonl_entry(segment, index))
+    chunk: list[TranslationSegment] = []
+    for segment in segments:
+        chunk.append(segment)
         if len(chunk) >= chunk_size:
             yield chunk
             chunk = []
