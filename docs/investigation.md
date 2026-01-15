@@ -57,7 +57,7 @@ Focused on the LLM translation pipeline for:
 - **Batch Processing (0.5 QA & Translation Memory):** roadmap calls out the ability to “Submit All Verified” segments on a page in one click, which frames batch-oriented workflows alongside streaming translation behavior.【F:docs/ROADMAP.md†L53-L59】
 
 ## Integration requirements relevant to JSONL streaming
-- **Optional JSON/JSONL import format:** JSON supports a list of objects (or `{ "segments": [...] }`), JSONL expects one object per line, and minimal fields are `key` and `source`; optional fields include `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps.【F:docs/INTEGRATION.md†L399-L400】
+- **Optional JSON/JSONL import format:** JSON supports a list of objects (or `{ "segments": [...] }`), JSONL expects one object per line, and minimal fields are `key` and `source`; optional fields include `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and `sync timestamps`.【F:docs/INTEGRATION.md†L399-L400】
 - **Remote-synced context awareness:** when segments originate from a provider, LLM context includes remote source + target text, and drafting remains manual (no auto-sync).【F:docs/INTEGRATION.md†L399-L400】
 
 Note: This summary is mirrored in README.md.
