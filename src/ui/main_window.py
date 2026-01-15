@@ -2387,6 +2387,30 @@ class FoundryGUI(QMainWindow):
         else:
             self.editor.btn_translate_now.setText(I18N.t("btn_translate_line"))
 
+    def _initialize_batch_metrics(self, settings: dict) -> None:
+        self.llm_request_count += self._count_llm_requests(self.segments)
+        self._batch_metrics.started_at = time.monotonic()
+        self._batch_metrics.processed_rows = 0
+        self._batch_metrics.duration_seconds = None
+        self._batch_metrics.avg_seconds = None
+        self._batch_metrics.model_name = settings.get("model")
+        self._update_llm_metrics_label()
+
+    def _finalize_batch_metrics(self) -> None:
+        if self._batch_metrics.started_at is not None:
+            self._batch_metrics.duration_seconds = (
+                time.monotonic() - self._batch_metrics.started_at
+            )
+            if self._batch_metrics.processed_rows > 0:
+                self._batch_metrics.avg_seconds = (
+                    self._batch_metrics.duration_seconds
+                    / self._batch_metrics.processed_rows
+                )
+            else:
+                self._batch_metrics.avg_seconds = None
+            self._batch_metrics.started_at = None
+            self._update_llm_metrics_label()
+
     def _capture_workflow_focus(self) -> None:
         widget = self.focusWidget()
         if widget is None or not widget.isVisible():
@@ -2500,13 +2524,7 @@ class FoundryGUI(QMainWindow):
         self.action_run_pipeline.setEnabled(False)
         self.progress_bar.setMaximum(len(self.segments))
         self.progress_bar.setValue(0)
-        self.llm_request_count += self._count_llm_requests(self.segments)
-        self._batch_metrics.started_at = time.monotonic()
-        self._batch_metrics.processed_rows = 0
-        self._batch_metrics.duration_seconds = None
-        self._batch_metrics.avg_seconds = None
-        self._batch_metrics.model_name = settings.get("model")
-        self._update_llm_metrics_label()
+        self._initialize_batch_metrics(settings)
 
         svc = LLMService(
             model_name=settings["model"],
@@ -2643,13 +2661,7 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setText(I18N.t("ui_stop_bulk"))
         self.btn_run.setStyleSheet(
             "background-color: #aa3333; font-weight: bold;")
-        self.llm_request_count += self._count_llm_requests(self.segments)
-        self._batch_metrics.started_at = time.monotonic()
-        self._batch_metrics.processed_rows = 0
-        self._batch_metrics.duration_seconds = None
-        self._batch_metrics.avg_seconds = None
-        self._batch_metrics.model_name = settings.get("model")
-        self._update_llm_metrics_label()
+        self._initialize_batch_metrics(settings)
 
         svc = LLMService(
             model_name=settings['model'],
@@ -2912,19 +2924,7 @@ class FoundryGUI(QMainWindow):
         self.save_ui_state()
         self.settings_tab.save_settings()
         self._tally_llm_failures(result)
-        if self._batch_metrics.started_at is not None:
-            self._batch_metrics.duration_seconds = (
-                time.monotonic() - self._batch_metrics.started_at
-            )
-            if self._batch_metrics.processed_rows > 0:
-                self._batch_metrics.avg_seconds = (
-                    self._batch_metrics.duration_seconds
-                    / self._batch_metrics.processed_rows
-                )
-            else:
-                self._batch_metrics.avg_seconds = None
-            self._batch_metrics.started_at = None
-            self._update_llm_metrics_label()
+        self._finalize_batch_metrics()
 
         settings = self.settings_tab.get_settings()
         export_format = self._get_selected_export_format()
@@ -2939,19 +2939,7 @@ class FoundryGUI(QMainWindow):
         self.save_ui_state()
         self.settings_tab.save_settings()
         self._tally_llm_failures(result)
-        if self._batch_metrics.started_at is not None:
-            self._batch_metrics.duration_seconds = (
-                time.monotonic() - self._batch_metrics.started_at
-            )
-            if self._batch_metrics.processed_rows > 0:
-                self._batch_metrics.avg_seconds = (
-                    self._batch_metrics.duration_seconds
-                    / self._batch_metrics.processed_rows
-                )
-            else:
-                self._batch_metrics.avg_seconds = None
-            self._batch_metrics.started_at = None
-            self._update_llm_metrics_label()
+        self._finalize_batch_metrics()
 
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=output_path)
@@ -3128,14 +3116,12 @@ class FoundryGUI(QMainWindow):
         self.settings_tab.save_settings()
 
         # 2. Force Stop the Worker
-        if hasattr(self, 'worker') and self.worker.isRunning():
-            self.worker.stop()  # Tell it to stop the loop
-            self.worker.terminate()  # Force kill the thread if it's stuck in Ollama
-            self.worker.wait()  # Wait for cleanup
-        if hasattr(self, "pipeline_worker") and self.pipeline_worker.isRunning():
-            self.pipeline_worker.stop()
-            self.pipeline_worker.terminate()
-            self.pipeline_worker.wait()
+        for worker_name in ("worker", "pipeline_worker"):
+            worker = getattr(self, worker_name, None)
+            if worker is not None and worker.isRunning():
+                worker.stop()
+                worker.terminate()
+                worker.wait()
 
         event.accept()
 

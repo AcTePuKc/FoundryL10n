@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal
-from core.database import save_translation
 from core.engine import TranslationEngine
 from core.translation_pipeline import run_ordered_jsonl_pipeline, segment_to_jsonl_entry
 from services.resource_service import ResourceLoader
@@ -138,51 +137,19 @@ class JSONLPipelineWorker(QThread):
                 if seg is None:
                     processed_entries.append(entry)
                     continue
-                if getattr(seg, "is_verified", False) or getattr(seg, "never_translate", False):
-                    processed_entries.append(segment_to_jsonl_entry(seg, entry.order))
-                    continue
-                idx = entry.order
-                prev_text = self.segments[idx - 1].source_text if idx > 0 else ""
-                next_text = (
-                    self.segments[idx + 1].source_text
-                    if idx < len(self.segments) - 1
-                    else ""
-                )
-                context_bits = []
-                if prev_text:
-                    context_bits.append(f"PREVIOUS: {prev_text}")
-                if next_text:
-                    context_bits.append(f"NEXT: {next_text}")
-                context_snippet = "\n".join(context_bits)
-
-                processed = engine.translate_single_segment(
-                    seg,
-                    self.target_lang,
-                    self.project_name,
-                    glossary_text,
-                    style_content,
-                    forbidden_content,
-                    self.temp,
-                    self.strict,
-                    self.prompt_template,
-                    context_extra=context_snippet,
+                engine.process_segment(
+                    segments=self.segments,
+                    index=entry.order,
+                    target_lang=self.target_lang,
+                    glossary=glossary_text,
+                    style=style_content,
+                    forbidden=forbidden_content,
+                    temp=self.temp,
+                    strict=self.strict,
+                    prompt_template=self.prompt_template,
                     glossary_dict=glossary_dict,
+                    project_name=self.project_name,
                 )
-                if processed:
-                    seg.has_risk = engine.audit_segment(seg, glossary_dict)
-                if processed and seg.translation:
-                    success = "[TAG ERROR]" not in seg.translation
-                    if success:
-                        save_translation(
-                            seg.source_text,
-                            self.target_lang,
-                            seg.translation,
-                            project_name=self.project_name,
-                            segment_key=seg.key,
-                            verified=seg.is_verified,
-                            skip=seg.never_translate,
-                            ai_draft=seg.ai_draft,
-                        )
                 processed_entries.append(segment_to_jsonl_entry(seg, entry.order))
             return processed_entries
 
