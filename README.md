@@ -15,6 +15,7 @@ FoundryL10n is a local-first translation workstation for narrative-heavy games. 
   - [Integrity report tab](#integrity-report-tab)
   - [Settings tab](#settings-tab)
 - [Project Structure](#project-structure)
+- [Documentation](#documentation)
 - [Provider Integrations](#provider-integrations)
 - [Translation Memory & Caching](#translation-memory--caching)
 - [Development](#development)
@@ -172,6 +173,10 @@ Supporting assets:
 - `glossary.tsv`, `dialogue.tsv` – Sample resources for testing
 - `profiles/` – Saved settings and presets
 - `foundry_memory.db` – SQLite translation memory (auto-created)
+
+## Documentation
+
+See [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) for a short index that links the investigation and integration documents with summaries of what they cover.
 
 ## Provider Integrations
 
