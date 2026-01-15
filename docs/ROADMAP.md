@@ -109,11 +109,11 @@ Roadmap updates must not supersede or contradict already implemented features, a
 
 **Implemented**
 * [x] **JSON/JSONL file import + export:** CLI/GUI support for JSON/JSONL parsing and export is in place.
+* [x] **JSONL append-only persistence + resume-by-skip:** Append-only JSONL persistence now flushes per entry, skips translated keys on resume, and keeps deterministic mapping by `key`.
 * [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
 * [x] **TSV/JSON array ⇄ JSONL converters:** Utility conversion script keeps stable key/index ordering and preserves note/empty translation fields.
 
 **Pending**
-* [x] **JSONL append-only persistence + resume-by-skip:** Implemented append-only JSONL persistence and resume-by-skip (scan output to skip translated keys).
 * [ ] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, per-chunk progress (segments completed/total), and per-file summary reporting for the CLI translation pipeline.
 * [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
 * [x] **Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
