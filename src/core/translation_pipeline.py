@@ -79,7 +79,7 @@ def load_translated_keys(jsonl_path: Path) -> set[str]:
                 continue
             key = entry.get("key")
             translation = entry.get("translation")
-            if key and translation:
+            if key and "translation" in entry:
                 translated.add(str(key))
     return translated
 
