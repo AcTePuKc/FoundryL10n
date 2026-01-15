@@ -1,61 +1,35 @@
-import csv
-import json
 import argparse
+import sys
 from pathlib import Path
+from typing import List, Dict, Any
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT / "src"))
+
+from core.parser import FoundryParser
 
 
-def read_tsv(path: Path):
-    """Read TSV with columns: key, source, translation, note."""
-    rows = []
-    with path.open("r", encoding="utf-8", newline="") as f:
-        r = csv.reader(f, delimiter="\t")
-
-        first = True
-        for line in r:
-            if not line:
-                continue
-
-            # Skip header row if present
-            if first and line[0].lower() == "key":
-                first = False
-                continue
-            first = False
-
-            key = line[0] if len(line) > 0 else ""
-            source = line[1] if len(line) > 1 else ""
-            translation = line[2] if len(line) > 2 else ""
-            note = line[3] if len(line) > 3 else ""
-
-            rows.append(
-                {
-                    "key": key,
-                    "source": source,
-                    "translation": translation,
-                    "note": note,
-                }
-            )
-    return rows
+def read_rows(path: Path) -> List[Dict[str, Any]]:
+    parser = FoundryParser()
+    segments = parser.parse_path(path)
+    rows = parser.build_export_rows(segments, include_empty_fields=True)
+    return parser.order_rows_by_key(rows)
 
 
-def write_json(rows, out_path: Path, pretty: bool = False):
-    """Write list of dicts as JSON array."""
-    with out_path.open("w", encoding="utf-8") as f:
-        indent = 2 if pretty else None
-        json.dump(rows, f, ensure_ascii=False, indent=indent)
-
-
-def write_jsonl(rows, out_path: Path):
-    """Write list of dicts as JSON Lines (one JSON object per line)."""
-    with out_path.open("w", encoding="utf-8") as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+def write_rows(
+    rows: List[Dict[str, Any]],
+    out_path: Path,
+    pretty: bool = False,
+) -> None:
+    parser = FoundryParser()
+    parser.save_rows(rows, out_path, pretty=pretty)
 
 
 def main():
     parser = argparse.ArgumentParser(
         description=(
-            "Convert TSV (key, source, translation, note) into JSON or JSONL. "
-            "Output format is chosen by the file extension: .json or .jsonl."
+            "Convert TSV/JSON/JSONL files across formats. "
+            "Output format is chosen by the file extension: .tsv, .json, or .jsonl."
         )
     )
 
@@ -70,7 +44,7 @@ def main():
         "--out",
         dest="out",
         required=True,
-        help="Path to output file (.json or .jsonl).",
+        help="Path to output file (.tsv, .json, or .jsonl).",
     )
 
     parser.add_argument(
@@ -82,7 +56,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="tsv_to_json_jsonl 1.0",
+        version="tsv_to_json_jsonl 1.1",
     )
 
     args = parser.parse_args()
@@ -93,17 +67,9 @@ def main():
     if not inp.is_file():
         parser.error(f"Input file does not exist: {inp}")
 
-    rows = read_tsv(inp)
-
-    suffix = out.suffix.lower()
-    if suffix == ".json":
-        write_json(rows, out, pretty=args.pretty)
-        print(f"Wrote JSON to: {out}")
-    elif suffix == ".jsonl":
-        write_jsonl(rows, out)
-        print(f"Wrote JSONL to: {out}")
-    else:
-        parser.error("Unsupported output format. Use file with .json or .jsonl extension.")
+    rows = read_rows(inp)
+    write_rows(rows, out, pretty=args.pretty)
+    print(f"Wrote {out.suffix.upper().lstrip('.')} to: {out}")
 
 
 if __name__ == "__main__":

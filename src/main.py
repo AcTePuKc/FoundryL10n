@@ -197,6 +197,30 @@ def translate_file(
     success, failed = _count_repair_outcomes(segments)
     print(I18N.t("cli_repair_summary").format(success=success, failed=failed))
 
+@app.command(name="convert", help="Convert TSV/JSON/JSONL files between formats.")
+def convert_file(
+    path: str = typer.Argument(..., help=I18N.t("cli_arg_file")),
+    out: str = typer.Option(..., "--out", "-o"),
+    pretty: bool = typer.Option(
+        False,
+        "--pretty",
+        help="Pretty-print JSON with indentation (only affects .json output).",
+    ),
+):
+    parser = FoundryParser()
+    input_path = Path(path)
+    output_path = Path(out)
+
+    if not input_path.exists():
+        print(I18N.t("cli_file_missing_error").format(path=path))
+        raise typer.Exit(code=1)
+
+    segments = parser.parse_path(input_path)
+    rows = parser.build_export_rows(segments, include_empty_fields=True)
+    rows = parser.order_rows_by_key(rows)
+    parser.save_rows(rows, output_path, pretty=pretty)
+    print(f"Converted {input_path} -> {output_path}")
+
 @app.command(name="text", help=I18N.t("cli_text_help"))
 def translate_text(
     content: str = typer.Argument(..., help=I18N.t("cli_arg_text")),

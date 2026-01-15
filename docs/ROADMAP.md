@@ -110,6 +110,7 @@ Roadmap updates must not supersede or contradict already implemented features, a
 **Implemented**
 * [x] **JSON/JSONL file import + export:** CLI/GUI support for JSON/JSONL parsing and export is in place.
 * [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
+* [x] **TSV/JSON array ⇄ JSONL converters:** Utility conversion script keeps stable key/index ordering and preserves note/empty translation fields.
 
 **Pending**
 * [ ] **JSONL append-only persistence + resume-by-skip:** Append-only JSONL persistence and resume-by-skip (scan output to skip translated keys) remain in investigation-only docs and still need implementation.

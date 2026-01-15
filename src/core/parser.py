@@ -51,6 +51,7 @@ class FoundryParser:
         self.text_col: str = ""
         self.target_col: str = ""
         self._custom_fields_col = "custom_fields"
+        self._default_export_fields = ["key", "source", "translation", "note"]
 
     def parse_custom_fields(self, value: object) -> Dict:
         if not value:
@@ -282,6 +283,76 @@ class FoundryParser:
                 row = self._build_export_row(seg)
                 f.write(json.dumps(row, ensure_ascii=False))
                 f.write("\n")
+
+    def build_export_rows(
+        self,
+        segments: List[TranslationSegment],
+        include_empty_fields: bool = False,
+    ) -> List[Dict]:
+        rows = []
+        text_col = self.text_col or "source"
+        target_col = self.target_col or "translation"
+        for seg in segments:
+            row = self._build_export_row(seg)
+            if include_empty_fields:
+                if row.get(target_col) is None:
+                    row[target_col] = ""
+                if "note" not in row:
+                    row["note"] = seg.context or ""
+                if target_col != "translation":
+                    row.setdefault("translation", row.get(target_col, ""))
+                if text_col != "source":
+                    row.setdefault("source", row.get(text_col, ""))
+            rows.append(row)
+        return rows
+
+    def order_rows_by_key(self, rows: List[Dict]) -> List[Dict]:
+        indexed = list(enumerate(rows))
+        if rows and all(str(row.get("key", "")) for row in rows):
+            indexed.sort(key=lambda item: (str(item[1].get("key", "")), item[0]))
+        return [row for _, row in indexed]
+
+    def save_rows(
+        self,
+        rows: List[Dict],
+        output_path: Path,
+        pretty: bool = False,
+    ) -> None:
+        if not rows:
+            return
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        suffix = output_path.suffix.lower()
+        if suffix == ".tsv":
+            all_keys = {key for row in rows for key in row.keys()}
+            fields = [
+                field for field in self._default_export_fields if field in all_keys
+            ]
+            extras = sorted(all_keys - set(fields))
+            fieldnames = fields + extras
+            with open(output_path, "w", encoding="utf-8", newline="") as f:
+                writer = csv.DictWriter(
+                    f,
+                    fieldnames=fieldnames,
+                    delimiter="\t",
+                    extrasaction="ignore",
+                    quoting=csv.QUOTE_MINIMAL,
+                )
+                writer.writeheader()
+                for row in rows:
+                    writer.writerow(row)
+            return
+        if suffix == ".json":
+            with open(output_path, "w", encoding="utf-8") as f:
+                indent = 2 if pretty else None
+                json.dump(rows, f, ensure_ascii=False, indent=indent)
+            return
+        if suffix == ".jsonl":
+            with open(output_path, "w", encoding="utf-8") as f:
+                for row in rows:
+                    f.write(json.dumps(row, ensure_ascii=False))
+                    f.write("\n")
+            return
+        raise ValueError("Unsupported output format. Use .tsv, .json, or .jsonl.")
 
     def save_path(self, segments: List[TranslationSegment], output_path: Path, export_format: str) -> None:
         format_key = (export_format or "tsv").lower()
