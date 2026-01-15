@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -79,7 +80,7 @@ def load_translated_keys(jsonl_path: Path) -> set[str]:
                 continue
             key = entry.get("key")
             translation = entry.get("translation")
-            if key and "translation" in entry:
+            if key and isinstance(translation, str) and translation.strip():
                 translated.add(str(key))
     return translated
 
@@ -90,6 +91,8 @@ def append_jsonl_entries(output_path: Path, entries: Iterable[JSONLPipelineEntry
         for entry in entries:
             handle.write(entry.to_jsonl())
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
 
 
 def run_ordered_jsonl_pipeline(
@@ -115,7 +118,20 @@ def run_ordered_jsonl_pipeline(
         if not filtered:
             continue
         processed = process_chunk(filtered) if process_chunk else filtered
-        ordered = sorted(processed, key=lambda entry: entry.order)
+        order_by_key = {
+            str(entry.payload.get("key")): entry.order for entry in filtered
+        }
+        normalized: list[JSONLPipelineEntry] = []
+        for entry in processed:
+            key = str(entry.payload.get("key"))
+            expected_order = order_by_key.get(key, entry.order)
+            if entry.order != expected_order:
+                entry = JSONLPipelineEntry(order=expected_order, payload=entry.payload)
+            normalized.append(entry)
+        ordered = sorted(
+            normalized,
+            key=lambda entry: (entry.order, str(entry.payload.get("key") or "")),
+        )
         if output_path is not None:
             append_jsonl_entries(output_path, ordered)
         for entry in ordered:
