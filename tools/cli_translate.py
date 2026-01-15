@@ -10,17 +10,17 @@ from core.translation_pipeline import JSONLPipelineEntry, run_ordered_jsonl_pipe
 class DummyLLM:
     def translate_segment(
         self,
-        text,
-        target_lang,
-        project_name="default",
-        glossary="",
-        style="",
-        forbidden="",
-        temp=0.1,
-        prompt_template="",
-        current_translation="",
-        context_extra="",
-    ):
+        text: str,
+        target_lang: str,
+        project_name: str = "default",
+        glossary: str = "",
+        style: str = "",
+        forbidden: str = "",
+        temp: float = 0.1,
+        prompt_template: str = "",
+        current_translation: str = "",
+        context_extra: str = "",
+    ) -> tuple[str, str]:
         return f"[DUMMY {target_lang}] {text}", ""
 
     def repair_placeholders(
