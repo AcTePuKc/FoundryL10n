@@ -2,6 +2,12 @@
 
 *Last updated: 2026-01-15. This document is maintained incrementally as the investigation progresses.*
 
+## Background
+- Current batching operates on TSV/JSON line groups rather than per-segment streaming, so each batch waits for the full response before advancing.
+- Observed latency: processing roughly 200 lines has taken ~20 minutes end-to-end in recent runs.
+- Scaling concern: as file size grows, batch size and round-trip time grow proportionally, stretching translator wait time.
+- Whole-file validation adds a fixed cost because validation/QA runs across the entire file after each batch.
+
 ## Findings / Stubs
 This document ('docs/investigation.md') is the canonical location for future inspection findings.
 
