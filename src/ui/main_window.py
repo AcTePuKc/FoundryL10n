@@ -2382,11 +2382,12 @@ class FoundryGUI(QMainWindow):
         return "jsonl" if export_format == "jsonl" else "json" if export_format == "json" else "tsv"
 
     def _export_name_filter(self, export_format: str) -> str:
-        if export_format == "json":
-            return I18N.t("filter_json")
-        if export_format == "jsonl":
-            return I18N.t("filter_jsonl")
-        return I18N.t("filter_tsv")
+        filter_keys = {
+            "json": "filter_json",
+            "jsonl": "filter_jsonl",
+        }
+        key = filter_keys.get(export_format, "filter_tsv")
+        return I18N.t(key)
 
     def _default_export_name(self, export_format: str) -> str:
         base_name = self.input_path.stem if self.input_path else "export"
