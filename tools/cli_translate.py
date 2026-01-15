@@ -4,7 +4,11 @@ from pathlib import Path
 
 from core.engine import TranslationEngine
 from core.parser import FoundryParser, TranslationSegment
-from core.translation_pipeline import JSONLPipelineEntry, run_ordered_jsonl_pipeline
+from core.translation_pipeline import (
+    JSONLPipelineEntry,
+    iter_segment_chunks,
+    run_ordered_jsonl_pipeline,
+)
 
 
 class DummyLLM:
@@ -132,8 +136,7 @@ def _translate_batch(
     chunk_size: int,
     workers: int,
 ) -> None:
-    for start in range(0, len(segments), chunk_size):
-        chunk = segments[start : start + chunk_size]
+    for chunk in iter_segment_chunks(segments, chunk_size):
         if workers <= 1:
             for segment in chunk:
                 _translate_segment(segment)
