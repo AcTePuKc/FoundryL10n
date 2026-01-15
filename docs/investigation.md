@@ -111,6 +111,10 @@ Suggested module layout (non-binding, aligns with existing responsibilities):
 
 High-level UI-facing API (conceptual):
 ```python
+# Required imports:
+# from pathlib import Path
+# from typing import Callable
+# from some_module import CancelToken, TranslationRunResult
 def translate_file(
     *,
     input_path: Path,
