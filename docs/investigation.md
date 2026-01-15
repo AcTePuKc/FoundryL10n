@@ -88,6 +88,12 @@ Focused on the LLM translation pipeline for:
 ## Roadmap touchpoints
 - **Batch Processing (0.5 QA & Translation Memory):** roadmap calls out the ability to “Submit All Verified” segments on a page in one click, which frames batch-oriented workflows alongside streaming translation behavior.【F:docs/ROADMAP.md†L53-L59】
 
+## Incremental JSONL persistence + resume strategy
+- **Append-only vs update semantics:** JSONL persistence should be append-first for streaming batches. Each translated segment writes a new line with the canonical `key` plus translation payload. Updates are modeled as additional lines for the same `key` (latest wins on replay), not in-place mutation, to keep writes sequential and avoid partial-line corruption when a crash occurs mid-update.
+- **Resume strategy (skip translated keys):** on restart, re-scan the JSONL output and build a `key → last translation` index. Incoming segments whose keys already have a non-empty translation should be skipped by default (treat as already translated). This makes resume idempotent and avoids reissuing LLM calls for completed segments.
+- **Crash-safety guarantees:** append-only writes can be made crash-safe by fsyncing after each JSONL line (or after a small batch) and by treating any trailing partial line as incomplete and ignorable on resume. This ensures that a crash never corrupts prior lines, and the worst case is losing the last in-flight line.
+- **Forward-looking worker model:** the initial implementation assumes a single-threaded, in-process worker that streams translations sequentially and appends JSONL lines in order. A future `--workers N` flag can switch to a multi-worker model (either in-process async tasks or multi-process workers). In both cases, JSONL persistence remains append-only, and ordering can be preserved via a coordinator that serializes writes or uses per-worker temp files merged deterministically.
+
 ## Integration requirements relevant to JSONL streaming
 - **Optional JSON/JSONL Import:** JSON and JSONL can be imported alongside TSV. JSON accepts a list of objects (or `{ "segments": [...] }`); JSONL expects one object per line. Minimal fields are `key` and `source`; `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and sync timestamps are optional.【F:docs/INTEGRATION.md†L399-L400】
 - **Remote-synced context awareness:** when segments originate from a remote provider, the LLM context includes the remote source + target text, and drafting remains manual (no auto-sync).【F:docs/INTEGRATION.md†L399-L400】
