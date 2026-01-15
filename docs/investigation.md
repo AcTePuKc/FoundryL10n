@@ -25,6 +25,26 @@ New stubs should be appended as short subsections under this heading, following 
 - **Never commit on failure:** any placeholder validation failure blocks committing the segment.
 - **Candidate failure handling:** on validation failure, attempt a retry; if still failing, skip and log the segment for later review; escalate to manual review when placeholders cannot be reconciled.
 
+### 2026-01-16 — CLI entry-point, LLM contract, deliverables, open questions
+- **CLI entry-point design (required flags + defaults + reporting expectations):**
+  - Required flags: `--input`, `--output`, `--source-lang`, `--target-lang`, `--provider` (or `--provider-id`), with optional `--project-id`.
+  - Defaults to document explicitly: `--chunk-size` (currently modeled as `20` in the conceptual API), `--strict` default `true`, `--progress` default `on` for terminal reporting.
+  - Reporting expectations: emit per-chunk progress (segments completed / total), per-file summary (elapsed time, segments translated/skipped), and a machine-readable status code for automation.
+- **Strict LLM IO contract:**
+  - Enforce a deterministic, schema-locked request/response format with zero tolerance for schema drift.
+  - Preserve placeholder integrity (counts, order, and identity) with hard failure on mismatch.
+  - Maintain deterministic output ordering (input order is output order) for reproducibility and merge safety.
+- **Concrete deliverables:**
+  - Design doc covering CLI + JSONL schema, placeholder validation rules, and resume strategy.
+  - Optional prototype (CLI translation runner + JSONL append-only writer).
+  - Constraints checklist (LLM contract, placeholder integrity, no schema drift, deterministic ordering, resume safety).
+- **Open questions:**
+  - `chunk_size` default (confirm `20` or set a new baseline).
+  - Expected speedup vs current batch flow (target latency/throughput).
+  - Parallelism model (async tasks vs multi-process workers; ordering guarantees).
+  - Large-file progress storage (append-only JSONL vs separate checkpoint file).
+  - UI non-blocking integration (worker threading + progress callbacks without blocking segment editing).
+
 ## Scope
 Focused only on:
 - `src/core/database.py` TM query and global replace usage of `__table__`.
