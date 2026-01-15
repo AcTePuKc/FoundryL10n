@@ -11,7 +11,7 @@
 ## Findings / Stubs
 This document ('docs/investigation.md') is the canonical location for future inspection findings.
 
-### Roadmap prerequisites
+## Roadmap prerequisites
 - **Dependencies/Sequencing:** Roadmap items related to JSONL streaming, CLI runner, and strict IO contract need explicit ordering (e.g., schema definition → persistence/resume → CLI entry-point → UI non-blocking integration) plus dependencies on core/shared validation utilities to keep GUI/CLI parity.
 - **Ownership:** Assign module-level owners (core/services/ui) or a single DRI for cross-cutting work (schema + persistence + UI), so follow-up tasks and review routing are clear.
 - **Acceptance criteria:** Define success metrics (throughput targets, latency per chunk, placeholder parity pass rate) and verification steps (resume-by-skip replay, crash-safe append-only behavior) to prevent ambiguous “done” states.
