@@ -1,7 +1,11 @@
 # Audit Note — Database TM/Replace + Consistency Status Filter
 
 ## Findings / Stubs
-Canonical location for future inspection findings is this document (`docs/investigation.md`). Append new stubs as a short subsection near the top (under this heading), prefixed with the date and a brief title, then include links to any related files or issues for follow-up.
+This document (`docs/investigation.md`) is the canonical location for future inspection findings.
+
+New stubs should be appended as short subsections under this heading, following this convention:
+- **Prefix** the subsection with the date and a brief title.
+- **Include** links to any related files or issues for follow-up.
 
 ## Scope
 Focused only on:
