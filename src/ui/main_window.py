@@ -2411,6 +2411,12 @@ class FoundryGUI(QMainWindow):
             self._batch_metrics.started_at = None
             self._update_llm_metrics_label()
 
+    def _finalize_batch_run(self, result) -> None:
+        self.save_ui_state()
+        self.settings_tab.save_settings()
+        self._tally_llm_failures(result)
+        self._finalize_batch_metrics()
+
     def _capture_workflow_focus(self) -> None:
         widget = self.focusWidget()
         if widget is None or not widget.isVisible():
@@ -2921,10 +2927,7 @@ class FoundryGUI(QMainWindow):
         self.btn_run.setEnabled(True)
         self.btn_run.setText(I18N.t("ui_start_bulk"))
         self.btn_run.setStyleSheet("font-weight: bold;")
-        self.save_ui_state()
-        self.settings_tab.save_settings()
-        self._tally_llm_failures(result)
-        self._finalize_batch_metrics()
+        self._finalize_batch_run(result)
 
         settings = self.settings_tab.get_settings()
         export_format = self._get_selected_export_format()
@@ -2936,10 +2939,7 @@ class FoundryGUI(QMainWindow):
 
     def on_pipeline_done(self, result, output_path: Path) -> None:
         self.action_run_pipeline.setEnabled(True)
-        self.save_ui_state()
-        self.settings_tab.save_settings()
-        self._tally_llm_failures(result)
-        self._finalize_batch_metrics()
+        self._finalize_batch_run(result)
 
         self.file_label.setText(
             I18N.t("msg_file_saved").format(path=output_path)
@@ -3120,8 +3120,9 @@ class FoundryGUI(QMainWindow):
             worker = getattr(self, worker_name, None)
             if worker is not None and worker.isRunning():
                 worker.stop()
-                worker.terminate()
-                worker.wait()
+                if not worker.wait(2000):
+                    worker.terminate()
+                    worker.wait()
 
         event.accept()
 
