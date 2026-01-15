@@ -70,8 +70,7 @@ def _build_engine() -> TranslationEngine:
     return TranslationEngine(DummyLLM())
 
 
-def _translate_segment(segment: TranslationSegment) -> TranslationSegment:
-    engine = _build_engine()
+def _translate_segment(segment: TranslationSegment, engine: TranslationEngine) -> TranslationSegment:
     engine.translate_single_segment(
         segment,
         target_lang="xx",
