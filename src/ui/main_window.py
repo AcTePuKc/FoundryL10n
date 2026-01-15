@@ -1795,7 +1795,7 @@ class FoundryGUI(QMainWindow):
             # Mark as manually verified
             placeholder_validation = validate_placeholder_order(
                 seg.source_text,
-                seg.translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""),
+                (seg.translation or "").replace(TAG_ERROR_PREFIX_WITH_SPACE, ""),
                 context={"segment_id": getattr(seg, "key", None)},
             )
             if TAG_ERROR_PREFIX in seg.translation or not placeholder_validation.is_valid:
