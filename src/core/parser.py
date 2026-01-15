@@ -323,19 +323,11 @@ class FoundryParser:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         suffix = output_path.suffix.lower()
         if suffix == ".tsv":
+            all_keys = {key for row in rows for key in row.keys()}
             fields = [
-                field
-                for field in self._default_export_fields
-                if any(field in row for row in rows)
+                field for field in self._default_export_fields if field in all_keys
             ]
-            extras = sorted(
-                {
-                    key
-                    for row in rows
-                    for key in row.keys()
-                    if key not in fields
-                }
-            )
+            extras = sorted(all_keys - set(fields))
             fieldnames = fields + extras
             with open(output_path, "w", encoding="utf-8", newline="") as f:
                 writer = csv.DictWriter(
