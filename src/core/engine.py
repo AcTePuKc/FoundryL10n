@@ -2,7 +2,7 @@ import re
 import difflib
 from core.masker import Masker
 from core.rlm_segmenter import RLMSegmenter
-from core.rlm_validator import validate_segments
+from core.rlm_validator import validate_placeholder_order, validate_segments
 from core.database import (get_cached_record, save_translation, engine,
                            TranslationRecord)
 from core.i18n import I18N
@@ -100,7 +100,7 @@ class TranslationEngine:
             if processed:
                 setattr(seg, "has_risk", has_risk)
 
-            if processed and (success or not strict):
+            if processed and success:
                 save_translation(
                     seg.source_text,
                     target_lang,
@@ -305,6 +305,7 @@ class TranslationEngine:
             else:
                 candidate_segments.append(segment.value)
         candidate_text = "".join(candidate_segments)
+        final_text = self.masker.unmask(candidate_text, tokens)
 
         target_segment_result = self.segmenter.segment(
             raw_line=candidate_text,
@@ -318,9 +319,13 @@ class TranslationEngine:
             target_tags=target_segment_result.tags,
             context={"segment_id": getattr(seg, "key", None)},
         )
-        success = validation.is_valid
-        final_text = self.masker.unmask(candidate_text, tokens)
-        placeholder_warning = ""
+        placeholder_validation = validate_placeholder_order(
+            seg.source_text,
+            final_text,
+            context={"segment_id": getattr(seg, "key", None)},
+        )
+        success = validation.is_valid and placeholder_validation.is_valid
+        manual_review_message = ""
 
         if not success and num_source_tags > 0:
             seg.repair_attempted = True
@@ -343,7 +348,12 @@ class TranslationEngine:
                     target_tags=repaired_target_result.tags,
                     context={"segment_id": getattr(seg, "key", None)},
                 )
-                success = repaired_validation.is_valid
+                placeholder_validation = validate_placeholder_order(
+                    seg.source_text,
+                    repaired_text,
+                    context={"segment_id": getattr(seg, "key", None)},
+                )
+                success = repaired_validation.is_valid and placeholder_validation.is_valid
                 final_text = repaired_text
                 if repair_thought:
                     thoughts.append(repair_thought)
@@ -351,17 +361,18 @@ class TranslationEngine:
                 seg.repair_success = True
             else:
                 seg.repair_failed = True
-                if not strict:
-                    placeholder_warning = I18N.t("audit_placeholder_warning")
+                manual_review_message = I18N.t("audit_placeholder_manual_review")
 
         if not getattr(seg, "ai_draft", ""):
             seg.ai_draft = final_text
 
         if num_source_tags == 0:
             final_text = re.sub(r"@@\s*PLACEHOLDER_\d+\s*@@", "", final_text).strip()
-            success = True
 
-        if not success and num_source_tags > 0 and strict:
+        if not success and not manual_review_message:
+            manual_review_message = I18N.t("audit_placeholder_manual_review")
+
+        if not success:
             final_text = f"[TAG ERROR] {final_text}"
 
         if seg.source_text.isupper() and any(c.isalpha() for c in seg.source_text):
@@ -369,8 +380,8 @@ class TranslationEngine:
 
         seg.translation = final_text
         seg.thought = " | ".join(thoughts)
-        if placeholder_warning:
-            thought_parts = [f"⚠️ {placeholder_warning}"]
+        if manual_review_message:
+            thought_parts = [f"⚠️ {manual_review_message}"]
             if seg.thought:
                 thought_parts.append(seg.thought)
             seg.thought = " | ".join(thought_parts)

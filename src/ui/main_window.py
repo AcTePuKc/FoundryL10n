@@ -32,6 +32,7 @@ from services.token_storage import TokenStorage
 from services.plugin_sync_service import GitHubPluginSyncService
 from core.field_utils import is_custom_field_missing
 from core.i18n import I18N
+from core.rlm_validator import validate_placeholder_order
 from core.tag_utils import extract_tags, strip_tags
 from core.database import (save_translation, get_cached_record,
                            Session, TranslationRecord, engine,
@@ -1559,6 +1560,25 @@ class FoundryGUI(QMainWindow):
         # 1) Get text from Editor
         new_text = self.editor.trans_edit.toPlainText()
 
+        placeholder_validation = validate_placeholder_order(
+            seg.source_text,
+            new_text,
+            context={"segment_id": getattr(seg, "key", None)},
+        )
+        if not placeholder_validation.is_valid:
+            seg.translation = f"{TAG_ERROR_PREFIX} {new_text}"
+            seg.is_verified = False
+            seg.thought = I18N.t("audit_placeholder_manual_review")
+            self.editor.cb_verified.setChecked(False)
+            self.update_row_visuals(self.current_row)
+            self.update_stats()
+            QMessageBox.warning(
+                self,
+                I18N.t("dlg_error_title"),
+                I18N.t("msg_placeholder_manual_review"),
+            )
+            return
+
         # 2) Update segment state (SYNC is important)
         seg.translation = new_text
         seg.is_verified = True  # Save always verifies
@@ -1719,6 +1739,15 @@ class FoundryGUI(QMainWindow):
             row = idx.row()
             seg = self.segments[row]
             if seg.translation:
+                placeholder_validation = validate_placeholder_order(
+                    seg.source_text,
+                    seg.translation.replace(TAG_ERROR_PREFIX_WITH_SPACE, ""),
+                    context={"segment_id": getattr(seg, "key", None)},
+                )
+                if TAG_ERROR_PREFIX in seg.translation or not placeholder_validation.is_valid:
+                    seg.thought = I18N.t("audit_placeholder_manual_review")
+                    self.update_row_visuals(row)
+                    continue
                 seg.is_verified = True  # Update memory
                 # Update DB
                 save_translation(
@@ -1764,6 +1793,20 @@ class FoundryGUI(QMainWindow):
 
         elif action_type == "verify":
             # Mark as manually verified
+            placeholder_validation = validate_placeholder_order(
+                seg.source_text,
+                (seg.translation or "").replace(TAG_ERROR_PREFIX_WITH_SPACE, ""),
+                context={"segment_id": getattr(seg, "key", None)},
+            )
+            if TAG_ERROR_PREFIX in seg.translation or not placeholder_validation.is_valid:
+                seg.thought = I18N.t("audit_placeholder_manual_review")
+                self.update_row_visuals(row)
+                QMessageBox.warning(
+                    self,
+                    I18N.t("dlg_error_title"),
+                    I18N.t("msg_placeholder_manual_review"),
+                )
+                return
             is_ver = True
 
         # Persist to DB with full context
