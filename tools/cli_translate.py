@@ -57,12 +57,14 @@ def _resolve_format(path: Path, override: str | None) -> str:
 
 
 def _parse_segments(parser: FoundryParser, path: Path, fmt: str) -> list[TranslationSegment]:
-    if fmt == "tsv":
-        return parser.parse_tsv(path)
-    if fmt == "json":
-        return parser.parse_json(path)
-    if fmt == "jsonl":
-        return parser.parse_jsonl(path)
+    parser_map = {
+        "tsv": parser.parse_tsv,
+        "json": parser.parse_json,
+        "jsonl": parser.parse_jsonl,
+    }
+    parser_func = parser_map.get(fmt)
+    if parser_func:
+        return parser_func(path)
     raise ValueError(f"Unsupported input format: {fmt}")
 
 
