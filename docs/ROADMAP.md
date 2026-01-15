@@ -1,6 +1,7 @@
 # FoundryL10n Roadmap
 
 This document describes the high-level evolution of FoundryL10n as a modular CAT workstation.
+Roadmap updates must not supersede or contradict already implemented features, and completed items should remain marked as done.
 
 ## 0.2 – Local CAT Refinement
 
