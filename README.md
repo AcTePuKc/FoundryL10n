@@ -111,6 +111,12 @@ Example:
 python main.py file dialogue.tsv --lang "French" --glossary profiles/french_glossary.tsv --style profiles/french_style.md
 ```
 
+#### JSON/JSONL import notes (investigation summary)
+
+- **Optional JSON/JSONL import format:** JSON supports a list of objects (or `{ "segments": [...] }`), JSONL expects one object per line, and minimal fields are `key` and `source`; optional fields include `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and `sync timestamps`.
+- **Remote-synced context awareness:** when segments originate from a provider, LLM context includes remote source + target text, and drafting remains manual (no auto-sync).
+- **Batch processing (roadmap):** the roadmap highlights a “Submit All Verified” action for page-level batching alongside streaming-style workflows.
+
 ### GUI
 
 The workstation UI is organized into three feature-rich tabs.

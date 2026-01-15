@@ -48,3 +48,16 @@ Focused on the LLM translation pipeline for:
 ## Mismatch identified + fix
 - **Mismatch:** GUI’s `TranslationWorker` was always invoked with default `strict=True`, ignoring the `strict_mode` setting from the Settings tab. This affects tag error cleanup (`[TAG ERROR]`) and strict tag preservation expectations in the GUI path compared to the intended strict toggle behavior. CLI already uses the engine default strictness and has no override, so the GUI should respect its UI setting for parity within the desktop pipeline.【F:src/ui/main_window.py†L1088-L1152】【F:src/ui/main_window.py†L2190-L2224】【F:src/ui/settings_tab.py†L910-L932】
 - **Fix applied:** pass `strict=settings["strict_mode"]` when starting both single-row and bulk translation workers so the GUI pipeline honors the strict toggle consistently.【F:src/ui/main_window.py†L1105-L1145】【F:src/ui/main_window.py†L2199-L2224】
+
+---
+
+# JSONL Streaming Translation Investigation — Roadmap + Integration Notes
+
+## Roadmap touchpoints
+- **Batch Processing (0.5 QA & Translation Memory):** roadmap calls out the ability to “Submit All Verified” segments on a page in one click, which frames batch-oriented workflows alongside streaming translation behavior.【F:docs/ROADMAP.md†L53-L59】
+
+## Integration requirements relevant to JSONL streaming
+- **Optional JSON/JSONL import format:** JSON supports a list of objects (or `{ "segments": [...] }`), JSONL expects one object per line, and minimal fields are `key` and `source`; optional fields include `translation`, `context`, `note`, `custom_fields`, `ai_draft`, `provider_id`, `remote_id`, and `sync timestamps`.【F:docs/INTEGRATION.md†L399-L400】
+- **Remote-synced context awareness:** when segments originate from a provider, LLM context includes remote source + target text, and drafting remains manual (no auto-sync).【F:docs/INTEGRATION.md†L399-L400】
+
+Note: This summary is mirrored in README.md.
