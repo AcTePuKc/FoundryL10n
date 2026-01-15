@@ -103,3 +103,12 @@ This document describes the high-level evolution of FoundryL10n as a modular CAT
   * Phase A (segmenter + validator): **completed**. See [RLM_DESIGN.md](RLM_DESIGN.md).
   * Phase B (repair pass + QA integration): **completed**.
   * Strict vs non-strict placeholder failure behavior: **implemented** (blocking error vs warning).
+
+## Investigation status checklist (prevent duplicate roadmap work)
+
+**Implemented**
+* [x] **JSON/JSONL file import + export:** CLI/GUI support for JSON/JSONL parsing and export is in place.
+* [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
+
+**Pending**
+* [ ] **JSONL streaming + resume logic:** Append-only JSONL persistence and resume-by-skip (scan output to skip translated keys) remain in investigation-only docs and still need implementation.
