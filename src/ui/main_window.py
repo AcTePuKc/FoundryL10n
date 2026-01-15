@@ -2379,7 +2379,7 @@ class FoundryGUI(QMainWindow):
         return self.export_format_picker.currentData() or "tsv"
 
     def _export_extension(self, export_format: str) -> str:
-        return "jsonl" if export_format == "jsonl" else "json" if export_format == "json" else "tsv"
+        return {"json": "json", "jsonl": "jsonl"}.get(export_format, "tsv")
 
     def _export_name_filter(self, export_format: str) -> str:
         filter_keys = {
