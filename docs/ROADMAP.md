@@ -116,8 +116,11 @@ Roadmap updates must not supersede or contradict already implemented features, a
 **Pending**
 * [x] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, per-chunk progress (segments completed/total), and per-file summary reporting for the CLI translation pipeline.
 * [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
+  * Missing helper: a shared IO contract module that defines the request/response schema and enforces strict validation for both CLI and GUI flows.
+  * Proposed location: `src/core/llm_io_contract.py` (schema + validation) with call sites in `src/services/llm_service.py` and `src/core/engine.py` before dispatch/after response.
 * [x] **Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
-* [ ] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
+* [x] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
+  * Note: current TM queries already rely on typed `SQLModel` columns (e.g., `TranslationMemoryIndex.project_name`, `target_lang`, `source_norm`) with no `__table__` usage in the codebase.
 * [x] **(planned) UI non-blocking streaming translation integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
 
 **Unplanned (completed)**
