@@ -10,7 +10,7 @@ from core.tag_utils import extract_tags
 
 _PLACEHOLDER_PATTERNS = (
     re.compile(r"<TSMARKER_\d+>"),
-    re.compile(r"%[^\\s]*[dsf]"),
+    re.compile(r"%[^\s]*[dsf]"),
     re.compile(r"\{\d+\}"),
     re.compile(r"\[BTN_[^\]]+\]"),
 )
