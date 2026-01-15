@@ -21,7 +21,7 @@ from services.resource_service import ResourceLoader
 from core.parser import FoundryParser
 from core.engine import TranslationEngine
 from core.masker import Masker
-from ui.worker import TranslationWorker
+from ui.worker import TranslationWorker, JSONLPipelineWorker
 from ui.settings_tab import SettingsTab
 from ui.editor_panel import EditorPanel
 from ui.integrity_tab import IntegrityTab
@@ -81,6 +81,7 @@ class FoundryGUI(QMainWindow):
         self.llm_failure_count = 0
         self._batch_metrics = BatchMetrics()
         self._import_format = "tsv"
+        self._pipeline_chunk_size = 20
 
         # Icon
         # --- ICON LOADING LOGIC ---
@@ -102,6 +103,7 @@ class FoundryGUI(QMainWindow):
         self.setMinimumSize(800, 600)
         self._init_actions()
         self._init_sync_controls()
+        self._init_pipeline_controls()
 
         self.init_translate_tab()
 
@@ -406,6 +408,9 @@ class FoundryGUI(QMainWindow):
         self.action_sync_plugins = QAction(self)
         self.action_sync_plugins.triggered.connect(self.handle_plugin_sync)
 
+        self.action_run_pipeline = QAction(self)
+        self.action_run_pipeline.triggered.connect(self.request_jsonl_pipeline_run)
+
     def _init_sync_controls(self) -> None:
         self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
         self.sync_menu.addAction(self.action_fetch_segments)
@@ -414,6 +419,10 @@ class FoundryGUI(QMainWindow):
         self.sync_menu.addSeparator()
         self.sync_menu.addAction(self.action_sync_plugins)
         self.update_sync_action_state()
+
+    def _init_pipeline_controls(self) -> None:
+        self.pipeline_menu = self.menuBar().addMenu(I18N.t("menu_pipeline"))
+        self.pipeline_menu.addAction(self.action_run_pipeline)
 
     def _update_context_menu_texts(self, count: int) -> None:
         self.action_verify_rows.setText(
@@ -438,6 +447,7 @@ class FoundryGUI(QMainWindow):
         self.action_search_replace.setText(I18N.t("menu_search_replace"))
         self.action_export_verified.setText(I18N.t("menu_export_verified"))
         self.action_history_delete.setText(I18N.t("menu_history_delete"))
+        self.action_run_pipeline.setText(I18N.t("menu_pipeline_run"))
 
     def _handle_bulk_verify(self):
         if self._context_menu_indices:
@@ -2459,6 +2469,70 @@ class FoundryGUI(QMainWindow):
         dialog.open()
         self._tsv_dialog = dialog
 
+    def request_jsonl_pipeline_run(self) -> None:
+        if not self.segments:
+            return
+        if hasattr(self, "pipeline_worker") and self.pipeline_worker.isRunning():
+            return
+        self._capture_workflow_focus()
+        dialog = QFileDialog(
+            self,
+            I18N.t("menu_pipeline_run"),
+            "",
+            self._export_name_filter("jsonl"),
+        )
+        dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        dialog.setDefaultSuffix(self._export_extension("jsonl"))
+        dialog.setModal(False)
+        dialog.selectFile(self._default_export_name("jsonl"))
+        dialog.fileSelected.connect(
+            lambda path: self.start_jsonl_pipeline(Path(path))
+        )
+        dialog.rejected.connect(self._restore_workflow_focus)
+        dialog.open()
+        self._pipeline_dialog = dialog
+
+    def start_jsonl_pipeline(self, output_path: Path) -> None:
+        if not output_path:
+            self._restore_workflow_focus()
+            return
+        settings = self.settings_tab.get_settings()
+        self.action_run_pipeline.setEnabled(False)
+        self.progress_bar.setMaximum(len(self.segments))
+        self.progress_bar.setValue(0)
+        self.llm_request_count += self._count_llm_requests(self.segments)
+        self._batch_metrics.started_at = time.monotonic()
+        self._batch_metrics.processed_rows = 0
+        self._batch_metrics.duration_seconds = None
+        self._batch_metrics.avg_seconds = None
+        self._batch_metrics.model_name = settings.get("model")
+        self._update_llm_metrics_label()
+
+        svc = LLMService(
+            model_name=settings["model"],
+            timeout=settings.get("llm_timeout"),
+        )
+        self.pipeline_worker = JSONLPipelineWorker(
+            segments=self.segments,
+            target_lang=settings["lang"],
+            llm_service=svc,
+            glossary_path=settings["glossary_path"],
+            style_path=settings["style_path"],
+            forbidden_path=settings["forbidden_path"],
+            output_path=output_path,
+            chunk_size=self._pipeline_chunk_size,
+            prompt_template=settings["prompt_template"],
+            project_name=settings.get("project_name", "default"),
+            temp=settings["temp"],
+            strict=settings["strict_mode"],
+        )
+        self.pipeline_worker.progress_signal.connect(self.update_row_ui)
+        self.pipeline_worker.finished_signal.connect(
+            lambda result, path=output_path: self.on_pipeline_done(result, path)
+        )
+        self.pipeline_worker.start()
+        self._restore_workflow_focus()
+
     def import_tsv_path(self, path: Path) -> None:
         if not path:
             self._restore_workflow_focus()
@@ -2860,6 +2934,29 @@ class FoundryGUI(QMainWindow):
             I18N.t("msg_file_saved").format(path=out)
         )
 
+    def on_pipeline_done(self, result, output_path: Path) -> None:
+        self.action_run_pipeline.setEnabled(True)
+        self.save_ui_state()
+        self.settings_tab.save_settings()
+        self._tally_llm_failures(result)
+        if self._batch_metrics.started_at is not None:
+            self._batch_metrics.duration_seconds = (
+                time.monotonic() - self._batch_metrics.started_at
+            )
+            if self._batch_metrics.processed_rows > 0:
+                self._batch_metrics.avg_seconds = (
+                    self._batch_metrics.duration_seconds
+                    / self._batch_metrics.processed_rows
+                )
+            else:
+                self._batch_metrics.avg_seconds = None
+            self._batch_metrics.started_at = None
+            self._update_llm_metrics_label()
+
+        self.file_label.setText(
+            I18N.t("msg_file_saved").format(path=output_path)
+        )
+
     @staticmethod
     def _count_llm_requests(segments) -> int:
         return sum(
@@ -3008,8 +3105,11 @@ class FoundryGUI(QMainWindow):
         self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
         self.action_submit_verified.setText(I18N.t("menu_sync_submit_verified"))
         self.action_sync_plugins.setText(I18N.t("menu_sync_plugins"))
+        self.action_run_pipeline.setText(I18N.t("menu_pipeline_run"))
         if hasattr(self, "sync_menu"):
             self.sync_menu.setTitle(I18N.t("menu_sync"))
+        if hasattr(self, "pipeline_menu"):
+            self.pipeline_menu.setTitle(I18N.t("menu_pipeline"))
         self.update_stats()
 
         if hasattr(self.settings_tab, "retranslate_ui"):
@@ -3032,6 +3132,10 @@ class FoundryGUI(QMainWindow):
             self.worker.stop()  # Tell it to stop the loop
             self.worker.terminate()  # Force kill the thread if it's stuck in Ollama
             self.worker.wait()  # Wait for cleanup
+        if hasattr(self, "pipeline_worker") and self.pipeline_worker.isRunning():
+            self.pipeline_worker.stop()
+            self.pipeline_worker.terminate()
+            self.pipeline_worker.wait()
 
         event.accept()
 
