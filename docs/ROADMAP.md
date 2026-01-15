@@ -109,7 +109,8 @@ Roadmap updates must not supersede or contradict already implemented features, a
 
 **Implemented**
 * [x] **JSON/JSONL file import + export:** CLI/GUI support for JSON/JSONL parsing and export is in place.
-* [x] **JSONL append-only persistence + resume-by-skip:** Append-only JSONL persistence now flushes per entry, skips translated keys on resume, and keeps deterministic mapping by `key` via `append_jsonl_entries`, `load_translated_keys`, and `run_ordered_jsonl_pipeline` in `src/core/translation_pipeline.py`.
+* [x] **JSONL append-only persistence + resume-by-skip:** Append-only JSONL persistence now flushes per entry, skips translated keys on resume, and keeps deterministic mapping by `key`.
+  * Note: Implemented via `append_jsonl_entries`, `load_translated_keys`, and `run_ordered_jsonl_pipeline` in `src/core/translation_pipeline.py`.
 * [x] **Segment chunk iterator reuse:** Shared chunking helper now powers segment batching in CLI translation and JSONL pipelines to keep ordering consistent.
 * [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
 * [x] **Placeholder pattern validation reuse:** Centralized placeholder checks (e.g., `<TSMARKER_n>`, `%s`, `{0}`, `[BTN_*]`) live in `src/core/rlm_validator.py`. The `validate_placeholder_order` function should be reused by UI and engine flows to avoid duplication.
