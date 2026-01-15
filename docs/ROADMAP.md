@@ -116,6 +116,6 @@ Roadmap updates must not supersede or contradict already implemented features, a
 * [x] **JSONL append-only persistence + resume-by-skip:** Implemented append-only JSONL persistence and resume-by-skip (scan output to skip translated keys).
 * [ ] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, per-chunk progress (segments completed/total), and per-file summary reporting for the CLI translation pipeline.
 * [ ] **(planned) Strict LLM IO contract:** enforce schema-locked request/response formats, deterministic ordering, and hard placeholder parity checks for CLI/GUI parity.
-* [ ] **(planned) Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
+* [x] **Placeholder failure handling policy:** retry-on-failure, skip + log unresolved segments, and manual review escalation rules when placeholders cannot be reconciled.
 * [ ] **(planned) SQLModel `__table__` typing cleanup:** replace direct `__table__.c` access in TM query and consistency status filter with typed column access to satisfy static analysis.
 * [ ] **(planned) UI non-blocking streaming translation integration:** worker threading + progress callbacks for streaming translation without blocking editor workflows.
