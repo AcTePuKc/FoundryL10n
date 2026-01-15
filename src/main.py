@@ -192,7 +192,7 @@ def translate_file(
         )
 
     output_path = Path(out) if out else Path("out") / lang / input_path.name
-    parser.save_tsv(segments, output_path)
+    parser.save_path(segments, output_path, input_path.suffix.lstrip("."))
     print(I18N.t("cli_done_results").format(output_path=output_path))
     success, failed = _count_repair_outcomes(segments)
     print(I18N.t("cli_repair_summary").format(success=success, failed=failed))
