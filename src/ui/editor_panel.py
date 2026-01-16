@@ -244,6 +244,8 @@ class EditorPanel(QWidget):
         validation: dict,
         value: object,
     ) -> QWidget | None:
+        if validation is None:
+            validation = {}
         builder = self._field_builders.get(field_type.lower())
         if builder is None:
             return None
