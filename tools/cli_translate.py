@@ -48,6 +48,12 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--out-format", dest="output_format", choices=["tsv", "json", "jsonl"])
     parser.add_argument("--chunk-size", dest="chunk_size", type=int, default=25)
     parser.add_argument("--workers", dest="workers", type=int, default=1)
+    parser.add_argument(
+        "--convert-only",
+        dest="convert_only",
+        action="store_true",
+        help="Convert between TSV/JSON/JSONL without running translation.",
+    )
     return parser.parse_args()
 
 
@@ -91,7 +97,10 @@ def _translate_segment(segment: TranslationSegment, engine: TranslationEngine) -
     return segment
 
 
-def _translate_entry(entry: JSONLPipelineEntry) -> JSONLPipelineEntry:
+def _translate_entry(
+    entry: JSONLPipelineEntry,
+    engine: TranslationEngine,
+) -> JSONLPipelineEntry:
     payload = dict(entry.payload)
     segment = TranslationSegment(
         key=str(payload.get("key", "")),
@@ -104,7 +113,7 @@ def _translate_entry(entry: JSONLPipelineEntry) -> JSONLPipelineEntry:
         remote_id=payload.get("remote_id"),
         last_sync=payload.get("last_sync"),
     )
-    _translate_segment(segment)
+    _translate_segment(segment, engine)
     payload["translation"] = segment.translation
     return JSONLPipelineEntry(order=entry.order, payload=payload)
 
@@ -114,12 +123,13 @@ def _translate_jsonl(
     output_path: Path,
     chunk_size: int,
     workers: int,
+    engine: TranslationEngine,
 ) -> None:
     def process_chunk(entries: list[JSONLPipelineEntry]) -> list[JSONLPipelineEntry]:
         if workers <= 1:
-            return [_translate_entry(entry) for entry in entries]
+            return [_translate_entry(entry, engine) for entry in entries]
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            return list(executor.map(_translate_entry, entries))
+            return list(executor.map(lambda entry: _translate_entry(entry, engine), entries))
 
     for _ in run_ordered_jsonl_pipeline(
         segments=segments,
@@ -135,14 +145,35 @@ def _translate_batch(
     segments: list[TranslationSegment],
     chunk_size: int,
     workers: int,
+    engine: TranslationEngine,
 ) -> None:
     for chunk in iter_segment_chunks(segments, chunk_size):
         if workers <= 1:
             for segment in chunk:
-                _translate_segment(segment)
+                _translate_segment(segment, engine)
         else:
             with ThreadPoolExecutor(max_workers=workers) as executor:
-                list(executor.map(_translate_segment, chunk))
+                list(executor.map(lambda segment: _translate_segment(segment, engine), chunk))
+
+
+def _coerce_output_path(path: Path, output_format: str | None) -> Path:
+    if not output_format:
+        return path
+    target_suffix = f".{output_format.lower()}"
+    if path.suffix.lower() == target_suffix:
+        return path
+    return path.with_suffix(target_suffix)
+
+
+def _convert_segments(
+    parser: FoundryParser,
+    segments: list[TranslationSegment],
+    output_path: Path,
+    output_format: str,
+) -> None:
+    rows = parser.build_export_rows(segments, include_empty_fields=True)
+    rows = parser.order_rows_by_key(rows)
+    parser.save_rows(rows, output_path)
 
 
 def main() -> int:
@@ -152,6 +183,7 @@ def main() -> int:
 
     input_format = _resolve_format(input_path, args.input_format)
     output_format = _resolve_format(output_path, args.output_format)
+    output_path = _coerce_output_path(output_path, output_format)
 
     if args.chunk_size <= 0:
         raise ValueError("chunk-size must be a positive integer")
@@ -161,16 +193,28 @@ def main() -> int:
     parser = FoundryParser()
     segments = _parse_segments(parser, input_path, input_format)
 
+    if args.convert_only:
+        _convert_segments(parser, segments, output_path, output_format)
+        return 0
+
+    engine = _build_engine()
+
     if output_format == "jsonl":
         _translate_jsonl(
             segments,
             output_path,
             chunk_size=args.chunk_size,
             workers=args.workers,
+            engine=engine,
         )
         return 0
 
-    _translate_batch(segments, chunk_size=args.chunk_size, workers=args.workers)
+    _translate_batch(
+        segments,
+        chunk_size=args.chunk_size,
+        workers=args.workers,
+        engine=engine,
+    )
     parser.save_path(segments, output_path, output_format)
     return 0
 

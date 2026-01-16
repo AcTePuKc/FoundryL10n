@@ -115,6 +115,7 @@ Roadmap updates must not supersede or contradict already implemented features, a
 * [x] **Segment/tag validation + repair:** Placeholder/tag validation and repair passes are implemented in the shared translation engine.
 * [x] **Placeholder pattern validation reuse:** Centralized placeholder checks (e.g., `<TSMARKER_n>`, `%s`, `{0}`, `[BTN_*]`) live in `src/core/rlm_validator.py`. The `validate_placeholder_order` function should be reused by UI and engine flows to avoid duplication.
 * [x] **TSV/JSON array ⇄ JSONL converters:** Utility conversion script keeps stable key/index ordering and preserves note/empty translation fields.
+  * Note: `tools/cli_translate.py --convert-only` now exposes the conversion path in the CLI for quick format swaps.
 
 **Pending**
 * [x] **(planned) CLI translation runner entry-point + reporting:** define required flags, defaults, per-chunk progress (segments completed/total), and per-file summary reporting for the CLI translation pipeline.
