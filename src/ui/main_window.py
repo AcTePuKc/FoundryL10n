@@ -103,7 +103,6 @@ class FoundryGUI(QMainWindow):
         self.setMinimumSize(800, 600)
         self._init_actions()
         self._init_sync_controls()
-        self._init_pipeline_controls()
 
         self.init_translate_tab()
 
@@ -408,9 +407,6 @@ class FoundryGUI(QMainWindow):
         self.action_sync_plugins = QAction(self)
         self.action_sync_plugins.triggered.connect(self.handle_plugin_sync)
 
-        self.action_run_pipeline = QAction(self)
-        self.action_run_pipeline.triggered.connect(self.request_jsonl_pipeline_run)
-
     def _init_sync_controls(self) -> None:
         self.sync_menu = self.menuBar().addMenu(I18N.t("menu_sync"))
         self.sync_menu.addAction(self.action_fetch_segments)
@@ -419,10 +415,6 @@ class FoundryGUI(QMainWindow):
         self.sync_menu.addSeparator()
         self.sync_menu.addAction(self.action_sync_plugins)
         self.update_sync_action_state()
-
-    def _init_pipeline_controls(self) -> None:
-        self.pipeline_menu = self.menuBar().addMenu(I18N.t("menu_pipeline"))
-        self.pipeline_menu.addAction(self.action_run_pipeline)
 
     def _update_context_menu_texts(self, count: int) -> None:
         self.action_verify_rows.setText(
@@ -447,7 +439,6 @@ class FoundryGUI(QMainWindow):
         self.action_search_replace.setText(I18N.t("menu_search_replace"))
         self.action_export_verified.setText(I18N.t("menu_export_verified"))
         self.action_history_delete.setText(I18N.t("menu_history_delete"))
-        self.action_run_pipeline.setText(I18N.t("menu_pipeline_run"))
 
     def _handle_bulk_verify(self):
         if self._context_menu_indices:
@@ -2500,6 +2491,8 @@ class FoundryGUI(QMainWindow):
         self._tsv_dialog = dialog
 
     def request_jsonl_pipeline_run(self) -> None:
+        # TODO: This method is temporarily orphaned and will be re-wired from a
+        # new pipeline UX entry point.
         if not self.segments:
             return
         if hasattr(self, "pipeline_worker") and self.pipeline_worker.isRunning():
@@ -2527,7 +2520,6 @@ class FoundryGUI(QMainWindow):
             self._restore_workflow_focus()
             return
         settings = self.settings_tab.get_settings()
-        self.action_run_pipeline.setEnabled(False)
         self.progress_bar.setMaximum(len(self.segments))
         self.progress_bar.setValue(0)
         self._initialize_batch_metrics(settings)
@@ -2938,7 +2930,6 @@ class FoundryGUI(QMainWindow):
         )
 
     def on_pipeline_done(self, result, output_path: Path) -> None:
-        self.action_run_pipeline.setEnabled(True)
         self._finalize_batch_run(result)
 
         self.file_label.setText(
@@ -3093,11 +3084,8 @@ class FoundryGUI(QMainWindow):
         self.action_submit_suggestion.setText(I18N.t("menu_sync_submit"))
         self.action_submit_verified.setText(I18N.t("menu_sync_submit_verified"))
         self.action_sync_plugins.setText(I18N.t("menu_sync_plugins"))
-        self.action_run_pipeline.setText(I18N.t("menu_pipeline_run"))
         if hasattr(self, "sync_menu"):
             self.sync_menu.setTitle(I18N.t("menu_sync"))
-        if hasattr(self, "pipeline_menu"):
-            self.pipeline_menu.setTitle(I18N.t("menu_pipeline"))
         self.update_stats()
 
         if hasattr(self.settings_tab, "retranslate_ui"):
