@@ -1,6 +1,6 @@
 import csv
 import json
-from typing import List, Dict, Optional
+from typing import Any, Dict, List, Optional
 from pathlib import Path
 
 class TranslationSegment:
@@ -10,7 +10,7 @@ class TranslationSegment:
         source_text: str,
         context: str = "",
         translation: str = "",
-        original_row: Optional[Dict] = None,
+        original_row: Optional[Dict[str, Any]] = None,
         ai_draft: str = "",
         provider_id: Optional[str] = None,
         remote_id: Optional[str] = None,
@@ -20,7 +20,7 @@ class TranslationSegment:
         self.key = key
         self.source_text = source_text
         self.context = context
-        self.original_row: Dict = original_row if original_row is not None else {}
+        self.original_row: Dict[str, Any] = original_row if original_row is not None else {}
         self.translation = translation
         self.thought = ""
         self.ai_draft = ai_draft
@@ -36,7 +36,7 @@ class TranslationSegment:
         self.repair_failed = False
 
     @staticmethod
-    def resolve_sync_timestamp(row: Dict) -> str | None:
+    def resolve_sync_timestamp(row: Dict[str, Any]) -> str | None:
         return (
             row.get("last_sync")
             or row.get("synced_at")
@@ -53,7 +53,7 @@ class FoundryParser:
         self._custom_fields_col = "custom_fields"
         self._default_export_fields = ["key", "source", "translation", "note"]
 
-    def parse_custom_fields(self, value: object) -> Dict:
+    def parse_custom_fields(self, value: object) -> Dict[str, Any]:
         if not value:
             return {}
         if isinstance(value, dict):
@@ -139,7 +139,7 @@ class FoundryParser:
         return self._parse_rows(rows)
 
     def parse_jsonl(self, file_path: Path) -> List[TranslationSegment]:
-        rows: List[Dict] = []
+        rows: List[Dict[str, Any]] = []
         with open(file_path, 'r', encoding='utf-8') as f:
             for line_number, line in enumerate(f, start=1):
                 stripped = line.strip()
@@ -158,7 +158,7 @@ class FoundryParser:
 
         return self._parse_rows(rows)
 
-    def _parse_rows(self, rows: List[Dict]) -> List[TranslationSegment]:
+    def _parse_rows(self, rows: List[Dict[str, Any]]) -> List[TranslationSegment]:
         segments: List[TranslationSegment] = []
         self.headers = []
         for row in rows:
@@ -251,8 +251,8 @@ class FoundryParser:
                     )
                 writer.writerow(clean_row)
 
-    def _build_export_row(self, segment: TranslationSegment) -> Dict:
-        row = segment.original_row.copy() if segment.original_row else {}
+    def _build_export_row(self, segment: TranslationSegment) -> Dict[str, Any]:
+        row: Dict[str, Any] = segment.original_row.copy() if segment.original_row else {}
         text_col = self.text_col or "source"
         target_col = self.target_col or "translation"
         if not row:
@@ -288,8 +288,8 @@ class FoundryParser:
         self,
         segments: List[TranslationSegment],
         include_empty_fields: bool = False,
-    ) -> List[Dict]:
-        rows = []
+    ) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
         text_col = self.text_col or "source"
         target_col = self.target_col or "translation"
         for seg in segments:
@@ -306,7 +306,7 @@ class FoundryParser:
             rows.append(row)
         return rows
 
-    def order_rows_by_key(self, rows: List[Dict]) -> List[Dict]:
+    def order_rows_by_key(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         indexed = list(enumerate(rows))
         if rows and all(str(row.get("key", "")) for row in rows):
             indexed.sort(key=lambda item: (str(item[1].get("key", "")), item[0]))
@@ -314,7 +314,7 @@ class FoundryParser:
 
     def save_rows(
         self,
-        rows: List[Dict],
+        rows: List[Dict[str, Any]],
         output_path: Path,
         pretty: bool = False,
     ) -> None:
