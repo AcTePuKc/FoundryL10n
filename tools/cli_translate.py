@@ -173,7 +173,6 @@ def _convert_segments(
 ) -> None:
     rows = parser.build_export_rows(segments, include_empty_fields=True)
     rows = parser.order_rows_by_key(rows)
-    output_path = _coerce_output_path(output_path, output_format)
     parser.save_rows(rows, output_path)
 
 
@@ -184,6 +183,7 @@ def main() -> int:
 
     input_format = _resolve_format(input_path, args.input_format)
     output_format = _resolve_format(output_path, args.output_format)
+    output_path = _coerce_output_path(output_path, output_format)
 
     if args.chunk_size <= 0:
         raise ValueError("chunk-size must be a positive integer")
