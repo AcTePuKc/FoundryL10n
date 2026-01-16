@@ -1,4 +1,5 @@
 import re
+from typing import cast
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QTextEdit, QLabel,
                                QPushButton, QHBoxLayout, QCheckBox,
                                QListWidget, QToolButton, QLineEdit,
@@ -298,13 +299,15 @@ class EditorPanel(QWidget):
         widget = QDoubleSpinBox()
         step = validation.get("step")
         widget.setDecimals(0 if isinstance(step, int) else 4)
-        widget.setMinimum(float(validation.get("min", -1e9)))
-        widget.setMaximum(float(validation.get("max", 1e9)))
+        min_value = float(cast("float | int | str", validation.get("min", -1e9)))
+        max_value = float(cast("float | int | str", validation.get("max", 1e9)))
+        widget.setMinimum(min_value)
+        widget.setMaximum(max_value)
         if step is not None:
-            widget.setSingleStep(float(step))
+            widget.setSingleStep(float(cast("float | int | str", step)))
         if value is not None:
             try:
-                widget.setValue(float(value))
+                widget.setValue(float(cast("float | int | str", value)))
             except (TypeError, ValueError):
                 pass
         return widget
