@@ -1,4 +1,4 @@
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine, select, col
 from typing import Optional
 from collections import Counter
 import hashlib
@@ -151,9 +151,9 @@ def query_translation_memory(
             .where(
                 TranslationMemoryIndex.project_name == project_name,
                 TranslationMemoryIndex.target_lang == target_lang,
-                TranslationMemoryIndex.source_norm.like(f"%{source_norm}%"),  # type: ignore[attr-defined]
+                col(TranslationMemoryIndex.source_norm).like(f"%{source_norm}%"),
             )
-            .order_by(TranslationMemoryIndex.id.desc())  # type: ignore[attr-defined]
+            .order_by(col(TranslationMemoryIndex.id).desc())
             .limit(limit)
         )
         return list(session.exec(statement).all())
@@ -172,15 +172,15 @@ def global_replace_in_db(
     """
     with Session(engine) as session:
         target_col = (
-            TranslationRecord.source_text
+            col(TranslationRecord.source_text)
             if search_source
-            else TranslationRecord.translation
+            else col(TranslationRecord.translation)
         )
 
         statement = select(TranslationRecord).where(
             TranslationRecord.project_name == project_name,
             TranslationRecord.target_lang == target_lang,
-            target_col.like(f"%{find_text}%"),  # type: ignore[attr-defined]
+            target_col.like(f"%{find_text}%"),
         )
 
         records = session.exec(statement).all()
