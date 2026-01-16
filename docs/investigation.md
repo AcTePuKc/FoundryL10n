@@ -21,6 +21,11 @@ This document ('docs/investigation.md') is the canonical location for future ins
   - Add tests to cover `str`, `dict`, and Ollama `GenerateResponse`-like objects to prevent regressions.
   - Ensure JSONL pipeline and GUI batch share the same adapter path to restore parity.
 - **Risks:** if `extract_response_text` is loosened too far, non-deterministic payloads could leak into tag validation; prefer a narrow adapter that explicitly targets the Ollama response type.
+- **Stub set (expand investigation, no execution yet):**
+  - **2026-01-17 — Contract probe (Ollama response shape):** add a temporary diagnostic hook in `LLMService.translate_segment()` that records the exact response class + available accessors (`response`, `model_dump`, `dict`) for the current Ollama client. **Write-back required:** record the observed type + access pattern in this section and remove the hook after capture. [ ] TODO
+  - **2026-01-17 — Adapter design (narrow acceptance):** draft a minimal adapter API in `core.llm_io_contract` (or `LLMService`) that accepts only `str`, `Mapping`, or Ollama `GenerateResponse` equivalents and converts to a canonical `dict` with a `response` field. **Write-back required:** document accepted shapes and final adapter location here. [ ] TODO
+  - **2026-01-17 — Contract tests (response parsing):** outline unit tests for `extract_response_text` with `str`, `dict`, and a small dummy class that mimics Ollama’s response signature (e.g., `.response` + `.model_dump`). **Write-back required:** link test file + coverage notes here when added. [ ] TODO
+  - **2026-01-17 — Pipeline parity check:** verify GUI batch + JSONL pipeline both use the same response extraction path once adapter is in place; identify any divergence in `TranslationEngine` or `LLMService` call sites. **Write-back required:** note findings and any follow-up stubs here. [ ] TODO
 
 ### 2026-01-17 — Pipeline menu UX regression
 - **Symptom:** a dedicated `Pipeline` menu runs a JSONL pipeline via a save dialog, duplicating existing export behaviors and introducing a modal save prompt when running.
