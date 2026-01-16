@@ -2491,6 +2491,8 @@ class FoundryGUI(QMainWindow):
         self._tsv_dialog = dialog
 
     def request_jsonl_pipeline_run(self) -> None:
+        # TODO: This method is temporarily orphaned and will be re-wired from a
+        # new pipeline UX entry point.
         if not self.segments:
             return
         if hasattr(self, "pipeline_worker") and self.pipeline_worker.isRunning():
