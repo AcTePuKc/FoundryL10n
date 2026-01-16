@@ -30,6 +30,9 @@ This document ('docs/investigation.md') is the canonical location for future ins
   - **2026-01-17 — Repro confirmation (minimal):** attempt a single-segment translation via CLI and GUI to verify `[TAG ERROR]` output and log the exact error payload seen before tag masking. **Write-back required:** include the minimal repro steps and raw error string in this section. [ ] TODO
   - **2026-01-17 — Contract boundaries review:** scan callers of `extract_response_text` beyond `LLMService` (if any) to ensure an adapter won’t mask non-LLM call sites. **Write-back required:** list call sites + any constraints on relaxing the contract. [ ] TODO
 
+#### Test report
+- **2026-01-17 — Contract tests executed:** `pytest tests/test_llm_io_contract.py` passed (5 tests).【F:tests/test_llm_io_contract.py†L1-L37】
+
 ### 2026-01-17 — Pipeline menu UX regression
 - **Symptom:** a dedicated `Pipeline` menu runs a JSONL pipeline via a save dialog, duplicating existing export behaviors and introducing a modal save prompt when running.
 - **Stubbed action:** decide where JSONL pipeline should live (e.g., batch/export panel or settings), and define a UX rule: pipeline execution should not request a new output path if one is already selected (or should reuse the current export path).
