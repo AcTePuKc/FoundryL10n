@@ -241,9 +241,11 @@ class EditorPanel(QWidget):
     def _build_provider_field_widget(
         self,
         field_type: str,
-        validation: dict,
+        validation: dict | None,
         value: object,
     ) -> QWidget | None:
+        if validation is None:
+            validation = {}
         builder = self._field_builders.get(field_type.lower())
         if builder is None:
             return None
