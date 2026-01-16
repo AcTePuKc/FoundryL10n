@@ -252,7 +252,7 @@ class FoundryParser:
                 writer.writerow(clean_row)
 
     def _build_export_row(self, segment: TranslationSegment) -> Dict[str, Any]:
-        row: Dict[str, Any] = segment.original_row.copy() if segment.original_row else {}
+        row: Dict[str, Any] = segment.original_row.copy()
         text_col = self.text_col or "source"
         target_col = self.target_col or "translation"
         if not row:
