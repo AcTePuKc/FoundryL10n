@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("PySide6", reason="UI tests require PySide6")
+
 from PySide6.QtWidgets import QApplication, QLineEdit
 
 from ui.editor_panel import EditorPanel

@@ -3,6 +3,8 @@
 This document describes the high-level evolution of FoundryL10n as a modular CAT workstation.
 Roadmap updates must not supersede or contradict already implemented features, and completed items should remain marked as done.
 
+Testing guidance (including UI/PySide6 rules) lives in [TESTING.md](TESTING.md).
+
 ## 0.2 – Local CAT Refinement
 
 **Focus:** Making the workstation reliable for individual offline use.
