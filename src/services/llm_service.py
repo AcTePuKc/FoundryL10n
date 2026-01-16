@@ -3,7 +3,11 @@ import re
 import httpx
 
 from core.i18n import I18N
-from core.llm_io_contract import build_request_payload, extract_response_text
+from core.llm_io_contract import (
+    build_request_payload,
+    extract_response_text,
+    normalize_response_payload,
+)
 
 DEFAULT_MODEL_UNAVAILABLE = "llm_model_unavailable"
 CONTEXT_PREFIX = "### CONTEXT: {context}\n"
@@ -183,7 +187,8 @@ class LLMService:
                 request_type="translate",
             )
             response = self.client.generate(**payload)
-            raw = extract_response_text(response)
+            normalized = normalize_response_payload(response)
+            raw = extract_response_text(normalized)
             return self._postprocess_output(raw, text, target_lang)
 
         except (httpx.TimeoutException, TimeoutError) as e:

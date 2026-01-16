@@ -37,23 +37,24 @@ def build_request_payload(
     }
 
 
+def normalize_response_payload(response: Any) -> Mapping[str, Any] | str | Any:
+    if isinstance(response, (Mapping, str)):
+        return response
+    if hasattr(response, "response"):
+        return {"response": getattr(response, "response")}
+    for method_name in ("model_dump", "dict"):
+        method = getattr(response, method_name, None)
+        if callable(method):
+            payload = method()
+            if isinstance(payload, Mapping) and "response" in payload:
+                return {"response": payload["response"]}
+    return response
+
+
 def extract_response_text(response: Mapping[str, Any] | str) -> str:
+    response = normalize_response_payload(response)
     if isinstance(response, str):
         return validate_response_text(response)
-    if not isinstance(response, Mapping):
-        adapted = None
-        if hasattr(response, "response"):
-            adapted = {"response": getattr(response, "response")}
-        else:
-            for method_name in ("model_dump", "dict"):
-                method = getattr(response, method_name, None)
-                if callable(method):
-                    payload = method()
-                    if isinstance(payload, Mapping) and "response" in payload:
-                        adapted = {"response": payload["response"]}
-                        break
-        if adapted is not None:
-            response = adapted
     if isinstance(response, Mapping):
         if "response" not in response:
             raise LLMContractError("LLM response missing 'response' field.")
