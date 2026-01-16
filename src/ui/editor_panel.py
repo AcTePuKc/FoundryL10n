@@ -299,12 +299,23 @@ class EditorPanel(QWidget):
         widget = QDoubleSpinBox()
         step = validation.get("step")
         widget.setDecimals(0 if isinstance(step, int) else 4)
-        min_value = float(cast("float | int | str", validation.get("min", -1e9)))
-        max_value = float(cast("float | int | str", validation.get("max", 1e9)))
+        min_value = -1e9
+        max_value = 1e9
+        try:
+            min_value = float(cast("float | int | str", validation.get("min", min_value)))
+        except (TypeError, ValueError):
+            pass
+        try:
+            max_value = float(cast("float | int | str", validation.get("max", max_value)))
+        except (TypeError, ValueError):
+            pass
         widget.setMinimum(min_value)
         widget.setMaximum(max_value)
         if step is not None:
-            widget.setSingleStep(float(cast("float | int | str", step)))
+            try:
+                widget.setSingleStep(float(cast("float | int | str", step)))
+            except (TypeError, ValueError):
+                pass
         if value is not None:
             try:
                 widget.setValue(float(cast("float | int | str", value)))
