@@ -3,6 +3,7 @@ import re
 import httpx
 
 from core.i18n import I18N
+from core.llm_io_contract import build_request_payload, extract_response_text
 
 DEFAULT_MODEL_UNAVAILABLE = "llm_model_unavailable"
 CONTEXT_PREFIX = "### CONTEXT: {context}\n"
@@ -174,15 +175,15 @@ class LLMService:
             full_prompt = CONTEXT_PREFIX.format(context=context_extra) + full_prompt
 
         try:
-            response = self.client.generate(
+            payload = build_request_payload(
                 model=self.model,
                 prompt=full_prompt,
-                options={
-                    "temperature": float(temp),
-                    "stop": STOP_TOKENS
-                }
+                temperature=float(temp),
+                stop=STOP_TOKENS,
+                request_type="translate",
             )
-            raw = response['response'].strip()
+            response = self.client.generate(**payload)
+            raw = extract_response_text(response)
             return self._postprocess_output(raw, text, target_lang)
 
         except (httpx.TimeoutException, TimeoutError) as e:
@@ -219,15 +220,15 @@ class LLMService:
             expected_placeholders=expected_text or "[]",
         )
         try:
-            response = self.client.generate(
+            payload = build_request_payload(
                 model=self.model,
                 prompt=prompt,
-                options={
-                    "temperature": 0.0,
-                    "stop": STOP_TOKENS,
-                },
+                temperature=0.0,
+                stop=STOP_TOKENS,
+                request_type="repair",
             )
-            raw = response["response"].strip()
+            response = self.client.generate(**payload)
+            raw = extract_response_text(response)
             return self._postprocess_repair_output(raw), ""
         except (httpx.TimeoutException, TimeoutError) as e:
             if self.timeout is not None:

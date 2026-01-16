@@ -2,7 +2,8 @@ import re
 import difflib
 from core.masker import Masker
 from core.rlm_segmenter import RLMSegmenter
-from core.rlm_validator import validate_placeholder_order, validate_segments
+from core.rlm_validator import validate_segments
+from core.llm_io_contract import validate_placeholder_parity
 from core.database import (get_cached_record, save_translation, engine,
                            TranslationRecord)
 from core.i18n import I18N
@@ -349,7 +350,7 @@ class TranslationEngine:
             target_tags=target_segment_result.tags,
             context={"segment_id": getattr(seg, "key", None)},
         )
-        placeholder_validation = validate_placeholder_order(
+        placeholder_validation = validate_placeholder_parity(
             seg.source_text,
             final_text,
             context={"segment_id": getattr(seg, "key", None)},
@@ -378,7 +379,7 @@ class TranslationEngine:
                     target_tags=repaired_target_result.tags,
                     context={"segment_id": getattr(seg, "key", None)},
                 )
-                placeholder_validation = validate_placeholder_order(
+                placeholder_validation = validate_placeholder_parity(
                     seg.source_text,
                     repaired_text,
                     context={"segment_id": getattr(seg, "key", None)},
