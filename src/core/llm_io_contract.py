@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
 from core.rlm_validator import ValidationResult, validate_placeholder_order
@@ -8,14 +7,6 @@ from core.rlm_validator import ValidationResult, validate_placeholder_order
 
 class LLMContractError(ValueError):
     pass
-
-
-@dataclass(frozen=True)
-class LLMRequest:
-    model: str
-    prompt: str
-    options: dict[str, Any]
-    request_type: str
 
 
 def build_request_payload(
@@ -39,16 +30,10 @@ def build_request_payload(
         "temperature": float(temperature),
         "stop": tuple(stop),
     }
-    request = LLMRequest(
-        model=model.strip(),
-        prompt=prompt,
-        options=options,
-        request_type=request_type.strip(),
-    )
     return {
-        "model": request.model,
-        "prompt": request.prompt,
-        "options": request.options,
+        "model": model.strip(),
+        "prompt": prompt,
+        "options": options,
     }
 
 
