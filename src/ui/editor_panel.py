@@ -377,7 +377,7 @@ class EditorPanel(QWidget):
             if is_required:
                 label_text = f"{label_text} *"
             field_type = str(field.get("type", "text"))
-            raw_validation = field.get("validation") or {}
+            raw_validation = field.get("validation")
             validation = raw_validation if isinstance(raw_validation, dict) else {}
             value = values.get(field_id, field.get("default"))
             widget = self._build_provider_field_widget(field_type, validation, value)
