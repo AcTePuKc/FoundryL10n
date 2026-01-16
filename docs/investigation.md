@@ -11,6 +11,22 @@
 ## Findings / Stubs
 This document ('docs/investigation.md') is the canonical location for future inspection findings.
 
+### 2026-01-17 — LLM response contract regression (all pipelines emit `[TAG ERROR]`)
+- **Symptom:** Every pipeline (GUI bulk, JSONL pipeline, and imports that rehydrate translations) now emits `[TAG ERROR] Error: LLM response must be a mapping or string.`, which then repeats per tag when tag masking/unmasking runs.
+- **Initial root-cause hypothesis:** `core.llm_io_contract.extract_response_text` now enforces response types of `Mapping` or `str`. `LLMService.translate_segment()` passes the raw `ollama.Client.generate()` response, which in newer Ollama client versions is a typed `GenerateResponse` object (not a `Mapping`). This violates the contract and throws `LLMContractError`, triggering the `[TAG ERROR]` fallback in the LLM service.
+- **Evidence locations:** `extract_response_text` enforces the type check and raises the error, and `LLMService.translate_segment()` wraps any exception into `[TAG ERROR]` output.【F:src/core/llm_io_contract.py†L40-L47】【F:src/services/llm_service.py†L178-L197】
+- **Investigation stub:** confirm the runtime type returned by `ollama.Client.generate()` for the app’s current dependency versions (log `type(response)` and `dir(response)`), and confirm whether it exposes `.response`, `.dict()`, or `.model_dump()` for compatibility.
+- **Candidate fixes (to validate):**
+  - Add an adapter in `LLMService` or `llm_io_contract.extract_response_text` that accepts objects with a `.response` attribute (or `model_dump()` output) and coerces them into a `dict`.
+  - Add tests to cover `str`, `dict`, and Ollama `GenerateResponse`-like objects to prevent regressions.
+  - Ensure JSONL pipeline and GUI batch share the same adapter path to restore parity.
+- **Risks:** if `extract_response_text` is loosened too far, non-deterministic payloads could leak into tag validation; prefer a narrow adapter that explicitly targets the Ollama response type.
+
+### 2026-01-17 — Pipeline menu UX regression
+- **Symptom:** a dedicated `Pipeline` menu runs a JSONL pipeline via a save dialog, duplicating existing export behaviors and introducing a modal save prompt when running.
+- **Stubbed action:** decide where JSONL pipeline should live (e.g., batch/export panel or settings), and define a UX rule: pipeline execution should not request a new output path if one is already selected (or should reuse the current export path).
+- **Follow-up:** document the intended JSONL pipeline entry point in `docs/INTEGRATION.md` and/or `docs/ROADMAP.md` once the UX placement is confirmed.
+
 ## Roadmap prerequisites
 - **Dependencies/Sequencing:** Roadmap items related to JSONL streaming, CLI runner, and strict IO contract need explicit ordering (e.g., schema definition → persistence/resume → CLI entry-point → UI non-blocking integration) plus dependencies on core/shared validation utilities to keep GUI/CLI parity.
 - **Ownership:** Assign module-level owners (core/services/ui) or a single DRI for cross-cutting work (schema + persistence + UI), so follow-up tasks and review routing are clear.
